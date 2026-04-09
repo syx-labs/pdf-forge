@@ -10,8 +10,8 @@
   "license": "MIT",
   "keywords": ["pdf", "slides", "presentation", "tailwind", "design", "documents", "mcp", "claude"],
   "bin": {
-    "pdf-forge": "./dist/pdf-forge.js",
-    "pdf-forge-mcp": "./dist/server.js"
+    "pdf-forge": "./dist/bin/pdf-forge.js",
+    "pdf-forge-mcp": "./dist/src/mcp/server.js"
   },
   "files": ["dist/", "assets/", "skills/", ".claude-plugin/"],
   "scripts": {
