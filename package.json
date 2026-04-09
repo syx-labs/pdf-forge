@@ -13,6 +13,9 @@
     "pdf-forge": "./dist/bin/pdf-forge.js",
     "pdf-forge-mcp": "./dist/src/mcp/server.js"
   },
+  "exports": {
+    "./mcp": "./dist/src/mcp/server.js"
+  },
   "files": ["dist/", "assets/", "skills/", ".claude-plugin/"],
   "scripts": {
     "build": "tsup",

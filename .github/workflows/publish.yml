@@ -23,6 +23,12 @@ jobs:
 
       - run: bun install
 
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun test tests/core/utils.test.ts
+
       - name: Build
         run: bun run build
 

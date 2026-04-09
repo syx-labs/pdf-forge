@@ -2,14 +2,18 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { resolve, join, dirname } from "node:path";
-import { readFile, mkdtemp, writeFile } from "node:fs/promises";
+import { readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { renderPages } from "../core/renderer.js";
 import { mergePages } from "../core/merger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PLUGIN_ROOT = resolve(__dirname, "../..");
+
+// Resolve PLUGIN_ROOT: from source (src/mcp/) go up 2, from dist (dist/src/mcp/) go up 3
+const PLUGIN_ROOT = __dirname.includes("dist")
+  ? resolve(__dirname, "../../..")
+  : resolve(__dirname, "../..");
 
 const RESOURCE_MAP: Record<string, string> = {
   "pdf-forge://design-system": "skills/pdf-forge/references/design-system.md",
@@ -70,37 +74,41 @@ export function createServer(): McpServer {
     async ({ format, pages, outputPath, scale }) => {
       const tempDir = await mkdtemp(join(tmpdir(), "pdf-forge-"));
 
-      for (let i = 0; i < pages.length; i++) {
-        const filename = `${String(i + 1).padStart(2, "0")}-page.html`;
-        await writeFile(join(tempDir, filename), pages[i], "utf-8");
+      try {
+        for (let i = 0; i < pages.length; i++) {
+          const filename = `${String(i + 1).padStart(2, "0")}-page.html`;
+          await writeFile(join(tempDir, filename), pages[i], "utf-8");
+        }
+
+        const renderDir = join(tempDir, "rendered");
+        await renderPages({
+          inputDir: tempDir,
+          outputDir: renderDir,
+          format,
+          scale,
+        });
+
+        const finalPath = resolve(outputPath ?? "./output.pdf");
+        const result = await mergePages({
+          inputDir: renderDir,
+          outputPath: finalPath,
+        });
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                path: result.path,
+                pageCount: result.pageCount,
+                fileSize: result.fileSize,
+              }),
+            },
+          ],
+        };
+      } finally {
+        await rm(tempDir, { recursive: true, force: true }).catch(() => {});
       }
-
-      const renderDir = join(tempDir, "rendered");
-      await renderPages({
-        inputDir: tempDir,
-        outputDir: renderDir,
-        format,
-        scale,
-      });
-
-      const finalPath = resolve(outputPath ?? "./output.pdf");
-      const result = await mergePages({
-        inputDir: renderDir,
-        outputPath: finalPath,
-      });
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              path: result.path,
-              pageCount: result.pageCount,
-              fileSize: result.fileSize,
-            }),
-          },
-        ],
-      };
     }
   );
 
@@ -110,8 +118,7 @@ export function createServer(): McpServer {
 // Start server when run directly
 const isMain =
   process.argv[1] &&
-  (process.argv[1].endsWith("server.ts") ||
-    process.argv[1].endsWith("server.js"));
+  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
 if (isMain) {
   const server = createServer();

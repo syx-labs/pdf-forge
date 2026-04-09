@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { resolve, join, dirname } from "node:path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir, platform } from "node:os";
@@ -7,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { setupDependencies } from "../src/core/setup.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PLUGIN_ROOT = resolve(__dirname, "..");
+
+// From source (bin/) go up 1, from dist (dist/bin/) go up 2
+const PLUGIN_ROOT = __dirname.includes("dist")
+  ? resolve(__dirname, "../..")
+  : resolve(__dirname, "..");
 
 function getConfigPath(): string {
   const home = homedir();

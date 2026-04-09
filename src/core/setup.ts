@@ -15,8 +15,16 @@ function run(cmd: string[], cwd: string): Promise<void> {
   });
 }
 
+function detectPackageManager(): { install: string[]; exec: string[] } {
+  if ("Bun" in globalThis) {
+    return { install: ["bun", "add"], exec: ["bunx"] };
+  }
+  return { install: ["npm", "install"], exec: ["npx"] };
+}
+
 export async function setupDependencies(options: SetupOptions): Promise<void> {
   const { pluginRoot } = options;
+  const pm = detectPackageManager();
 
   const missing: string[] = [];
   try { await import("playwright"); } catch { missing.push("playwright"); }
@@ -24,10 +32,10 @@ export async function setupDependencies(options: SetupOptions): Promise<void> {
 
   if (missing.length > 0) {
     console.log(`Installing: ${missing.join(", ")}...`);
-    await run(["bun", "add", ...missing], pluginRoot);
+    await run([...pm.install, ...missing], pluginRoot);
   }
 
   console.log("Installing Chromium browser for Playwright...");
-  await run(["bunx", "playwright", "install", "chromium"], pluginRoot);
+  await run([...pm.exec, "playwright", "install", "chromium"], pluginRoot);
   console.log("Setup complete.");
 }
