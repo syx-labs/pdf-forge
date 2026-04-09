@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=210mm" />
+  <title>Appendix Document</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Document Container: A4 -->
+  <div class="relative w-[210mm] min-h-[297mm] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col justify-between min-h-[297mm] p-12">
+
+      <!-- Dense content area -->
+      <div class="flex flex-col gap-6">
+
+        <!-- REPLACE: Section Label -->
+        <span class="text-xs font-mono uppercase tracking-label text-zinc-500">
+          Apendice A
+        </span>
+
+        <!-- REPLACE: Heading -->
+        <h1 class="text-2xl font-semibold tracking-heading text-zinc-100 mb-6">
+          Glossario, Metodologia e Referencias
+        </h1>
+
+        <!-- Divider -->
+        <div class="w-full h-px bg-zinc-800"></div>
+
+        <!-- Subsection: Glossary / Definitions -->
+        <div class="flex flex-col gap-3">
+
+          <!-- REPLACE: Subsection Heading -->
+          <h2 class="text-lg font-medium text-zinc-200">
+            Termos e Definicoes
+          </h2>
+
+          <!-- REPLACE: Definition list -->
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1">
+              <span class="text-sm font-medium text-zinc-300">SLA (Service Level Agreement)</span>
+              <span class="text-sm text-zinc-400 leading-relaxed tracking-body">Acordo formal que define niveis minimos de disponibilidade, tempo de resposta e resolucao de incidentes entre provedor e cliente.</span>
+            </div>
+            <div class="w-full h-px bg-zinc-800/60"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-sm font-medium text-zinc-300">RPO (Recovery Point Objective)</span>
+              <span class="text-sm text-zinc-400 leading-relaxed tracking-body">Quantidade maxima de dados (em tempo) que pode ser perdida em caso de falha. Define a frequencia minima de backups.</span>
+            </div>
+            <div class="w-full h-px bg-zinc-800/60"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-sm font-medium text-zinc-300">RTO (Recovery Time Objective)</span>
+              <span class="text-sm text-zinc-400 leading-relaxed tracking-body">Tempo maximo aceitavel para restauracao completa do servico apos uma interrupcao nao planejada.</span>
+            </div>
+            <div class="w-full h-px bg-zinc-800/60"></div>
+            <div class="flex flex-col gap-1">
+              <span class="text-sm font-medium text-zinc-300">p95 / p99</span>
+              <span class="text-sm text-zinc-400 leading-relaxed tracking-body">Percentis de latencia. O p95 indica o tempo de resposta abaixo do qual 95% das requisicoes sao atendidas.</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Subsection: Methodology -->
+        <div class="flex flex-col gap-3 mt-3">
+
+          <!-- REPLACE: Subsection Heading -->
+          <h2 class="text-lg font-medium text-zinc-200">
+            Metodologia
+          </h2>
+
+          <!-- REPLACE: Methodology body -->
+          <p class="text-sm text-zinc-400 leading-relaxed tracking-body">
+            A analise de desempenho foi conduzida utilizando dados coletados via OpenTelemetry
+            entre janeiro e dezembro de 2025. As metricas de latencia foram agregadas em janelas
+            de 5 minutos e os percentis calculados sobre cada janela. Outliers acima de 3 desvios
+            padrao foram removidos para evitar distorcao por erros de rede.
+          </p>
+
+          <p class="text-sm text-zinc-400 leading-relaxed tracking-body">
+            O dimensionamento de capacidade seguiu o modelo de filas M/M/c, com fator de seguranca
+            de 1.4x sobre o pico historico observado. Testes de carga foram executados com k6
+            em ambiente isolado, replicando a topologia de producao.
+          </p>
+
+        </div>
+
+        <!-- Subsection: Table -->
+        <div class="flex flex-col gap-3 mt-3">
+
+          <!-- REPLACE: Subsection Heading -->
+          <h2 class="text-lg font-medium text-zinc-200">
+            Parametros de Configuracao
+          </h2>
+
+          <!-- REPLACE: Table -->
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-zinc-800">
+                <th class="text-left py-2 pr-4 text-xs font-mono uppercase tracking-label text-zinc-500 font-normal">Parametro</th>
+                <th class="text-left py-2 pr-4 text-xs font-mono uppercase tracking-label text-zinc-500 font-normal">Valor</th>
+                <th class="text-left py-2 text-xs font-mono uppercase tracking-label text-zinc-500 font-normal">Descricao</th>
+              </tr>
+            </thead>
+            <tbody class="text-zinc-400">
+              <tr class="border-b border-zinc-800/40">
+                <td class="py-2 pr-4 font-mono text-xs text-zinc-300">max_connections</td>
+                <td class="py-2 pr-4 font-mono text-xs">200</td>
+                <td class="py-2 text-sm">Pool maximo de conexoes por instancia</td>
+              </tr>
+              <tr class="border-b border-zinc-800/40">
+                <td class="py-2 pr-4 font-mono text-xs text-zinc-300">timeout_ms</td>
+                <td class="py-2 pr-4 font-mono text-xs">5000</td>
+                <td class="py-2 text-sm">Timeout de requisicao em milissegundos</td>
+              </tr>
+              <tr class="border-b border-zinc-800/40">
+                <td class="py-2 pr-4 font-mono text-xs text-zinc-300">retry_count</td>
+                <td class="py-2 pr-4 font-mono text-xs">3</td>
+                <td class="py-2 text-sm">Tentativas antes de circuit breaker</td>
+              </tr>
+              <tr class="border-b border-zinc-800/40">
+                <td class="py-2 pr-4 font-mono text-xs text-zinc-300">cache_ttl</td>
+                <td class="py-2 pr-4 font-mono text-xs">3600</td>
+                <td class="py-2 text-sm">TTL do cache em segundos</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4 font-mono text-xs text-zinc-300">replica_count</td>
+                <td class="py-2 pr-4 font-mono text-xs">3</td>
+                <td class="py-2 text-sm">Replicas minimas por servico</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+
+        <!-- Subsection: References -->
+        <div class="flex flex-col gap-3 mt-3">
+
+          <!-- REPLACE: Subsection Heading -->
+          <h2 class="text-lg font-medium text-zinc-200">
+            Referencias
+          </h2>
+
+          <!-- REPLACE: Reference notes -->
+          <div class="flex flex-col gap-2">
+            <span class="text-xs text-zinc-500 font-mono">[1] Google SRE Book &mdash; Site Reliability Engineering, O'Reilly Media, 2016.</span>
+            <span class="text-xs text-zinc-500 font-mono">[2] Kubernetes Production Best Practices &mdash; learnk8s.io/production-best-practices</span>
+            <span class="text-xs text-zinc-500 font-mono">[3] ISO/IEC 27001:2022 &mdash; Information Security Management Systems.</span>
+            <span class="text-xs text-zinc-500 font-mono">[4] OWASP Top 10 (2024) &mdash; owasp.org/www-project-top-ten</span>
+            <span class="text-xs text-zinc-500 font-mono">[5] OpenTelemetry Specification v1.30 &mdash; opentelemetry.io/docs/specs</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Page Number -->
+      <div class="flex justify-end mt-8">
+        <!-- REPLACE: Page Number -->
+        <span class="text-xs text-zinc-500 font-mono">12</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

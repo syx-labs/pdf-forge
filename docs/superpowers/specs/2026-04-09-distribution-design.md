@@ -154,7 +154,7 @@ Nome: `pdf-forge-mcp`
 
 ```json
 {
-  "name": "syxlabs-plugins",
+  "name": "syx-labs-plugins",
   "plugins": [
     {
       "name": "pdf-forge",
@@ -168,8 +168,8 @@ Nome: `pdf-forge-mcp`
 Instalacao no Claude Code:
 
 ```bash
-/plugin marketplace add syxlabs/pdf-forge
-/plugin install pdf-forge@syxlabs-plugins
+/plugin marketplace add syx-labs/pdf-forge
+/plugin install pdf-forge@syx-labs-plugins
 ```
 
 ### Marketplace oficial
@@ -184,7 +184,7 @@ Submit paralelo via `claude.ai/settings/plugins/submit`. Quando aprovado:
 
 | Plataforma | Instalacao |
 |------------|-----------|
-| Claude Code | `/plugin install pdf-forge@syxlabs-plugins` |
+| Claude Code | `/plugin install pdf-forge@syx-labs-plugins` |
 | Claude Desktop | `npx pdf-forge setup` |
 | Claude Web | Mesma config MCP (quando suportado) |
 

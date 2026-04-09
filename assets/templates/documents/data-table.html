@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=210mm" />
+  <title>Data Table</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Document Container: A4 -->
+  <div class="relative w-[210mm] min-h-[297mm] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col min-h-[297mm] p-16">
+
+      <!-- Section Label -->
+      <!-- REPLACE: Section Label -->
+      <span class="text-xs font-mono uppercase tracking-label text-zinc-500 mb-2">
+        Secao 05 — Financeiro
+      </span>
+
+      <!-- Page Title -->
+      <!-- REPLACE: Page Title -->
+      <h1 class="text-4xl font-semibold tracking-heading text-zinc-100 mb-8">
+        Projecao Orcamentaria por Fase
+      </h1>
+
+      <!-- Data Table (div-based) -->
+      <div class="w-full rounded-xl border border-zinc-800 overflow-hidden mb-8">
+
+        <!-- Table Header -->
+        <!-- REPLACE: Table Header Columns -->
+        <div class="grid grid-cols-5 bg-zinc-900">
+          <div class="px-6 py-4 text-xs font-mono uppercase tracking-label text-zinc-400">
+            Fase
+          </div>
+          <div class="px-6 py-4 text-xs font-mono uppercase tracking-label text-zinc-400">
+            Periodo
+          </div>
+          <div class="px-6 py-4 text-xs font-mono uppercase tracking-label text-zinc-400 text-right">
+            Infraestrutura
+          </div>
+          <div class="px-6 py-4 text-xs font-mono uppercase tracking-label text-zinc-400 text-right">
+            Servicos
+          </div>
+          <div class="px-6 py-4 text-xs font-mono uppercase tracking-label text-zinc-400 text-right">
+            Total
+          </div>
+        </div>
+
+        <!-- REPLACE: Table Data Rows -->
+
+        <!-- Row 1 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50">
+          <div class="px-6 py-4 text-base text-zinc-300">Fundacao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q1 2026</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 180.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 240.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 420.000</div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50 bg-zinc-900/30">
+          <div class="px-6 py-4 text-base text-zinc-300">Integracao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q2 2026</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 120.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 380.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 500.000</div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50">
+          <div class="px-6 py-4 text-base text-zinc-300">Migracao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q3 2026</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 200.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 450.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 650.000</div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50 bg-zinc-900/30">
+          <div class="px-6 py-4 text-base text-zinc-300">Otimizacao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q4 2026</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 90.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 320.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 410.000</div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50">
+          <div class="px-6 py-4 text-base text-zinc-300">Estabilizacao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q1 2027</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 60.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 180.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 240.000</div>
+        </div>
+
+        <!-- Row 6 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50 bg-zinc-900/30">
+          <div class="px-6 py-4 text-base text-zinc-300">Sustentacao</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Q2 2027</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 45.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 95.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 140.000</div>
+        </div>
+
+        <!-- Row 7 -->
+        <div class="grid grid-cols-5 border-b border-zinc-800/50">
+          <div class="px-6 py-4 text-base text-zinc-300">Reserva Tecnica</div>
+          <div class="px-6 py-4 text-base text-zinc-400">Continuo</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 15.000</div>
+          <div class="px-6 py-4 text-base text-zinc-400 text-right font-mono">R$ 25.000</div>
+          <div class="px-6 py-4 text-base text-zinc-100 text-right font-mono font-medium">R$ 40.000</div>
+        </div>
+
+        <!-- Total/Summary Row -->
+        <!-- REPLACE: Total Row -->
+        <div class="grid grid-cols-5 border-t-2 border-zinc-700 bg-zinc-900/50">
+          <div class="px-6 py-4 text-base font-semibold text-white">Total</div>
+          <div class="px-6 py-4 text-base text-zinc-400">18 meses</div>
+          <div class="px-6 py-4 text-base font-semibold text-white text-right font-mono">R$ 710.000</div>
+          <div class="px-6 py-4 text-base font-semibold text-white text-right font-mono">R$ 1.690.000</div>
+          <div class="px-6 py-4 text-base font-semibold text-white text-right font-mono">R$ 2.400.000</div>
+        </div>
+
+      </div>
+
+      <!-- Highlight Metric Card -->
+      <!-- REPLACE: Highlight Card -->
+      <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex items-center gap-6">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400/20 to-orange-400/20 flex items-center justify-center">
+            <div class="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-orange-400"></div>
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-medium text-zinc-300 mb-1">Custo Mensal Medio</div>
+          <div class="text-2xl font-bold tracking-display text-zinc-100">R$ 133.333</div>
+          <div class="text-sm text-zinc-500 mt-1">
+            70% alocado em servicos profissionais, 30% em infraestrutura cloud
+          </div>
+        </div>
+      </div>
+
+      <!-- Spacer to push page number down -->
+      <div class="flex-1"></div>
+
+      <!-- Page Number -->
+      <div class="flex justify-end pt-8">
+        <!-- REPLACE: Page Number -->
+        <span class="text-xs text-zinc-500 font-mono">08</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

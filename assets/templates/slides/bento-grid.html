@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Bento Grid Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Slide Container -->
+  <div class="relative w-[1920px] h-[1080px] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Background decorative glow elements -->
+    <div class="absolute top-[-200px] left-[400px] w-[700px] h-[700px] rounded-full bg-purple-600/5 blur-[120px]"></div>
+    <div class="absolute bottom-[-200px] right-[200px] w-[500px] h-[500px] rounded-full bg-orange-500/5 blur-[150px]"></div>
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col h-full px-[120px] py-[80px]">
+
+      <!-- Header section -->
+      <div class="mb-16">
+        <!-- REPLACE: Section Label -->
+        <div class="text-zinc-500 font-mono text-xl uppercase tracking-label mb-4">
+          Plataforma
+        </div>
+
+        <!-- REPLACE: Section Title -->
+        <div class="text-6xl font-semibold tracking-heading text-zinc-100">
+          Modulos e Servicos
+        </div>
+
+        <!-- REPLACE: Section Subtitle -->
+        <div class="text-2xl text-zinc-400 font-light tracking-body mt-4 max-w-3xl">
+          Tudo que voce precisa para escalar sua operacao, integrado em uma unica plataforma.
+        </div>
+      </div>
+
+      <!-- Bento Grid -->
+      <div class="grid grid-cols-4 grid-rows-2 gap-6 flex-1">
+
+        <!-- Hero Card: col-span-2 row-span-2 -->
+        <!-- REPLACE: Hero card content (primary module/feature) -->
+        <div class="col-span-2 row-span-2 bg-zinc-900/50 border border-zinc-800 rounded-3xl p-10 flex flex-col justify-between">
+          <div class="flex flex-col gap-6">
+            <!-- Icon placeholder -->
+            <div class="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600"></div>
+            </div>
+
+            <!-- REPLACE: Hero Title -->
+            <div class="text-4xl font-medium text-zinc-100">
+              Analytics Engine
+            </div>
+
+            <!-- REPLACE: Hero Description -->
+            <div class="text-2xl text-zinc-400 font-light tracking-body leading-relaxed">
+              Painel unificado com metricas em tempo real, funis de conversao e segmentacao avancada de usuarios. Integra com todos os modulos da plataforma.
+            </div>
+          </div>
+
+          <!-- Bottom section with price -->
+          <div class="border-t border-zinc-800 pt-6 flex items-center justify-between">
+            <!-- REPLACE: Hero Tag -->
+            <div class="text-sm text-zinc-500 font-mono uppercase tracking-label">
+              Core Module
+            </div>
+            <!-- REPLACE: Hero Price -->
+            <div class="text-3xl font-semibold text-zinc-100">
+              R$ 497<span class="text-lg text-zinc-500 font-light">/mes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medium Card: col-span-2 row-span-1 -->
+        <!-- REPLACE: Medium card content (secondary module/feature) -->
+        <div class="col-span-2 row-span-1 bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex flex-col justify-between">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-4">
+              <!-- Icon placeholder -->
+              <div class="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-orange-400 to-orange-600"></div>
+              </div>
+
+              <!-- REPLACE: Medium Card Title -->
+              <div class="text-2xl font-medium text-zinc-100">
+                Automacao de Workflows
+              </div>
+            </div>
+
+            <!-- REPLACE: Medium Card Description -->
+            <div class="text-xl text-zinc-400 font-light tracking-body leading-relaxed">
+              Crie fluxos automatizados com triggers, condicoes e acoes personalizadas. Suporte a webhooks e integracao com APIs externas.
+            </div>
+          </div>
+
+          <!-- Bottom section with price -->
+          <div class="border-t border-zinc-800 pt-4 flex items-center justify-between">
+            <!-- REPLACE: Medium Card Tag -->
+            <div class="text-sm text-zinc-500 font-mono uppercase tracking-label">
+              Add-on
+            </div>
+            <!-- REPLACE: Medium Card Price -->
+            <div class="text-2xl font-semibold text-zinc-100">
+              R$ 197<span class="text-base text-zinc-500 font-light">/mes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Small Card 1: col-span-1 row-span-1 -->
+        <!-- REPLACE: Small card 1 content -->
+        <div class="col-span-1 row-span-1 bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-between">
+          <div class="flex flex-col gap-3">
+            <!-- Icon placeholder -->
+            <div class="w-10 h-10 bg-zinc-800 rounded-2xl flex items-center justify-center">
+              <div class="w-5 h-5 rounded bg-gradient-to-br from-emerald-400 to-emerald-600"></div>
+            </div>
+
+            <!-- REPLACE: Small Card 1 Title -->
+            <div class="text-xl font-medium text-zinc-100">
+              API Gateway
+            </div>
+
+            <!-- REPLACE: Small Card 1 Description -->
+            <div class="text-base text-zinc-400 font-light tracking-body leading-relaxed">
+              Rate limiting, autenticacao e monitoramento de endpoints.
+            </div>
+          </div>
+
+          <!-- Bottom section with price -->
+          <div class="border-t border-zinc-800 pt-3 flex items-center justify-end">
+            <!-- REPLACE: Small Card 1 Price -->
+            <div class="text-xl font-semibold text-zinc-100">
+              R$ 97<span class="text-sm text-zinc-500 font-light">/mes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Small Card 2: col-span-1 row-span-1 -->
+        <!-- REPLACE: Small card 2 content -->
+        <div class="col-span-1 row-span-1 bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-between">
+          <div class="flex flex-col gap-3">
+            <!-- Icon placeholder -->
+            <div class="w-10 h-10 bg-zinc-800 rounded-2xl flex items-center justify-center">
+              <div class="w-5 h-5 rounded bg-gradient-to-br from-sky-400 to-sky-600"></div>
+            </div>
+
+            <!-- REPLACE: Small Card 2 Title -->
+            <div class="text-xl font-medium text-zinc-100">
+              Storage & CDN
+            </div>
+
+            <!-- REPLACE: Small Card 2 Description -->
+            <div class="text-base text-zinc-400 font-light tracking-body leading-relaxed">
+              Upload de arquivos, cache global e entrega otimizada.
+            </div>
+          </div>
+
+          <!-- Bottom section with price -->
+          <div class="border-t border-zinc-800 pt-3 flex items-center justify-end">
+            <!-- REPLACE: Small Card 2 Price -->
+            <div class="text-xl font-semibold text-zinc-100">
+              R$ 67<span class="text-sm text-zinc-500 font-light">/mes</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

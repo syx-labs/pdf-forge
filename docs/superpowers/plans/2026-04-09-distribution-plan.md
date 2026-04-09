@@ -1133,11 +1133,11 @@ Replace `.claude-plugin/plugin.json`:
   "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
   "author": {
     "name": "Gabriel Falcao",
-    "url": "https://github.com/syxlabs"
+    "url": "https://github.com/syx-labs"
   },
   "license": "MIT",
-  "homepage": "https://github.com/syxlabs/pdf-forge",
-  "repository": "https://github.com/syxlabs/pdf-forge",
+  "homepage": "https://github.com/syx-labs/pdf-forge",
+  "repository": "https://github.com/syx-labs/pdf-forge",
   "keywords": ["pdf", "slides", "presentation", "tailwind", "design", "documents"]
 }
 ```
@@ -1146,7 +1146,7 @@ Replace `.claude-plugin/plugin.json`:
 
 ```json
 {
-  "name": "syxlabs-plugins",
+  "name": "syx-labs-plugins",
   "plugins": [
     {
       "name": "pdf-forge",
@@ -1280,10 +1280,10 @@ Add the marketplace and install:
 
 ```bash
 # Add marketplace
-/plugin marketplace add syxlabs/pdf-forge
+/plugin marketplace add syx-labs/pdf-forge
 
 # Install
-/plugin install pdf-forge@syxlabs-plugins
+/plugin install pdf-forge@syx-labs-plugins
 ```
 
 Or if available on the official marketplace:
@@ -1305,7 +1305,7 @@ Then restart Claude Desktop. The pdf-forge tool and design system resources will
 ### Development
 
 ```bash
-git clone https://github.com/syxlabs/pdf-forge.git
+git clone https://github.com/syx-labs/pdf-forge.git
 cd pdf-forge
 bun install
 bun run scripts/setup.ts

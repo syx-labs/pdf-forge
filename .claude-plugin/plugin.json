@@ -4,10 +4,10 @@
   "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
   "author": {
     "name": "Gabriel Falcao",
-    "url": "https://github.com/syxlabs"
+    "url": "https://github.com/syx-labs"
   },
   "license": "MIT",
-  "homepage": "https://github.com/syxlabs/pdf-forge",
-  "repository": "https://github.com/syxlabs/pdf-forge",
+  "homepage": "https://github.com/syx-labs/pdf-forge",
+  "repository": "https://github.com/syx-labs/pdf-forge",
   "keywords": ["pdf", "slides", "presentation", "tailwind", "design", "documents"]
 }

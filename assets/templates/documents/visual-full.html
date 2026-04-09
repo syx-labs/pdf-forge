@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=210mm" />
+  <title>Visual Full Document</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Document Container: A4 -->
+  <div class="relative w-[210mm] min-h-[297mm] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col justify-between min-h-[297mm] p-16">
+
+      <!-- Header + Visual + Caption -->
+      <div class="flex flex-col gap-6">
+
+        <!-- REPLACE: Section Label -->
+        <span class="text-xs font-mono uppercase tracking-label text-zinc-500">
+          Secao 05 &mdash; Analise de Desempenho
+        </span>
+
+        <!-- REPLACE: Page Heading -->
+        <h1 class="text-4xl font-semibold tracking-heading text-zinc-100 leading-tight">
+          Metricas de Performance
+        </h1>
+
+        <!-- Divider -->
+        <div class="w-full h-px bg-zinc-800"></div>
+
+        <!--
+          REPLACE: Visual Area
+          Substitua o conteudo abaixo pelo grafico, diagrama ou imagem real.
+          Opcoes:
+            - Inserir SVG inline (grafico de barras, linhas, pizza, etc.)
+            - Inserir <img src="..." /> com imagem base64 ou URL
+            - Construir grafico com divs e Tailwind (barras horizontais/verticais)
+        -->
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl w-full flex flex-col items-center justify-center" style="min-height: 520px;">
+
+          <!-- Placeholder grid pattern -->
+          <div class="flex flex-col items-center gap-6">
+            <!-- Grid dots pattern -->
+            <div class="grid grid-cols-8 gap-4 opacity-20">
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+              <div class="w-2 h-2 rounded-full bg-zinc-500"></div>
+            </div>
+
+            <!-- Placeholder label -->
+            <span class="text-2xl text-zinc-600 font-light tracking-body">Grafico / Diagrama</span>
+            <span class="text-sm text-zinc-700 font-mono">chart.svg / chart.png / inline SVG</span>
+          </div>
+
+        </div>
+
+        <!-- REPLACE: Caption -->
+        <p class="text-sm text-zinc-500 mt-4">
+          Figura 5.1 &mdash; Evolucao do tempo medio de resposta (p95) ao longo dos ultimos 12 meses,
+          segmentado por tipo de requisicao (API publica, API interna, webhooks).
+        </p>
+
+        <!-- REPLACE: Interpretation paragraph -->
+        <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+          Os dados demonstram uma reducao consistente de 42% no tempo de resposta p95
+          apos a migracao para a nova arquitetura em agosto. O pico observado em outubro
+          corresponde ao periodo de Black Friday, quando o volume de requisicoes triplicou.
+          Mesmo sob carga elevada, o sistema manteve latencia abaixo do SLA definido de 200ms.
+        </p>
+
+      </div>
+
+      <!-- Page Number -->
+      <div class="flex justify-end mt-8">
+        <!-- REPLACE: Page Number -->
+        <span class="text-xs text-zinc-500 font-mono">05</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

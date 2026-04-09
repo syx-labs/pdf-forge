@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=210mm" />
+  <title>Executive Summary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Document Container: A4 -->
+  <div class="relative w-[210mm] min-h-[297mm] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col min-h-[297mm] p-16">
+
+      <!-- Section Label -->
+      <!-- REPLACE: Section Label -->
+      <span class="text-xs font-mono uppercase tracking-label text-orange-500 mb-3">
+        Resumo Executivo
+      </span>
+
+      <!-- Page Title -->
+      <!-- REPLACE: Page Title -->
+      <h1 class="text-4xl font-semibold tracking-heading text-zinc-100 mb-8">
+        Visao Geral do Projeto
+      </h1>
+
+      <!-- Highlight Cards: 3-column grid -->
+      <div class="grid grid-cols-3 gap-4 mb-10">
+
+        <!-- REPLACE: Highlight Card 1 -->
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+          <div class="text-3xl font-bold tracking-display text-zinc-100 mb-1">R$ 2.4M</div>
+          <div class="text-sm font-medium text-zinc-300 mb-1">Investimento Total</div>
+          <div class="text-sm text-zinc-500">Distribuido em 4 trimestres com marcos incrementais</div>
+        </div>
+
+        <!-- REPLACE: Highlight Card 2 -->
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+          <div class="text-3xl font-bold tracking-display text-zinc-100 mb-1">340%</div>
+          <div class="text-sm font-medium text-zinc-300 mb-1">ROI Projetado</div>
+          <div class="text-sm text-zinc-500">Retorno esperado em 18 meses apos implementacao</div>
+        </div>
+
+        <!-- REPLACE: Highlight Card 3 -->
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+          <div class="text-3xl font-bold tracking-display text-zinc-100 mb-1">12 sem</div>
+          <div class="text-sm font-medium text-zinc-300 mb-1">Prazo de Entrega</div>
+          <div class="text-sm text-zinc-500">Primeira fase operacional em producao completa</div>
+        </div>
+
+      </div>
+
+      <!-- Summary Text -->
+      <div class="space-y-6">
+
+        <!-- REPLACE: Summary Paragraph 1 -->
+        <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+          Este documento apresenta o plano estrategico para a transformacao digital da organizacao,
+          abrangendo desde a modernizacao da infraestrutura de tecnologia ate a redesenho completo
+          dos processos de negocio. A proposta foi desenvolvida com base em diagnostico aprofundado
+          realizado ao longo de seis semanas com todas as areas da empresa.
+        </p>
+
+        <!-- REPLACE: Summary Paragraph 2 -->
+        <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+          A abordagem prioriza entregas incrementais com valor mensuravel em cada fase. O primeiro
+          trimestre foca na fundacao tecnologica — migracao de workloads para cloud, implementacao
+          de observabilidade e automacao de pipelines criticos. O segundo trimestre avanca para
+          integracao de sistemas legados e capacitacao das equipes internas.
+        </p>
+
+        <!-- REPLACE: Summary Paragraph 3 -->
+        <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+          Os principais riscos identificados incluem dependencia de fornecedores unicos, resistencia
+          organizacional a mudancas e restricoes de compliance no setor financeiro. Para cada risco,
+          foram definidos planos de mitigacao especificos detalhados na secao 4 deste documento.
+          A governanca do projeto sera conduzida por comite executivo com reunioes quinzenais.
+        </p>
+
+      </div>
+
+      <!-- Spacer to push page number down -->
+      <div class="flex-1"></div>
+
+      <!-- Page Number -->
+      <div class="flex justify-end pt-8">
+        <!-- REPLACE: Page Number -->
+        <span class="text-xs text-zinc-500 font-mono">02</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

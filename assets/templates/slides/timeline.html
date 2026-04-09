@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Timeline Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950 font-sans antialiased">
+
+  <!-- Slide Container -->
+  <div class="w-[1920px] h-[1080px] bg-zinc-950 flex flex-col justify-center px-32 py-24 relative overflow-hidden">
+
+    <!-- Subtle background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-950 to-zinc-900 pointer-events-none"></div>
+
+    <!-- Content -->
+    <div class="relative z-10">
+
+      <!-- Section Label -->
+      <!-- REPLACE: section label text -->
+      <div class="text-xl font-mono uppercase tracking-label text-orange-500 mb-4">Roadmap</div>
+
+      <!-- Hero Heading -->
+      <!-- REPLACE: hero heading text -->
+      <h1 class="text-7xl font-semibold tracking-heading leading-tight text-zinc-100 mb-24">
+        Fases do Projeto
+      </h1>
+
+      <!-- Timeline -->
+      <div class="relative">
+
+        <!-- Connecting line -->
+        <div class="absolute top-[28px] left-[80px] right-[80px] border-t-2 border-zinc-800"></div>
+
+        <!-- Phases grid -->
+        <div class="grid grid-cols-4 gap-8">
+
+          <!-- Phase 1 -->
+          <!-- REPLACE: phase 1 number, title, duration, and description -->
+          <div class="flex flex-col items-start">
+            <!-- Phase marker -->
+            <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-purple-400 to-orange-400 mb-8">
+              <span class="text-xl font-bold text-white">01</span>
+            </div>
+            <!-- Phase content -->
+            <div class="text-2xl font-medium text-white mb-2">Descoberta</div>
+            <div class="text-lg text-zinc-500 font-mono mb-4">Semanas 1-2</div>
+            <div class="text-lg text-zinc-400 font-light tracking-body leading-relaxed">
+              Levantamento de requisitos, entrevistas com stakeholders e analise do cenario atual
+            </div>
+          </div>
+
+          <!-- Phase 2 -->
+          <!-- REPLACE: phase 2 number, title, duration, and description -->
+          <div class="flex flex-col items-start">
+            <!-- Phase marker -->
+            <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-full bg-zinc-800 mb-8">
+              <span class="text-xl font-bold text-zinc-400">02</span>
+            </div>
+            <!-- Phase content -->
+            <div class="text-2xl font-medium text-white mb-2">Planejamento</div>
+            <div class="text-lg text-zinc-500 font-mono mb-4">Semanas 3-4</div>
+            <div class="text-lg text-zinc-400 font-light tracking-body leading-relaxed">
+              Definicao de arquitetura, prototipagem e validacao da solucao proposta
+            </div>
+          </div>
+
+          <!-- Phase 3 -->
+          <!-- REPLACE: phase 3 number, title, duration, and description -->
+          <div class="flex flex-col items-start">
+            <!-- Phase marker -->
+            <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-full bg-zinc-800 mb-8">
+              <span class="text-xl font-bold text-zinc-400">03</span>
+            </div>
+            <!-- Phase content -->
+            <div class="text-2xl font-medium text-white mb-2">Implementacao</div>
+            <div class="text-lg text-zinc-500 font-mono mb-4">Semanas 5-10</div>
+            <div class="text-lg text-zinc-400 font-light tracking-body leading-relaxed">
+              Desenvolvimento iterativo com entregas incrementais e revisoes semanais
+            </div>
+          </div>
+
+          <!-- Phase 4 -->
+          <!-- REPLACE: phase 4 number, title, duration, and description -->
+          <div class="flex flex-col items-start">
+            <!-- Phase marker -->
+            <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-full bg-zinc-800 mb-8">
+              <span class="text-xl font-bold text-zinc-400">04</span>
+            </div>
+            <!-- Phase content -->
+            <div class="text-2xl font-medium text-white mb-2">Lancamento</div>
+            <div class="text-lg text-zinc-500 font-mono mb-4">Semanas 11-12</div>
+            <div class="text-lg text-zinc-400 font-light tracking-body leading-relaxed">
+              Deploy em producao, monitoramento e transferencia de conhecimento para o time
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

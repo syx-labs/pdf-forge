@@ -1,5 +1,5 @@
 {
-  "name": "syxlabs-plugins",
+  "name": "syx-labs-plugins",
   "plugins": [
     {
       "name": "pdf-forge",

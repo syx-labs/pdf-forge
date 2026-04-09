@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>CTA Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950 font-sans antialiased">
+
+  <!-- Slide Container -->
+  <div class="w-[1920px] h-[1080px] bg-zinc-950 flex flex-col items-center justify-center px-32 py-24 relative overflow-hidden">
+
+    <!-- Background decorative glow elements -->
+    <div class="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-purple-600/5 blur-[150px] pointer-events-none"></div>
+    <div class="absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-orange-500/4 blur-[120px] pointer-events-none"></div>
+
+    <!-- Content -->
+    <div class="relative z-10 flex flex-col items-center text-center">
+
+      <!-- Section Label -->
+      <!-- REPLACE: section label text -->
+      <div class="text-xl font-mono uppercase tracking-label text-orange-500 mb-8">Proximo Passo</div>
+
+      <!-- Main CTA Heading -->
+      <!-- REPLACE: CTA heading text -->
+      <h1 class="text-8xl font-semibold tracking-heading text-zinc-100 mb-6">
+        Vamos Conversar?
+      </h1>
+
+      <!-- Subtitle -->
+      <!-- REPLACE: CTA subtitle text -->
+      <p class="text-2xl text-zinc-400 font-light tracking-body mt-2 max-w-3xl leading-relaxed">
+        Estamos prontos para entender seu desafio e construir a solucao ideal para o seu negocio.
+      </p>
+
+      <!-- Gradient accent bar -->
+      <div class="w-[200px] h-[3px] rounded-full bg-gradient-to-r from-purple-400 to-orange-400 mt-16 mb-16"></div>
+
+      <!-- Contact Info Grid -->
+      <div class="grid grid-cols-3 gap-16">
+
+        <!-- Contact: Email -->
+        <!-- REPLACE: email address -->
+        <div class="flex flex-col items-center gap-2">
+          <span class="text-lg font-mono uppercase tracking-label text-zinc-500">Email</span>
+          <span class="text-2xl text-white font-light">contato@empresa.com</span>
+        </div>
+
+        <!-- Contact: Phone -->
+        <!-- REPLACE: phone number -->
+        <div class="flex flex-col items-center gap-2">
+          <span class="text-lg font-mono uppercase tracking-label text-zinc-500">Telefone</span>
+          <span class="text-2xl text-white font-light">+55 11 9999-0000</span>
+        </div>
+
+        <!-- Contact: Website -->
+        <!-- REPLACE: website URL -->
+        <div class="flex flex-col items-center gap-2">
+          <span class="text-lg font-mono uppercase tracking-label text-zinc-500">Website</span>
+          <span class="text-2xl text-white font-light">empresa.com.br</span>
+        </div>
+
+      </div>
+
+      <!-- Company name / logo placeholder -->
+      <!-- REPLACE: company name or logo -->
+      <div class="mt-20">
+        <span class="font-mono uppercase tracking-label text-zinc-600 text-sm">Nome da Empresa</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

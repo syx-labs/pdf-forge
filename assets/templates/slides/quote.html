@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Quote Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950 font-sans antialiased">
+
+  <!-- Slide Container -->
+  <div class="w-[1920px] h-[1080px] bg-zinc-950 flex items-center justify-center px-32 py-24 relative overflow-hidden">
+
+    <!-- Subtle background glow behind quote area -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] rounded-full bg-purple-600/4 blur-[150px] pointer-events-none"></div>
+
+    <!-- Decorative quotation mark -->
+    <div class="absolute top-[140px] left-[100px] text-[280px] leading-none font-serif text-zinc-800/20 pointer-events-none select-none">"</div>
+
+    <!-- Content -->
+    <div class="relative z-10 flex flex-col items-center text-center max-w-5xl">
+
+      <!-- Quote text -->
+      <!-- REPLACE: quote text -->
+      <p class="text-5xl font-light tracking-body text-zinc-200 leading-relaxed mb-16">
+        A tecnologia so faz sentido quando simplifica a vida das pessoas. Nosso trabalho e transformar complexidade em clareza.
+      </p>
+
+      <!-- Attribution -->
+      <div class="flex items-center gap-6">
+        <!-- REPLACE: avatar (optional, can be an image or kept as placeholder circle) -->
+        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-400 to-orange-400 flex-shrink-0"></div>
+
+        <div class="flex flex-col items-start">
+          <!-- REPLACE: author name -->
+          <span class="text-2xl font-medium text-white">Maria Fernanda Silva</span>
+          <!-- REPLACE: author role and company -->
+          <span class="text-xl text-zinc-500">CEO, Nome da Empresa</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

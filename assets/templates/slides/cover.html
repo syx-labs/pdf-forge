@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Cover Slide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Slide Container -->
+  <div class="relative w-[1920px] h-[1080px] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Background decorative glow elements -->
+    <div class="absolute top-[-200px] right-[-100px] w-[800px] h-[800px] rounded-full bg-purple-600/5 blur-[120px]"></div>
+    <div class="absolute bottom-[-300px] left-[200px] w-[600px] h-[600px] rounded-full bg-orange-500/5 blur-[150px]"></div>
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col justify-between h-full px-[120px] py-[80px]">
+
+      <!-- Top section: Brand -->
+      <div>
+        <!-- REPLACE: Company Name -->
+        <span class="font-mono uppercase tracking-label text-zinc-500 text-sm">
+          Nome da Empresa
+        </span>
+      </div>
+
+      <!-- Center section: Title + Subtitle + Accent -->
+      <div class="flex flex-col gap-10">
+        <!-- Gradient accent line -->
+        <div class="w-[120px] h-[4px] rounded-full bg-gradient-to-r from-purple-400 to-orange-400"></div>
+
+        <!-- REPLACE: Presentation Title -->
+        <h1 class="text-8xl font-semibold tracking-heading text-zinc-100 leading-tight max-w-[1400px]">
+          Titulo da Apresentacao
+        </h1>
+
+        <!-- REPLACE: Presentation Subtitle -->
+        <p class="text-3xl text-zinc-400 font-light tracking-body max-w-[1000px] leading-relaxed">
+          Subtitulo descritivo da proposta
+        </p>
+      </div>
+
+      <!-- Bottom section: Date + Author -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-8">
+          <!-- REPLACE: Author Name -->
+          <span class="text-xl text-zinc-500 font-mono">
+            Nome do Autor
+          </span>
+
+          <span class="text-zinc-700">|</span>
+
+          <!-- REPLACE: Date -->
+          <span class="text-xl text-zinc-500 font-mono">
+            Abril 2026
+          </span>
+        </div>
+
+        <!-- REPLACE: Additional Info (e.g., confidential label, version) -->
+        <span class="font-mono uppercase tracking-label text-zinc-600 text-xs">
+          Confidencial
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

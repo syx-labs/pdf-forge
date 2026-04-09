@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=210mm" />
+  <title>Content Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          letterSpacing: {
+            'display': '-0.1em',
+            'heading': '-0.06em',
+            'body': '-0.025em',
+            'label': '-0.01em',
+          },
+          lineHeight: {
+            'tight': '1.15',
+            'snug': '1.3',
+            'relaxed': '1.75',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="m-0 p-0 bg-zinc-950">
+
+  <!-- Document Container: A4 -->
+  <div class="relative w-[210mm] min-h-[297mm] bg-zinc-950 overflow-hidden font-sans">
+
+    <!-- Content wrapper -->
+    <div class="relative z-10 flex flex-col min-h-[297mm] p-16">
+
+      <!-- Section Label (optional) -->
+      <!-- REPLACE: Section Label -->
+      <span class="text-xs font-mono uppercase tracking-label text-zinc-500 mb-2">
+        Secao 02 — Arquitetura
+      </span>
+
+      <!-- Heading 1 -->
+      <!-- REPLACE: Page Heading -->
+      <h1 class="text-4xl font-semibold tracking-heading text-zinc-100 mb-6">
+        Arquitetura da Solucao
+      </h1>
+
+      <!-- Body Text -->
+      <!-- REPLACE: Introductory Paragraph -->
+      <p class="text-base text-zinc-400 leading-relaxed tracking-body mb-6">
+        A arquitetura proposta segue principios de cloud-native design, priorizando resiliencia,
+        escalabilidade horizontal e observabilidade em todas as camadas. O desenho foi validado
+        com os times de engenharia e seguranca da informacao para garantir aderencia aos requisitos
+        nao-funcionais estabelecidos no documento de escopo.
+      </p>
+
+      <!-- REPLACE: Additional Paragraph -->
+      <p class="text-base text-zinc-400 leading-relaxed tracking-body mb-6">
+        A infraestrutura sera provisionada via Infrastructure as Code utilizando Terraform,
+        com ambientes segregados para desenvolvimento, staging e producao. Cada ambiente possui
+        seu proprio cluster Kubernetes e banco de dados isolado, eliminando riscos de contaminacao
+        entre ambientes.
+      </p>
+
+      <!-- Heading 2: Subsection -->
+      <!-- REPLACE: Subsection Heading -->
+      <h2 class="text-2xl font-semibold tracking-heading text-zinc-100 mt-10 mb-4">
+        Camada de Servicos
+      </h2>
+
+      <!-- REPLACE: Subsection Body -->
+      <p class="text-base text-zinc-400 leading-relaxed tracking-body mb-6">
+        Os microsservicos serao organizados por dominio de negocio, seguindo os bounded contexts
+        identificados durante o processo de Event Storming. Cada servico possui autonomia sobre
+        seus dados e expoe contratos via API REST documentada com OpenAPI 3.1.
+      </p>
+
+      <!-- Bullet List (styled with border-l) -->
+      <!-- REPLACE: List Items -->
+      <div class="space-y-2 ml-6 mb-6">
+        <div class="border-l-2 border-zinc-700 pl-4">
+          <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+            <span class="text-zinc-300 font-medium">Gateway de API</span> — Roteamento,
+            rate limiting e autenticacao centralizada via OAuth 2.0 com PKCE
+          </p>
+        </div>
+        <div class="border-l-2 border-zinc-700 pl-4">
+          <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+            <span class="text-zinc-300 font-medium">Service Mesh</span> — Comunicacao
+            inter-servicos com mTLS, circuit breaker e distributed tracing
+          </p>
+        </div>
+        <div class="border-l-2 border-zinc-700 pl-4">
+          <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+            <span class="text-zinc-300 font-medium">Event Bus</span> — Mensageria assincrona
+            com Apache Kafka para integracao entre dominios
+          </p>
+        </div>
+        <div class="border-l-2 border-zinc-700 pl-4">
+          <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+            <span class="text-zinc-300 font-medium">Observabilidade</span> — Stack
+            unificada com OpenTelemetry, Grafana e alertas automatizados
+          </p>
+        </div>
+      </div>
+
+      <!-- Heading 3: Topic -->
+      <!-- REPLACE: Topic Heading -->
+      <h3 class="text-xl font-medium text-zinc-200 mt-8 mb-3">
+        Estrategia de Persistencia
+      </h3>
+
+      <!-- REPLACE: Topic Body -->
+      <p class="text-base text-zinc-400 leading-relaxed tracking-body mb-6">
+        Cada microsservico adota a estrategia de persistencia mais adequada ao seu padrao de acesso.
+        Servicos transacionais utilizam PostgreSQL com replicacao sincrona. Servicos de busca e
+        analytics operam sobre Elasticsearch com indices otimizados. Cache distribuido via Redis
+        Cluster reduz latencia de leitura em endpoints de alta demanda.
+      </p>
+
+      <!-- REPLACE: Additional Topic Body -->
+      <p class="text-base text-zinc-400 leading-relaxed tracking-body">
+        A migracao de dados dos sistemas legados sera conduzida em fases, utilizando o padrao
+        Strangler Fig para garantir coexistencia durante o periodo de transicao. Cada fase inclui
+        validacao automatizada de integridade e rollback documentado.
+      </p>
+
+      <!-- Spacer to push page number down -->
+      <div class="flex-1"></div>
+
+      <!-- Page Number -->
+      <div class="flex justify-end pt-8">
+        <!-- REPLACE: Page Number -->
+        <span class="text-xs text-zinc-500 font-mono">05</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

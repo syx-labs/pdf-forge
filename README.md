@@ -23,10 +23,10 @@ Add the marketplace and install:
 
 ```bash
 # Add marketplace
-/plugin marketplace add syxlabs/pdf-forge
+/plugin marketplace add syx-labs/pdf-forge
 
 # Install
-/plugin install pdf-forge@syxlabs-plugins
+/plugin install pdf-forge@syx-labs-plugins
 ```
 
 Or if available on the official marketplace:
@@ -48,7 +48,7 @@ Then restart Claude Desktop. The pdf-forge tool and design system resources will
 ### Development
 
 ```bash
-git clone https://github.com/syxlabs/pdf-forge.git
+git clone https://github.com/syx-labs/pdf-forge.git
 cd pdf-forge
 bun install
 bun run scripts/setup.ts
