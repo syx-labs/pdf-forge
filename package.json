@@ -1,0 +1,37 @@
+{
+  "name": "pdf-forge-mcp",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
+  "author": {
+    "name": "Gabriel Falcao"
+  },
+  "license": "MIT",
+  "keywords": ["pdf", "slides", "presentation", "tailwind", "design", "documents", "mcp", "claude"],
+  "bin": {
+    "pdf-forge": "./dist/bin/pdf-forge.js",
+    "pdf-forge-mcp": "./dist/src/mcp/server.js"
+  },
+  "exports": {
+    "./mcp": "./dist/src/mcp/server.js"
+  },
+  "files": ["dist/", "assets/", "skills/", ".claude-plugin/"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.50.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2"
+  }
+}
