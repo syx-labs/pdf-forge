@@ -40,7 +40,7 @@ Or if available on the official marketplace:
 One command sets up everything — installs Playwright/Chromium and configures Claude Desktop:
 
 ```bash
-npx pdf-forge setup
+npx pdf-forge-mcp setup
 ```
 
 Then restart Claude Desktop. The pdf-forge tool and design system resources will be available.
