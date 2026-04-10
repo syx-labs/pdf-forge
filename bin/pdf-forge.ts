@@ -3,6 +3,8 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
 import { setupDependencies } from "../src/core/setup.js";
+import { createServer } from "../src/mcp/server.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -29,11 +31,9 @@ function getConfigPath(): string {
 async function setup() {
   console.log("pdf-forge setup\n");
 
-  // 1. Install dependencies
   console.log("Step 1/2: Installing dependencies...");
   await setupDependencies({ pluginRoot: PLUGIN_ROOT });
 
-  // 2. Configure Claude Desktop
   console.log("\nStep 2/2: Configuring Claude Desktop...");
   const configPath = getConfigPath();
   let config: Record<string, unknown> = {};
@@ -42,7 +42,6 @@ async function setup() {
     const raw = await readFile(configPath, "utf-8");
     config = JSON.parse(raw);
   } catch {
-    // File doesn't exist or is invalid — start fresh
     const configDir = dirname(configPath);
     await mkdir(configDir, { recursive: true });
   }
@@ -66,6 +65,12 @@ async function setup() {
   console.log("Restart Claude Desktop to activate pdf-forge.");
 }
 
+async function serve() {
+  const server = createServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
 const command = process.argv[2];
 
 if (command === "setup") {
@@ -75,9 +80,11 @@ if (command === "setup") {
     console.error("Setup failed:", err instanceof Error ? err.message : err);
     process.exit(1);
   }
-} else {
+} else if (command === "help" || command === "--help" || command === "-h") {
   console.log("pdf-forge - Professional PDF generation\n");
   console.log("Usage:");
-  console.log("  npx pdf-forge setup    Install dependencies and configure Claude Desktop");
-  console.log("  npx pdf-forge-mcp      Start the MCP server (used by Claude Desktop)");
+  console.log("  npx pdf-forge-mcp          Start the MCP server");
+  console.log("  npx pdf-forge-mcp setup    Install dependencies and configure Claude Desktop");
+} else {
+  await serve();
 }

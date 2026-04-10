@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { resolve, join, dirname } from "node:path";
 import { readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
@@ -115,13 +114,3 @@ export function createServer(): McpServer {
   return server;
 }
 
-// Start server when run directly
-const isMain =
-  process.argv[1] &&
-  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-
-if (isMain) {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-}

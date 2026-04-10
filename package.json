@@ -1,6 +1,6 @@
 {
   "name": "pdf-forge-mcp",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "private": false,
   "type": "module",
   "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
@@ -19,8 +19,7 @@
     "claude"
   ],
   "bin": {
-    "pdf-forge": "dist/bin/pdf-forge.js",
-    "pdf-forge-mcp": "dist/src/mcp/server.js"
+    "pdf-forge-mcp": "dist/bin/pdf-forge.js"
   },
   "exports": {
     "./mcp": "./dist/src/mcp/server.js"

@@ -3,7 +3,7 @@
   "plugins": [
     {
       "name": "pdf-forge",
-      "source": ".",
+      "source": "./",
       "description": "Professional PDF generation with Tailwind CSS. Slides and documents with Vercel/Stripe-quality aesthetics."
     }
   ]
