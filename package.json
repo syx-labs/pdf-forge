@@ -1,6 +1,6 @@
 {
   "name": "pdf-forge-mcp",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
@@ -28,6 +28,7 @@
     "dist/",
     "assets/",
     "skills/",
+    "install.sh",
     ".claude-plugin/"
   ],
   "scripts": {
