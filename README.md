@@ -1,6 +1,6 @@
 # pdf-forge
 
-Professional PDF generation for Claude Code. Slides and documents with Vercel/Stripe-quality aesthetics using pure HTML + Tailwind CSS.
+Professional PDF generation for AI coding agents. Slides and documents with Vercel/Stripe-quality aesthetics using pure HTML + Tailwind CSS. Works with Warp, Claude Code, Cursor, Codex, Augment Code, Gemini, and more.
 
 ## The Problem
 
@@ -17,22 +17,50 @@ AI-generated PDFs look recognizably generic: inconsistent spacing, flat typograp
 
 ## Installation
 
-### Claude Code (plugin)
+### Cross-platform (recommended)
 
-Add the marketplace and install:
+Installs the skill for **all** detected agents — Warp, Claude Code, Cursor, Codex, Augment Code, Gemini, and more:
 
 ```bash
-# Add marketplace
-/plugin marketplace add syx-labs/pdf-forge
-
-# Install
-/plugin install pdf-forge@syx-labs-plugins
+git clone https://github.com/syx-labs/pdf-forge.git
+cd pdf-forge
+bun install
+./install.sh            # creates symlinks + sets PDF_FORGE_HOME
 ```
 
-Or if available on the official marketplace:
+Reload your shell (`source ~/.zshrc`) or open a new terminal. The skill is now available as `/pdf-forge` in every supported agent.
 
 ```bash
-/plugin install pdf-forge@claude-plugins-official
+# Preview what will be created (no changes)
+./install.sh --dry-run
+
+# Remove all symlinks and env var
+./install.sh --uninstall
+```
+
+**How it works:** The installer creates a canonical symlink at `~/.agents/skills/pdf-forge` pointing to the project's skill directory, then creates relative symlinks from each platform (`~/.claude/skills/`, `~/.cursor/skills/`, etc.) to the canonical location. It also exports `PDF_FORGE_HOME` in your shell profile so scripts can locate the project root.
+
+**Supported platforms:**
+
+- Warp (`~/.agents/skills/`, `~/.warp/skills/`)
+- Claude Code (`~/.claude/skills/`)
+- Cursor (`~/.cursor/skills/`)
+- Codex (`~/.codex/skills/`)
+- Augment Code (`~/.augment/skills/`)
+- Gemini CLI (`~/.gemini/skills/`)
+- GitHub Copilot (`~/.copilot/skills/`)
+- Factory (`~/.factory/skills/`)
+- OpenCode (`~/.opencode/skills/`)
+
+Platforms not installed on your machine are automatically skipped.
+
+### Claude Code (plugin)
+
+Alternatively, install as a Claude Code plugin:
+
+```bash
+/plugin marketplace add syx-labs/pdf-forge
+/plugin install pdf-forge@syx-labs-plugins
 ```
 
 ### Claude Desktop (MCP server)

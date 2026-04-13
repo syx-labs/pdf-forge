@@ -67,13 +67,13 @@ Run the rendering pipeline:
 
 ```bash
 # First time only: install dependencies
-bun run ${CLAUDE_PLUGIN_ROOT}/scripts/setup.ts
+bun run $PDF_FORGE_HOME/scripts/setup.ts
 
 # Render HTML pages to images/PDFs
-bun run ${CLAUDE_PLUGIN_ROOT}/scripts/render-pdf.ts ./pages/ --output ./rendered/
+bun run $PDF_FORGE_HOME/scripts/render-pdf.ts ./pages/ --output ./rendered/
 
 # Merge into final PDF
-bun run ${CLAUDE_PLUGIN_ROOT}/scripts/merge-pages.ts ./rendered/ --output ./output.pdf
+bun run $PDF_FORGE_HOME/scripts/merge-pages.ts ./rendered/ --output ./output.pdf
 ```
 
 The render script auto-detects the format (slides vs docs) from the HTML content.
@@ -108,8 +108,9 @@ No React components, no Shadcn, no Radix UI. Only raw `<div>` elements with Tail
 
 ## Path Resolution
 
-- `references/` paths are relative to this skill directory (`${CLAUDE_PLUGIN_ROOT}/skills/pdf-forge/`)
-- `assets/` and `scripts/` paths are relative to the plugin root (`${CLAUDE_PLUGIN_ROOT}/`)
+- `references/` paths are relative to this skill directory (where this `SKILL.md` lives)
+- `assets/` and `scripts/` paths are relative to `$PDF_FORGE_HOME` (the project root)
+- `$PDF_FORGE_HOME` is set during installation via `install.sh` — it points to the pdf-forge project root
 
 ## Reference Files
 
