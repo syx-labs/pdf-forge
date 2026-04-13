@@ -5,3 +5,13 @@ dist/
 output/
 rendered/
 bun.lock
+
+# OS
+.DS_Store
+
+# Tool caches
+.firecrawl/
+.remember/
+
+# Generated content
+pages/
