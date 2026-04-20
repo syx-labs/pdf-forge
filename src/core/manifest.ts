@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+import { basename } from "node:path";
 import { dump as yamlDump } from "js-yaml";
 import type { SocialFormat } from "./types.js";
 
@@ -19,6 +20,16 @@ export interface ManifestInput {
 }
 
 export async function writeManifest(input: ManifestInput): Promise<void> {
+  // Slide `file` is a basename relative to the manifest's directory — both the
+  // manifest writer and the preview generator rely on this contract.
+  for (const slide of input.slides) {
+    if (basename(slide.file) !== slide.file) {
+      throw new Error(
+        `Manifest slide.file must be a basename, got "${slide.file}". Strip directory components before calling writeManifest.`
+      );
+    }
+  }
+
   const data: Record<string, unknown> = {
     carousel: {
       format: input.format,

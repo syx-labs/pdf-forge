@@ -9,6 +9,8 @@ import { resolve } from "node:path";
 import { renderPages } from "../src/core/renderer";
 import type { Format, SocialFormat } from "../src/core/types";
 import {
+  FORMAT_VALUES,
+  isValidFormat,
   isValidSocialFormat,
   SOCIAL_FORMAT_VALUES,
 } from "../src/core/social-presets";
@@ -24,9 +26,9 @@ for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === "--format") {
     const val = args[++i];
-    if (val !== "slides" && val !== "docs" && val !== "social") {
+    if (!isValidFormat(val)) {
       console.error(
-        `Invalid format "${val}". Use "slides", "docs", or "social".`
+        `Invalid format "${val}". Valid: ${FORMAT_VALUES.join(", ")}.`
       );
       process.exit(1);
     }
@@ -72,7 +74,7 @@ try {
     socialFormat,
     scale,
   });
-  const suffix = result.socialFormat ? ` (${result.socialFormat})` : "";
+  const suffix = result.format === "social" ? ` (${result.socialFormat})` : "";
   console.log(
     `\nRendered ${result.files.length} ${result.format}${suffix} files to ${resolve(outputDir)}`
   );

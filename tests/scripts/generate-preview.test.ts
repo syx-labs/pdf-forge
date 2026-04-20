@@ -63,4 +63,48 @@ describe("generate-preview CLI", () => {
     const html = await readFile(join(bare, "preview.html"), "utf-8");
     expect(html).toContain("01.png");
   });
+
+  test("fails when directory has no .png files", async () => {
+    const empty = join(tempDir, "empty");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(empty, { recursive: true });
+    const result = await $`bun run scripts/generate-preview.ts ${empty}`
+      .nothrow()
+      .quiet();
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr.toString()).toMatch(/No \.png files/);
+  });
+
+  test("fails with a clear error when manifest.yaml is malformed", async () => {
+    const bad = join(tempDir, "bad-yaml");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(bad, { recursive: true });
+    const redPx = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAIiLUMYAAAAASUVORK5CYII=",
+      "base64"
+    );
+    await writeFile(join(bad, "01.png"), redPx);
+    await writeFile(join(bad, "manifest.yaml"), "carousel: [unclosed\n  - not valid yaml: at all :");
+    const result = await $`bun run scripts/generate-preview.ts ${bad}`
+      .nothrow()
+      .quiet();
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr.toString()).toMatch(/Failed to parse/);
+  });
+
+  test("URL-encodes filenames with spaces in preview <img src>", async () => {
+    const quirky = join(tempDir, "quirky");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(quirky, { recursive: true });
+    const redPx = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAIiLUMYAAAAASUVORK5CYII=",
+      "base64"
+    );
+    await writeFile(join(quirky, "01 hook.png"), redPx);
+    await $`bun run scripts/generate-preview.ts ${quirky}`.quiet();
+    const html = await readFile(join(quirky, "preview.html"), "utf-8");
+    // src must encode the space; alt keeps the raw filename for humans
+    expect(html).toContain('src="01%20hook.png"');
+    expect(html).toContain('alt="01 hook.png"');
+  });
 });

@@ -1,4 +1,13 @@
-import type { SocialFormat } from "./types.js";
+import type { Format, SocialFormat } from "./types.js";
+
+export const FORMAT_VALUES = ["slides", "docs", "social"] as const satisfies readonly Format[];
+
+export function isValidFormat(value: unknown): value is Format {
+  return (
+    typeof value === "string" &&
+    (FORMAT_VALUES as readonly string[]).includes(value)
+  );
+}
 
 export interface Viewport {
   width: number;

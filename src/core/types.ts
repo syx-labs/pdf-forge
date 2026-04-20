@@ -11,15 +11,19 @@ export interface RenderOptions {
   inputDir: string;
   outputDir: string;
   format?: Format;
+  // Only meaningful when format is "social" (or auto-detect resolves to it).
+  // Passing this together with format "slides"/"docs" raises a runtime error.
   socialFormat?: SocialFormat;
   scale?: number;
 }
 
-export interface RenderResult {
-  files: string[];
-  format: Format;
-  socialFormat?: SocialFormat;
-}
+// Discriminated by `format`: the social branch narrows `socialFormat` to a
+// required `SocialFormat`; slides/docs branches have `socialFormat: undefined`.
+// Callers that `if (result.format === "social")` get non-optional access.
+export type RenderResult =
+  | { files: string[]; format: "slides"; socialFormat?: undefined }
+  | { files: string[]; format: "docs"; socialFormat?: undefined }
+  | { files: string[]; format: "social"; socialFormat: SocialFormat };
 
 export interface MergeOptions {
   inputDir: string;

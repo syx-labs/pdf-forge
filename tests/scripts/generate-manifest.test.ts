@@ -41,4 +41,12 @@ describe("generate-manifest CLI", () => {
       .quiet();
     expect(result.exitCode).not.toBe(0);
   });
+
+  test("fails when --archetype count does not match PNG count", async () => {
+    const result = await $`bun run scripts/generate-manifest.ts ${renderedDir} --format post-4-5 --archetype cover,cta`
+      .nothrow()
+      .quiet();
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr.toString()).toMatch(/Archetype count mismatch/);
+  });
 });

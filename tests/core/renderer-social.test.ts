@@ -124,6 +124,8 @@ describe("renderPages social format", () => {
       join(input, "02.html"),
       makeSocialHtml("post-4-5", `<div class="w-screen h-screen">b</div>`)
     );
+    // Error must identify BOTH conflicting filenames and both format tokens so
+    // the user can locate the offending slide in a multi-slide carousel.
     await expect(
       renderPages({
         inputDir: input,
@@ -131,8 +133,16 @@ describe("renderPages social format", () => {
         format: "social",
         scale: 1,
       })
-    ).rejects.toThrow(/mixed.*social.*format/i);
-  }, 30_000);
+    ).rejects.toThrow(/01\.html.*02\.html|02\.html.*01\.html/);
+    await expect(
+      renderPages({
+        inputDir: input,
+        outputDir: output,
+        format: "social",
+        scale: 1,
+      })
+    ).rejects.toThrow(/post-1-1.*post-4-5|post-4-5.*post-1-1/);
+  }, 60_000);
 
   test("throws explicit error when social content overflows viewport", async () => {
     const input = join(tempDir, "overflow");
@@ -154,5 +164,47 @@ describe("renderPages social format", () => {
         scale: 1,
       })
     ).rejects.toThrow(/overflow/i);
+  }, 30_000);
+
+  test("rejects incompatible format+socialFormat combination", async () => {
+    const input = join(tempDir, "incompat");
+    const output = join(tempDir, "out-incompat");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(input, { recursive: true });
+    await writeFile(
+      join(input, "01.html"),
+      `<!DOCTYPE html><html><body><div>ignored</div></body></html>`
+    );
+    await expect(
+      renderPages({
+        inputDir: input,
+        outputDir: output,
+        format: "slides",
+        socialFormat: "story",
+        scale: 1,
+      })
+    ).rejects.toThrow(/incompatible with format/);
+  }, 30_000);
+
+  test("tolerates up to +2px sub-pixel overflow without throwing", async () => {
+    // Viewport is 1080 for post-1-1; content at 1082px should pass (within +2px slack).
+    const input = join(tempDir, "overflow-boundary");
+    const output = join(tempDir, "out-overflow-boundary");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(input, { recursive: true });
+    await writeFile(
+      join(input, "01.html"),
+      `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head>
+       <body data-social-format="post-1-1" class="m-0 p-0 bg-zinc-950 text-white">
+         <div style="height: 1082px; width: 1080px;">borderline</div>
+       </body></html>`
+    );
+    const result = await renderPages({
+      inputDir: input,
+      outputDir: output,
+      format: "social",
+      scale: 1,
+    });
+    expect(result.files).toHaveLength(1);
   }, 30_000);
 });

@@ -1,6 +1,8 @@
 # Themes — bundled presets for `social` format
 
-Each YAML file defines a theme Claude reads when composing social HTML. Reference a preset in `.claude/pdf-forge.local.md`:
+Each YAML file defines a theme **Claude reads when composing social HTML**. The renderer pipeline never parses these files — they are a composition contract the LLM honors while writing HTML. The only runtime signal is `data-social-format` on `<body>`, which picks the viewport.
+
+Reference a preset in `.claude/pdf-forge.local.md`:
 
 ```yaml
 social:

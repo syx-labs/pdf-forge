@@ -61,4 +61,17 @@ describe("writeManifest", () => {
     expect(content).toMatch(/['"]#mvp['"]/);
     expect(content).toMatch(/['"]#founder['"]/);
   });
+
+  test("rejects slide.file that is not a basename", async () => {
+    const outputPath = join(tempDir, "should-fail.yaml");
+    await expect(
+      writeManifest({
+        outputPath,
+        format: "post-1-1",
+        slides: [
+          { file: "sub/01-hook.png", archetype: "cover" },
+        ],
+      })
+    ).rejects.toThrow(/basename/i);
+  });
 });

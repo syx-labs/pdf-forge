@@ -44,10 +44,21 @@ const finalOutput = outputPath ? resolve(outputPath) : join(dir, "preview.html")
 const entries = await readdir(dir);
 const pngs = entries.filter((f) => f.endsWith(".png")).sort();
 
+if (pngs.length === 0) {
+  console.error(`No .png files found in ${dir}`);
+  process.exit(1);
+}
+
 let manifest: ManifestShape | null = null;
 if (entries.includes("manifest.yaml")) {
   const raw = await readFile(join(dir, "manifest.yaml"), "utf-8");
-  manifest = yamlLoad(raw) as ManifestShape;
+  try {
+    manifest = yamlLoad(raw) as ManifestShape;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Failed to parse ${join(dir, "manifest.yaml")}: ${msg}`);
+    process.exit(1);
+  }
 }
 
 const format = String(manifest?.carousel?.format ?? "unknown");
@@ -72,13 +83,19 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// Encode path segments for a safe src attribute. Preserves / separators so
+// relative paths stay valid, but escapes spaces, #, ?, etc. in filenames.
+function encodePath(p: string): string {
+  return p.split("/").map(encodeURIComponent).join("/");
+}
+
 const slideCards = pngs
   .map((file, i) => {
     const archetype = slideMeta.get(file) ?? "—";
     return `
       <figure class="slide">
         <div class="slide-index">${String(i + 1).padStart(2, "0")}/${String(pngs.length).padStart(2, "0")}</div>
-        <img src="${escapeHtml(pngsRelative[i])}" alt="${escapeHtml(file)}" />
+        <img src="${escapeHtml(encodePath(pngsRelative[i]))}" alt="${escapeHtml(file)}" />
         <figcaption>
           <div class="filename">${escapeHtml(file)}</div>
           <div class="archetype">${escapeHtml(archetype)}</div>

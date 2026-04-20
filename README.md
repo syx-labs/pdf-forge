@@ -111,16 +111,19 @@ brand:
 font:
   url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
   family: "Inter"
-# Optional: Instagram content configuration
+# Optional: Instagram composition hints (read by Claude, not by the pipeline)
 social:
-  preset: "dark-editorial"
-  allow_photos: false
+  preset: "dark-editorial"      # which assets/themes/<name>.yaml Claude mirrors
+  accent_gradient: "from-emerald-400 to-cyan-400"  # override preset gradient
+  allow_photos: false           # gate photo-overlay archetype
   brand_handle: "@yourhandle"
   default_footer: true
 ---
 ```
 
-Without this file, defaults apply: dark theme, Inter font, purple/orange accents. The optional `social:` block enables Instagram output configuration — reference any preset from `assets/themes/` or inline-override individual fields.
+Without this file, defaults apply: dark theme, Inter font, purple/orange accents.
+
+The `social:` block is a **composition contract for Claude**, not a runtime config the pipeline parses. Claude reads it when generating HTML for the social format — picking the preset's palette and fonts, honoring overrides, and respecting the `allow_photos` gate. The renderer itself only reads `data-social-format` from the `<body>` tag to pick a viewport. See `assets/themes/README.md` for the preset list and `skills/pdf-forge/SKILL.md` "Workflow — Social" for how Claude consumes each field.
 
 ## Templates
 

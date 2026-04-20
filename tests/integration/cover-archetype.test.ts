@@ -1,10 +1,24 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { mkdtemp, copyFile, rm, stat, readdir } from "node:fs/promises";
+import { mkdtemp, copyFile, rm, stat, readdir, readFile } from "node:fs/promises";
 import { join, resolve, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { renderPages } from "../../src/core/renderer";
 import { SOCIAL_FORMAT_VALUES, getSocialViewport } from "../../src/core/social-presets";
+
+// Read PNG IHDR chunk to validate actual rendered dimensions. The IHDR header
+// is the first chunk after the 8-byte PNG signature; width/height are big-endian
+// uint32 at offsets 16 and 20.
+async function readPngSize(path: string): Promise<{ width: number; height: number }> {
+  const buf = await readFile(path);
+  if (buf.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {
+    throw new Error(`Not a valid PNG: ${path}`);
+  }
+  return {
+    width: buf.readUInt32BE(16),
+    height: buf.readUInt32BE(20),
+  };
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
@@ -43,13 +57,17 @@ describe("cover archetype renders for all 5 formats", () => {
       const files = await readdir(output);
       expect(files).toContain("01-cover.png");
 
-      const pngStat = await stat(join(output, "01-cover.png"));
+      const pngPath = join(output, "01-cover.png");
+      const pngStat = await stat(pngPath);
       expect(pngStat.size).toBeGreaterThan(10_000);
 
-      // viewport sanity: expected dimensions known from getSocialViewport
+      // Actual PNG dimensions must match the declared viewport at scale=1.
+      // This is the contract that makes the whole social format valuable —
+      // a regression swapping viewports would silently ship wrong aspect ratios.
       const viewport = getSocialViewport(fmt);
-      expect(viewport.width).toBe(1080);
-      expect(viewport.height).toBeGreaterThan(0);
+      const pngSize = await readPngSize(pngPath);
+      expect(pngSize.width).toBe(viewport.width);
+      expect(pngSize.height).toBe(viewport.height);
     }, 30_000);
   }
 });

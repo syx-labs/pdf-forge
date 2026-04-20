@@ -2,7 +2,11 @@
  * generate-manifest.ts — build manifest.yaml for a social render output
  *
  * Usage:
- *   bun run scripts/generate-manifest.ts <rendered-dir> --format <social-format> [--archetype cover,body,cta] [--theme <name>] [--caption <text>] [--hashtags tag1,tag2]
+ *   bun run scripts/generate-manifest.ts <rendered-dir> --format <social-format> [--archetype cover,definition,steps,quote,cta] [--theme <name>] [--caption <text>] [--hashtags tag1,tag2]
+ *
+ * Archetype names go into the manifest as-is; they are not validated against
+ * shipped templates (only `cover` ships today — the rest land in follow-up).
+ * If --archetype is passed, its comma-separated count must match the PNG count.
  */
 
 import { resolve, join } from "node:path";
@@ -59,6 +63,13 @@ const pngs = entries.filter((f) => f.endsWith(".png")).sort();
 
 if (pngs.length === 0) {
   console.error(`No .png files found in ${resolvedDir}`);
+  process.exit(1);
+}
+
+if (archetypes.length > 0 && archetypes.length !== pngs.length) {
+  console.error(
+    `Archetype count mismatch: --archetype has ${archetypes.length} entries but ${pngs.length} PNGs in ${resolvedDir}. Pass one archetype per slide.`
+  );
   process.exit(1);
 }
 

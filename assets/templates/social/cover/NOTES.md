@@ -20,7 +20,7 @@ Opening slide for a post or carousel. Primary job: create enough curiosity to ea
 
 ## REPLACE slots
 
-- Section label (`text-*-mono uppercase tracking-label`): category, guide number, series tag
+- Section label (`font-mono uppercase tracking-label` + `text-lg`/`text-xl`/`text-2xl` per format — see `_shared/type-scales.md`): category, guide number, series tag
 - Headline: 6-14 words max; wrap the key noun in the gradient span
 - Sub-caption / @handle: optional one-liner below
 - (Carousel only) Slide counter: `NN/TT` updated automatically or hand-set

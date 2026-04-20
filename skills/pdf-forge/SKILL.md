@@ -97,12 +97,16 @@ If ambiguous, ask. Feed post default is `post-4-5`.
 
 ### 2. Read Theme Preset
 
-Check `.claude/pdf-forge.local.md` for a `social:` block. Key fields:
+The `social:` block in `.claude/pdf-forge.local.md` is a **composition contract you read when writing HTML** — the renderer pipeline never parses it. Every value below must be honored by the HTML Claude emits (palettes, fonts, gradient, footer); the renderer only cares about `data-social-format` on `<body>` for viewport selection.
 
-- `preset`: name of bundled theme from `assets/themes/` (e.g. `dark-editorial`, `warm-minimal`)
-- `theme`, `accent_gradient`, `custom_palette`, `fonts_override`: override any preset field
-- `brand_handle`, `default_footer`: branding automation
-- `allow_photos`: gates the photo-overlay archetype
+Key fields:
+
+- `preset`: name of bundled theme from `assets/themes/` (e.g. `dark-editorial`, `warm-minimal`) — Claude reads the YAML and mirrors its `palette` / `fonts` / `accent_gradient` into the HTML.
+- `accent_gradient`: override the preset's gradient (`from-X to-Y` Tailwind classes).
+- `custom_palette`: override the preset's six palette tokens.
+- `fonts_override`: override the preset's `fonts.display` / `fonts.mono`.
+- `brand_handle` / `default_footer`: branding automation — Claude inserts these into the generated HTML footer when present.
+- `allow_photos`: gates the `photo-overlay` archetype.
 
 If no `social:` block, defaults to `dark-editorial` preset.
 
@@ -135,7 +139,7 @@ For custom compositions (escape hatch, no matching archetype), write HTML from s
 ### 5. Render to PNG
 
 ```bash
-bun run scripts/render-pdf.ts ./pages/ --format social --output ./rendered/
+bun run $PDF_FORGE_HOME/scripts/render-pdf.ts ./pages/ --format social --output ./rendered/
 ```
 
 One PNG per HTML, named from the source filename. Renderer aborts on overflow (body taller than viewport) and on carousel format mismatch.
@@ -143,15 +147,15 @@ One PNG per HTML, named from the source filename. Renderer aborts on overflow (b
 ### 6. Generate Manifest
 
 ```bash
-bun run scripts/generate-manifest.ts ./rendered/ --format carousel-4-5 --theme dark-editorial --archetype cover,definition,steps,quote,cta
+bun run $PDF_FORGE_HOME/scripts/generate-manifest.ts ./rendered/ --format carousel-4-5 --theme dark-editorial --archetype cover,cover,cover,cover,cover
 ```
 
-Writes `manifest.yaml` with slide metadata ready for publish tooling or archival.
+Writes `manifest.yaml` with slide metadata ready for publish tooling or archival. Use one archetype name per PNG — currently only `cover` ships; remaining archetypes land in the archetype-library follow-up plan. The CLI rejects the command if the archetype count doesn't match the PNG count.
 
 ### 7. (Optional) Generate Preview
 
 ```bash
-bun run scripts/generate-preview.ts ./rendered/
+bun run $PDF_FORGE_HOME/scripts/generate-preview.ts ./rendered/
 ```
 
 Opens in browser — shows all slides as a grid, with captions and hashtags if present in the manifest.

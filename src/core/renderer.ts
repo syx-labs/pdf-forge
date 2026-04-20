@@ -56,6 +56,18 @@ async function resolveSocialFormat(
 export async function renderPages(options: RenderOptions): Promise<RenderResult> {
   const { inputDir, outputDir, scale = 2 } = options;
 
+  // Guard: socialFormat only applies to the social format. Silently ignoring
+  // it for slides/docs would mask user misconfiguration.
+  if (
+    options.socialFormat !== undefined &&
+    (options.format === "slides" || options.format === "docs")
+  ) {
+    throw new Error(
+      `socialFormat "${options.socialFormat}" is incompatible with format "${options.format}". ` +
+        `Omit socialFormat or set format to "social".`
+    );
+  }
+
   const s = await fsStat(inputDir);
   if (!s.isDirectory()) {
     throw new Error(`"${inputDir}" is not a directory.`);
@@ -119,6 +131,8 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
           },
           viewport.height
         );
+        // +2px tolerance for sub-pixel layout rounding (Chromium rasterizes
+        // fractional heights that round up — tightening to `>` causes flaky failures).
         if (overflow.scrollHeight > overflow.viewportHeight + 2) {
           throw new Error(
             `Content overflow in "${name}": body scrollHeight ${overflow.scrollHeight}px > viewport ${overflow.viewportHeight}px. ` +
@@ -153,5 +167,12 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
     await browser.close();
   }
 
-  return { files: outputFiles, format, socialFormat };
+  if (format === "social") {
+    // socialFormat is guaranteed set above when format === "social".
+    if (socialFormat === undefined) {
+      throw new Error("Internal: socialFormat unresolved for format=social.");
+    }
+    return { files: outputFiles, format, socialFormat };
+  }
+  return { files: outputFiles, format, socialFormat: undefined };
 }
