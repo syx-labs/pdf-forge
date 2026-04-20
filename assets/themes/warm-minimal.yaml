@@ -1,0 +1,23 @@
+# Warm minimal — cream + black with serif display. Kinfolk/Aesop territory.
+name: warm-minimal
+theme: light
+palette:
+  bg: "#f5f1ea"
+  surface: "#ede5d8"
+  surface_alt: "#e0d4c0"
+  text_primary: "#1a1a1a"
+  text_secondary: "#4a4a4a"
+  text_muted: "#8a8a8a"
+  border: "#d4c7b0"
+accent_gradient: "from-stone-700 to-stone-900"
+accent_solid: "#1a1a1a"
+accent_warm: "#8b5e3c"
+fonts:
+  display:
+    family: "Instrument Serif"
+    url: "https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500"
+allow_photos: true
+mood: "warm minimal — quiet luxury, serif display, generous whitespace"

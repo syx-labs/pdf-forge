@@ -1,0 +1,23 @@
+# High contrast punch — pure black with magenta accent. Wanted: attention.
+name: high-contrast-punch
+theme: dark
+palette:
+  bg: "#000000"
+  surface: "#0a0a0a"
+  surface_alt: "#141414"
+  text_primary: "#ffffff"
+  text_secondary: "#d4d4d8"
+  text_muted: "#71717a"
+  border: "#27272a"
+accent_gradient: "from-fuchsia-500 to-pink-500"
+accent_solid: "#d946ef"
+accent_warm: "#ec4899"
+fonts:
+  display:
+    family: "Inter"
+    url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500"
+allow_photos: false
+mood: "high contrast punch — loud, direct, unmissable"

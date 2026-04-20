@@ -111,10 +111,16 @@ brand:
 font:
   url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
   family: "Inter"
+# Optional: Instagram content configuration
+social:
+  preset: "dark-editorial"
+  allow_photos: false
+  brand_handle: "@yourhandle"
+  default_footer: true
 ---
 ```
 
-Without this file, defaults apply: dark theme, Inter font, purple/orange accents.
+Without this file, defaults apply: dark theme, Inter font, purple/orange accents. The optional `social:` block enables Instagram output configuration — reference any preset from `assets/themes/` or inline-override individual fields.
 
 ## Templates
 
@@ -142,6 +148,18 @@ Without this file, defaults apply: dark theme, Inter font, purple/orange accents
 | Two-Column | Parallel information |
 | Visual Full | Charts, diagrams |
 | Appendix | Supplementary data |
+
+### Social — Instagram (various aspect ratios)
+
+| Format | Viewport | Use Case |
+|--------|----------|----------|
+| post-1-1 | 1080×1080 | Square feed post |
+| post-4-5 | 1080×1350 | Portrait feed post (default for editorial) |
+| carousel-1-1 | 1080×1080 | Square carousel (N slides) |
+| carousel-4-5 | 1080×1350 | Portrait carousel |
+| story | 1080×1920 | Story / Reels cover |
+
+Ten archetypes planned; `cover` ships with this release. Remaining archetypes (mega-stat, steps, quote, before-after, definition, checklist, cta, photo-overlay, bento) added in the archetype-library follow-up plan. Custom HTML composition always works as an escape hatch via `assets/templates/social/_shared/boilerplate.html`.
 
 ## Design Philosophy
 
