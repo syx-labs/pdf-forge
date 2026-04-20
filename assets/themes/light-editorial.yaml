@@ -1,0 +1,23 @@
+# Light editorial — inverted zinc scale for finance, legal, formal contexts.
+name: light-editorial
+theme: light
+palette:
+  bg: "#fafafa"
+  surface: "#f4f4f5"
+  surface_alt: "#e4e4e7"
+  text_primary: "#09090b"
+  text_secondary: "#52525b"
+  text_muted: "#a1a1aa"
+  border: "#d4d4d8"
+accent_gradient: "from-purple-600 to-orange-600"
+accent_solid: "#7c3aed"
+accent_warm: "#ea580c"
+fonts:
+  display:
+    family: "Inter"
+    url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500"
+allow_photos: false
+mood: "formal editorial — calm, authoritative, report-grade"

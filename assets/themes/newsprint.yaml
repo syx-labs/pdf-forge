@@ -1,0 +1,23 @@
+# Newsprint — beige + serif + subtle texture. Essay/opinion feel.
+name: newsprint
+theme: light
+palette:
+  bg: "#f4efe6"
+  surface: "#ebe5d8"
+  surface_alt: "#ddd4c0"
+  text_primary: "#1c1a17"
+  text_secondary: "#4a4438"
+  text_muted: "#877f6e"
+  border: "#c9bfa8"
+accent_gradient: "from-red-700 to-red-900"
+accent_solid: "#991b1b"
+accent_warm: "#b45309"
+fonts:
+  display:
+    family: "Playfair Display"
+    url: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap"
+  mono:
+    family: "IBM Plex Mono"
+    url: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+allow_photos: true
+mood: "newsprint — essayistic, long-form feel, literary"
