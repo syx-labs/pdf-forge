@@ -36,7 +36,7 @@ Em vez de criar uma skill separada que duplicaria o core, estender `pdf-forge` m
   - Configura viewport baseada em tabela de presets (ver seção "Presets de formato").
   - Sempre screenshot PNG, nunca PDF, `deviceScaleFactor: 2` por default.
   - Valida consistência entre slides de um carrossel (mesmo sub-formato em todos os arquivos).
-- `src/core/utils.ts#detectFormat`: reconhece formato `social` via presença de `data-social-format` em qualquer HTML do input dir.
+- `src/core/utils.ts#detectFormat`: decide `social` checando apenas o primeiro arquivo HTML (`htmlFiles[0]`) pela presença de `data-social-format` no `<body>`. A função não varre os demais arquivos — a consistência entre slides é validada depois pelo renderer.
 - `scripts/render-pdf.ts`: aceita `--format social` e flag `--social-format <preset>`. Nome do script mantido (rename para `render.ts` fica fora do escopo).
 
 ### Presets de formato
@@ -53,7 +53,7 @@ Justificativa do 2x default: Instagram comprime agressivamente no upload; sobrar
 
 ### Mudanças nos assets
 
-```
+```text
 assets/templates/social/
 ├── _shared/
 │   ├── boilerplate.html                # shell: Tailwind CDN, Inter, base CSS, data-social-format
@@ -167,7 +167,7 @@ social:
 
 Novo diretório `assets/themes/` com presets de referência:
 
-```
+```text
 assets/themes/
 ├── dark-editorial.yaml                 # zinc + gradient (default)
 ├── light-editorial.yaml                # tons claros, finance/legal
@@ -238,7 +238,7 @@ Script `scripts/extract-palette.ts` que usa biblioteca de color quantization pra
 
 ### Padrão narrativo recomendado
 
-```
+```text
 01-hook.html              # cover (puxa atenção)
 02-setup.html             # definition ou problema (contexto)
 03-content-1.html         # steps/stat/quote (payload)
@@ -320,7 +320,7 @@ Caption e hashtags são opt-in (`--caption` ou instrução no briefing). Default
 
 ### Estrutura de pastas por build
 
-```
+```text
 projeto/
 ├── briefs/                             # opcional, forma B
 │   └── 2026-04-20-mvp-stack.yaml
@@ -362,7 +362,7 @@ bun run scripts/generate-preview.ts ./rendered/ --output ./rendered/preview.html
 
 Convenção sugerida (não imposta):
 
-```
+```text
 creative-workflow/
 ├── 2026-04-20-mvp-stack-carousel/
 │   ├── briefs/

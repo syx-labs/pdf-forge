@@ -10,9 +10,9 @@
 
 **Scope:** MVP infrastructure + cover archetype as reference implementation. Remaining 9 archetypes (mega-stat, steps, quote, before-after, definition, checklist, cta, photo-overlay, bento) × 5 formats each are a follow-up plan — see `2026-04-20-pdf-forge-instagram-archetype-library.md` (to be written after this plan lands).
 
-**Source spec:** `/Users/shadow/Projects/personal/creative-workflow/docs/superpowers/specs/2026-04-20-pdf-forge-instagram-design.md`
+**Source spec:** `<repo-root>/docs/superpowers/specs/2026-04-20-pdf-forge-instagram-design.md`
 
-**Repository:** `/Users/shadow/Projects/personal/skills/pdf-forge` (branch `main`). All paths below are relative to this directory unless noted.
+**Repository:** `<repo-root>` is the pdf-forge repo root (branch `main`). All paths below are relative to this directory unless noted.
 
 ---
 
@@ -21,7 +21,7 @@
 - [ ] **Confirm working directory and branch**
 
 ```bash
-cd /Users/shadow/Projects/personal/skills/pdf-forge
+cd <repo-root>
 git status
 git branch --show-current
 ```
@@ -2121,7 +2121,7 @@ mood: "newsprint — essayistic, long-form feel, literary"
 
 - [ ] **Step 6: Create `assets/themes/README.md`**
 
-```markdown
+````markdown
 # Themes — bundled presets for `social` format
 
 Each YAML file defines a theme Claude reads when composing social HTML. Reference a preset in `.claude/pdf-forge.local.md`:
@@ -2162,7 +2162,7 @@ Every preset defines:
 2. Update all fields — do not leave any as-is from the template
 3. Reference it in a project's `.claude/pdf-forge.local.md` with `social.preset: <name>`
 4. Document it in the table above
-```
+````
 
 - [ ] **Step 7: Commit**
 
@@ -2450,7 +2450,7 @@ Replace that line with:
 
 Find the section "### 6. Render to PDF" in `skills/pdf-forge/SKILL.md`. After its closing paragraph (the one that says `The render script auto-detects the format (slides vs docs) from the HTML content.`), insert this new subsection before `## Design Rules`:
 
-```markdown
+````markdown
 ## Workflow — Social (Instagram)
 
 ### 1. Detect Sub-Format
@@ -2557,7 +2557,7 @@ Ask the user if ambiguous. Default to `style transfer`.
 - Safe zones of the target format always apply (even if the reference breaks them)
 - If reference format differs from target, reposition rather than stretch
 - Commercial fonts replaced by similar Google Fonts; document the substitution in output
-```
+````
 
 - [ ] **Step 3: Expand the Template Files table**
 
@@ -2619,7 +2619,7 @@ git commit -m "docs(skill): add social workflow and reference mode sections"
 
 In `README.md`, find the block starting `## Brand Customization` and ending before `## Templates`. Replace the YAML example and surrounding text with:
 
-```markdown
+````markdown
 ## Brand Customization
 
 Create `.claude/pdf-forge.local.md` in your project:
@@ -2644,7 +2644,7 @@ social:
 ```
 
 Without this file, defaults apply: dark theme, Inter font, purple/orange accents. The optional `social:` block enables Instagram output configuration — reference any preset from `assets/themes/` or inline-override individual fields.
-```
+````
 
 - [ ] **Step 2: Commit**
 
