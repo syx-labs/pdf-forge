@@ -1,0 +1,24 @@
+# Dark editorial — pdf-forge default aesthetic adapted for Instagram.
+# Zinc backbone, single purple→orange gradient accent, Inter typography.
+name: dark-editorial
+theme: dark
+palette:
+  bg: "#09090b"
+  surface: "#18181b"
+  surface_alt: "#27272a"
+  text_primary: "#fafafa"
+  text_secondary: "#a1a1aa"
+  text_muted: "#71717a"
+  border: "#27272a"
+accent_gradient: "from-purple-400 to-orange-400"
+accent_solid: "#a78bfa"
+accent_warm: "#fb923c"
+fonts:
+  display:
+    family: "Inter"
+    url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500"
+allow_photos: false
+mood: "editorial tech — restrained, high-contrast, typographic-first"
