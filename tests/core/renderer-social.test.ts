@@ -133,4 +133,26 @@ describe("renderPages social format", () => {
       })
     ).rejects.toThrow(/mixed.*social.*format/i);
   }, 30_000);
+
+  test("throws explicit error when social content overflows viewport", async () => {
+    const input = join(tempDir, "overflow");
+    const output = join(tempDir, "out-overflow");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(input, { recursive: true });
+    await writeFile(
+      join(input, "01.html"),
+      `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head>
+       <body data-social-format="post-1-1" class="m-0 p-0 bg-zinc-950 text-white">
+         <div style="height: 2000px; width: 1080px;">overflows</div>
+       </body></html>`
+    );
+    await expect(
+      renderPages({
+        inputDir: input,
+        outputDir: output,
+        format: "social",
+        scale: 1,
+      })
+    ).rejects.toThrow(/overflow/i);
+  }, 30_000);
 });
