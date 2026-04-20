@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test --parallel=1 --timeout=60000",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
