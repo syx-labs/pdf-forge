@@ -5,7 +5,7 @@ import { createServer } from "../../src/mcp/server";
 
 describe("MCP Server", () => {
   test("lists resources", async () => {
-    const server = createServer();
+    const server = await createServer();
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
 
@@ -28,7 +28,7 @@ describe("MCP Server", () => {
   });
 
   test("reads a resource", async () => {
-    const server = createServer();
+    const server = await createServer();
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
 
@@ -48,7 +48,7 @@ describe("MCP Server", () => {
   });
 
   test("lists generate_pdf tool", async () => {
-    const server = createServer();
+    const server = await createServer();
     const [clientTransport, serverTransport] =
       InMemoryTransport.createLinkedPair();
 

@@ -14,6 +14,17 @@ const PLUGIN_ROOT = __dirname.includes("dist")
   ? resolve(__dirname, "../../..")
   : resolve(__dirname, "../..");
 
+async function readPackageVersion(): Promise<string> {
+  // Read package.json so the MCP server version mirrors the distributed package —
+  // avoids the 0.1.0/0.3.x drift that used to ship.
+  try {
+    const raw = await readFile(join(PLUGIN_ROOT, "package.json"), "utf-8");
+    return (JSON.parse(raw) as { version?: string }).version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 const RESOURCE_MAP: Record<string, string> = {
   "pdf-forge://design-system": "skills/pdf-forge/references/design-system.md",
   "pdf-forge://templates/slides":
@@ -23,10 +34,11 @@ const RESOURCE_MAP: Record<string, string> = {
   "pdf-forge://anti-patterns": "skills/pdf-forge/references/anti-patterns.md",
 };
 
-export function createServer(): McpServer {
+export async function createServer(): Promise<McpServer> {
+  const version = await readPackageVersion();
   const server = new McpServer({
     name: "pdf-forge",
-    version: "0.1.0",
+    version,
   });
 
   // Register resources

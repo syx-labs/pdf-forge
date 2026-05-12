@@ -66,7 +66,7 @@ async function setup() {
 }
 
 async function serve() {
-  const server = createServer();
+  const server = await createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

@@ -1,6 +1,6 @@
 {
   "name": "pdf-forge-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "type": "module",
   "description": "Professional PDF generation with Tailwind CSS. Anti-AI-sloppy slides and documents.",
@@ -35,6 +35,10 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test --parallel=1 --timeout=60000",
+    "render": "bun run scripts/render-pdf.ts",
+    "merge": "bun run scripts/merge-pages.ts",
+    "pptx": "bun run scripts/png-to-pptx.ts",
+    "gen-images": "bun run scripts/gen-images.ts",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
