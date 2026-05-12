@@ -32,7 +32,9 @@ let widthOverride: number | undefined;
 let heightOverride: number | undefined;
 
 function requireNext(flag: string, value: string | undefined): string {
-  if (value === undefined || value.startsWith("--")) {
+  // Reject undefined, empty string, and short/long flag tokens (e.g. `-h`, `--foo`).
+  // `--output -h` would otherwise resolve `-h` as the output path and break parse.
+  if (value === undefined || value === "" || /^-{1,2}[A-Za-z]/.test(value)) {
     console.error(`${flag} requires a value.`);
     process.exit(1);
   }
@@ -167,7 +169,9 @@ if (exitInfo.spawnError) {
 }
 
 if (exitInfo.code !== 0) {
-  console.error(`python-pptx failed (exit ${exitInfo.code}). Is \`uv\` installed?`);
+  // uv-missing case is handled above via spawnError; here uv ran but python-pptx
+  // failed (e.g. python error). stderr is inherited, so the user already sees it.
+  console.error(`python-pptx failed (exit ${exitInfo.code}). See stderr above.`);
   process.exit(exitInfo.code);
 }
 
