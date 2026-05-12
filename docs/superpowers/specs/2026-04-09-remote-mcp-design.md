@@ -8,7 +8,20 @@ Spec para o MCP server remoto do pdf-forge, hospedado no Railway, acessivel pelo
 - Railway para hosting (Docker com Node + Chromium)
 - Cloudflare R2 para storage de PDFs (presigned URLs, 1h expiracao, lifecycle 24h)
 - API key para autenticacao (header `Authorization: Bearer <key>`)
-- MCP Streamable HTTP transport no endpoint `POST /mcp`
+- MCP Streamable HTTP transport em `POST /mcp` e `GET /mcp` (a especificacao Streamable HTTP exige ambos verbos no mesmo endpoint)
+
+### Pre-requisito no `pdf-forge-mcp`
+
+Para o remote consumir o core via npm, `pdf-forge-mcp` precisa expor `./core` em `package.json` exports (atualmente so expoe `./mcp`):
+
+```json
+"exports": {
+  "./mcp": "./dist/src/mcp/server.js",
+  "./core": "./dist/src/core/index.js"
+}
+```
+
+Sem isso, o Node bloqueia deep imports e `import { renderPages, mergePages } from "pdf-forge-mcp/core"` falha em runtime.
 
 ## Arquitetura
 
@@ -33,7 +46,10 @@ pdf-forge-remote/
 
 ### MCP Server
 
-Endpoint unico: `POST /mcp` — recebe JSON-RPC, responde via Streamable HTTP transport.
+Endpoint MCP unico em `/mcp` com dois verbos:
+
+- `POST /mcp` — recebe JSON-RPC do cliente.
+- `GET /mcp` — abre o stream server-to-client (SSE) que a especificacao Streamable HTTP requer para notifications/server-initiated messages. Clientes compliant (Claude Web e outros) abrem essa conexao em paralelo ao POST; sem o GET o cliente trava.
 
 Health check: `GET /health` — retorna 200 com `{ status: "ok" }`.
 
@@ -82,13 +98,15 @@ Middleware Express verifica `Authorization: Bearer <api-key>` em toda request (e
 FROM node:20-slim
 RUN npx playwright install chromium --with-deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install --production
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 COPY dist/ ./dist/
 ENV PORT=3000
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
 ```
+
+`npm ci --omit=dev` é a forma recomendada (npm 9+) — instala exatamente o que está no lockfile e pula devDependencies, garantindo build reproducible.
 
 ### Deploy Railway
 
