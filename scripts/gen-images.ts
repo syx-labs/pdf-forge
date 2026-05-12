@@ -88,6 +88,18 @@ if (!manifest || !Array.isArray(manifest.images) || manifest.images.length === 0
   process.exit(1);
 }
 
+// slug becomes a filename — reject path separators, .., and other shell metacharacters.
+// Allowed: lowercase/uppercase letters, digits, hyphen, underscore, dot.
+const SLUG_PATTERN = /^[A-Za-z0-9._-]+$/;
+for (const spec of manifest.images) {
+  if (!spec || typeof spec.slug !== "string" || !SLUG_PATTERN.test(spec.slug) || spec.slug.startsWith(".")) {
+    console.error(
+      `Invalid slug "${spec?.slug}". Slugs must match /^[A-Za-z0-9._-]+$/ and not start with a dot (no path traversal).`
+    );
+    process.exit(1);
+  }
+}
+
 const imagesDir = resolve(projectRoot, manifest.images_dir ?? "assets/images");
 const logDir = resolve(projectRoot, manifest.log_dir ?? "scripts/logs");
 const defaultAspect = manifest.default_aspect ?? "16:9";
@@ -148,14 +160,23 @@ async function runOne(spec: ImageSpec): Promise<"done" | "skipped" | "failed"> {
   proc.stdout.on("data", (chunk) => logHandle.write(chunk));
   proc.stderr.on("data", (chunk) => logHandle.write(chunk));
 
-  const exitCode: number = await new Promise((res, rej) => {
-    proc.on("close", (c) => res(c ?? 1));
-    proc.on("error", rej);
+  // Spawn errors (e.g. `codex` not on PATH) must not blow up the whole pool —
+  // surface them as failed slugs and keep the rest of the manifest running.
+  const exitInfo: { code: number; spawnError?: Error } = await new Promise((res) => {
+    proc.on("close", (c) => res({ code: c ?? 1 }));
+    proc.on("error", (err) => res({ code: 1, spawnError: err }));
   });
   await logHandle.end();
 
-  if (exitCode !== 0) {
-    console.log(`[FAIL]  ${spec.slug} (exit ${exitCode}, see ${logPath})`);
+  if (exitInfo.spawnError) {
+    console.log(
+      `[FAIL]  ${spec.slug} (spawn error: ${exitInfo.spawnError.message}, see ${logPath})`
+    );
+    return "failed";
+  }
+
+  if (exitInfo.code !== 0) {
+    console.log(`[FAIL]  ${spec.slug} (exit ${exitInfo.code}, see ${logPath})`);
     return "failed";
   }
 

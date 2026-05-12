@@ -27,6 +27,7 @@
   "files": [
     "dist/",
     "assets/",
+    "scripts/",
     "skills/",
     "install.sh",
     ".claude-plugin/"
