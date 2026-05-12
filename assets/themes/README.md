@@ -20,6 +20,13 @@ social:
 | `warm-minimal.yaml` | quiet luxury, serif display, generous whitespace | light | yes |
 | `high-contrast-punch.yaml` | loud, direct, unmissable | dark | no |
 | `newsprint.yaml` | essayistic, long-form, literary | light | yes |
+| `yorus-dark.yaml` | premium dark systems-interface — operational confidence, Yorus brand | dark | no |
+
+## Brand presets
+
+Presets with a `brand:` block (e.g. `yorus-dark`) document the official brand colors and voice so the LLM can apply them when composing **slides and documents**, not only Instagram. When `brand:` is present, treat the palette as authoritative — override only when the user explicitly asks.
+
+If the brand also ships a sibling skill (e.g. `yorus-visual-direction`), defer visual judgment to that skill and use the preset palette as the implementation baseline. There is no automatic detection — read `.claude/pdf-forge.local.md` (`preset:` field) or infer from the project's brand directory name.
 
 ## Schema
 

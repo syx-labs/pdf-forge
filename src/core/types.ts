@@ -15,6 +15,9 @@ export interface RenderOptions {
   // Passing this together with format "slides"/"docs" raises a runtime error.
   socialFormat?: SocialFormat;
   scale?: number;
+  // Opt-out of the overflow guard for single-viewport formats (slides, social).
+  // Docs are always exempt — page.pdf paginates natively.
+  allowOverflow?: boolean;
 }
 
 // Discriminated by `format`: the social branch narrows `socialFormat` to a

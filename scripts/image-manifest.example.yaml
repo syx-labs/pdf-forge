@@ -1,0 +1,67 @@
+# gen-images.ts manifest — example.
+#
+# Schema:
+#   images_dir         Where PNGs are written. Default: assets/images
+#   log_dir            Where codex logs go. Default: scripts/logs
+#   default_aspect     "16:9" | "4:5" | "1:1" | "9:16". Default: "16:9"
+#   default_dimensions Pixel dimensions string. Default: "2048x1152"
+#   common_style       Multi-line style brief prepended to every prompt.
+#   common_palette     Color palette one-liner prepended to every prompt.
+#   asset_type         What you're making (used in "Asset type:" line).
+#   use_case           imagegen use case tag. Default: "stylized-concept".
+#   images[]           List of image specs:
+#     slug             Output filename (without .png).
+#     concept          Per-image description (the "Primary request:" line).
+#     aspect           Override default_aspect for this image.
+#     dimensions       Override default_dimensions for this image.
+#
+# Usage:
+#   bun run scripts/gen-images.ts <project-root> path/to/this-manifest.yaml --concurrency 4
+#
+# Idempotent: PNGs that already exist are skipped.
+
+images_dir: assets/images
+log_dir: scripts/logs
+default_aspect: "16:9"
+default_dimensions: "2048x1152"
+asset_type: "card thumbnail for a premium B2B media-strategy proposal deck"
+use_case: stylized-concept
+
+common_palette: >
+  pure black #010101 base background (80%+ area), thin orange #ef700b stroke
+  accents (max 10% area), single purple #8933e2 soft depth glow (max 5% area),
+  zinc-white #fafafa highlights only on critical nodes
+
+common_style: |
+  Style/medium: dark premium systems-interface illustration, ultra-fine line work,
+  vector-like clean surfaces, controlled negative space, editorial restraint
+  Composition/framing: 16:9 landscape, asymmetric, NOT center-locked, breathing room dominant
+  Lighting/mood: pure black void with very subtle ambient depth glow, calm strategic confidence
+  Materials/textures: clean vector-like flat surfaces, no photographic noise, no skeuomorphism, no glossy plastic
+  Constraints: NO text, NO numbers, NO logos, NO faces, NO robots, NO brains, NO neural-net spaghetti, NO generic AI hologram tropes, NO glassmorphism, NO saturated rainbow gradients
+  Avoid: stock photography aesthetic, busy clutter, AI agency cliché, generic SaaS dashboard mockup
+
+images:
+  - slug: 04-02-arquitetura
+    concept: >
+      abstract minimalist composition representing operational architecture — a precise
+      architectural blueprint feel: nested rectangular containers in thin zinc lines
+      forming a structural hierarchy (frame inside frame inside frame), one container
+      highlighted with an orange stroke, top-down clarity like a floor plan of an
+      information system. Soft purple wash in lower-left quadrant.
+
+  - slug: 04-03-execucao
+    concept: >
+      abstract minimalist composition representing tactical media execution — a
+      horizontal flow strip with small geometric tokens moving along thin guide rails
+      left-to-right, some tokens on an orange channel, some on a purple channel,
+      sense of operational tempo and disciplined routing, not chaos.
+
+  - slug: 05-01-planejamento-hero
+    concept: >
+      abstract premium composition representing strategic media planning at hero
+      scale — multiple precise nodes connected by thin orange threads forming a
+      structured emerging pattern with depth, three layers of depth implied through
+      scale and glow falloff. Generous breathing room. Cinematic editorial framing.
+    aspect: "16:9"
+    dimensions: "2560x1440"
