@@ -1,5 +1,9 @@
 {
   "name": "syx-labs-plugins",
+  "owner": {
+    "name": "Gabriel Falcao",
+    "url": "https://github.com/syx-labs"
+  },
   "plugins": [
     {
       "name": "pdf-forge",
