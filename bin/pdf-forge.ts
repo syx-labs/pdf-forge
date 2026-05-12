@@ -86,5 +86,10 @@ if (command === "setup") {
   console.log("  npx pdf-forge-mcp          Start the MCP server");
   console.log("  npx pdf-forge-mcp setup    Install dependencies and configure Claude Desktop");
 } else {
-  await serve();
+  try {
+    await serve();
+  } catch (err) {
+    console.error("MCP server failed:", err instanceof Error ? err.message : err);
+    process.exit(1);
+  }
 }

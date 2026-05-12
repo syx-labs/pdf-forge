@@ -31,12 +31,20 @@ let aspect = "16:9";
 let widthOverride: number | undefined;
 let heightOverride: number | undefined;
 
+function requireNext(flag: string, value: string | undefined): string {
+  if (value === undefined || value.startsWith("--")) {
+    console.error(`${flag} requires a value.`);
+    process.exit(1);
+  }
+  return value;
+}
+
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === "--output" || arg === "-o") {
-    outputPath = args[++i];
+    outputPath = requireNext(arg, args[++i]);
   } else if (arg === "--aspect") {
-    aspect = args[++i];
+    aspect = requireNext(arg, args[++i]);
     if (!ASPECT_PRESETS[aspect]) {
       console.error(
         `Invalid --aspect "${aspect}". Valid: ${ASPECT_KEYS.join(", ")}.`
@@ -44,13 +52,13 @@ for (let i = 0; i < args.length; i++) {
       process.exit(1);
     }
   } else if (arg === "--width") {
-    widthOverride = parseFloat(args[++i]);
+    widthOverride = parseFloat(requireNext(arg, args[++i]));
     if (isNaN(widthOverride) || widthOverride <= 0) {
       console.error("--width must be a positive number (inches).");
       process.exit(1);
     }
   } else if (arg === "--height") {
-    heightOverride = parseFloat(args[++i]);
+    heightOverride = parseFloat(requireNext(arg, args[++i]));
     if (isNaN(heightOverride) || heightOverride <= 0) {
       console.error("--height must be a positive number (inches).");
       process.exit(1);
@@ -144,14 +152,23 @@ child.stdout.on("data", (chunk) => {
 child.stdin.write(payload);
 child.stdin.end();
 
-const code: number = await new Promise((res, rej) => {
-  child.on("close", (c) => res(c ?? 1));
-  child.on("error", rej);
-});
+const exitInfo: { code: number; spawnError?: Error } = await new Promise(
+  (res) => {
+    child.on("close", (c) => res({ code: c ?? 1 }));
+    child.on("error", (err) => res({ code: 1, spawnError: err }));
+  }
+);
 
-if (code !== 0) {
-  console.error(`python-pptx failed (exit ${code}). Is \`uv\` installed?`);
-  process.exit(code);
+if (exitInfo.spawnError) {
+  console.error(
+    `Failed to spawn \`uv\`: ${exitInfo.spawnError.message}. Install uv from https://docs.astral.sh/uv/.`
+  );
+  process.exit(1);
+}
+
+if (exitInfo.code !== 0) {
+  console.error(`python-pptx failed (exit ${exitInfo.code}). Is \`uv\` installed?`);
+  process.exit(exitInfo.code);
 }
 
 try {

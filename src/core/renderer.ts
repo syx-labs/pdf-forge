@@ -142,7 +142,7 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
               ? `Slides have a fixed 1920×1080 viewport. Reduce content, tighten spacing, or split into multiple slides. Pass allowOverflow: true to bypass.`
               : `Reduce content, shorten text, or lower font sizes. Pass allowOverflow: true to bypass.`;
           throw new Error(
-            `Content overflow in "${name}": body scrollHeight ${overflow.scrollHeight}px > viewport ${overflow.viewportHeight}px. ${hint}`
+            `Content overflow in "${name}": documentElement scrollHeight ${overflow.scrollHeight}px > viewport ${overflow.viewportHeight}px. ${hint}`
           );
         }
       }
