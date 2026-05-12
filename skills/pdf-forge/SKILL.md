@@ -37,6 +37,10 @@ Check for `.claude/pdf-forge.local.md` in the project root. If present, extract 
 
 Read `references/color-palettes.md` for the full color system and brand substitution rules.
 
+**Brand presets** ship under `assets/themes/` (e.g. `yorus-dark.yaml`). Each preset defines a palette, fonts, and accent gradient that you should honor when composing HTML. Presets with a `brand:` block apply to slides and documents (not only social). When a project's `.claude/pdf-forge.local.md` references a preset, treat that palette as authoritative.
+
+**Yorus interop**: when working on a Yorus project (path matches `yorus`, `alfama`, etc., or `preset: yorus-dark` is set), the `yorus-visual-direction` skill is the source of truth for visual judgment — palette is `#010101 / #ef700b / #8933e2`, voice is active and concrete, anti-AI-slop is non-negotiable. The `yorus-dark.yaml` preset encodes the implementation baseline; the sibling skill handles direction.
+
 ### 3. Plan the Page Sequence
 
 Select layouts from the template catalog. Read the appropriate reference:
@@ -81,6 +85,33 @@ bun run $PDF_FORGE_HOME/scripts/merge-pages.ts ./rendered/ --output ./output.pdf
 ```
 
 The render script auto-detects the format (slides vs docs) from the HTML content.
+
+The renderer enforces an **overflow guard** on slides and social formats: if rendered content is taller than the viewport (1080px for slides), the render aborts with the offending filename. Pass `allowOverflow: true` (programmatic) or accept the failure as a layout signal — usually the slide needs splitting, tighter spacing, or shorter copy. Docs are exempt (page.pdf paginates natively).
+
+### 7. (Optional) Export to PPTX
+
+When the deliverable is a `.pptx` (boardroom decks, client proposals, anything that goes through PowerPoint/Keynote), convert the rendered PNGs into a full-bleed PPTX:
+
+```bash
+# Requires `uv` on PATH (https://docs.astral.sh/uv/)
+bun run $PDF_FORGE_HOME/scripts/png-to-pptx.ts ./rendered/ --output ./deck.pptx
+```
+
+Defaults to 16:9 widescreen (13.333 × 7.5 in). Each PNG becomes one full-bleed slide via `python-pptx` (the only mature library for this). Override aspect with `--aspect 4:3|16:10|a4-landscape|a4-portrait` or pass `--width <in> --height <in>` for custom.
+
+Pixel-perfect: the PNGs were rendered from your authored HTML, so the PPTX reproduces the design exactly — no template fighting, no font substitution surprises.
+
+### 8. (Optional) Generate AI Imagery
+
+For decks that need original imagery (abstract hero cards, conceptual illustrations), use the parameterized generator. It dispatches `codex` jobs in parallel through the imagegen skill, sharing a common style brief across all slugs:
+
+```bash
+bun run $PDF_FORGE_HOME/scripts/gen-images.ts /path/to/project ./image-manifest.yaml --concurrency 4
+```
+
+The manifest is YAML (see `scripts/image-manifest.example.yaml`) with `common_style`, `common_palette`, and an `images[]` list of `{slug, concept, aspect?, dimensions?}`. Idempotent — slugs whose PNG already exists are skipped, so reruns are safe.
+
+For Yorus decks, the example manifest already encodes the official palette (`#010101 / #ef700b / #8933e2`) and the dark premium systems-interface brief — copy and edit the `images[]` list per project.
 
 ## Workflow — Social (Instagram)
 
@@ -274,19 +305,10 @@ Each archetype has five format variants: `post-1-1.html`, `post-4-5.html`, `caro
 | Archetype | Purpose |
 |----------|---------|
 | `cover/` | Opening slide — carousel hook or bold single-post headline |
-| `mega-stat/` | One huge number centered — ROI, percentage, hero metric *(planned)* |
-| `steps/` | Numbered list — framework, how-to, playbook *(planned)* |
-| `quote/` | Centered pull quote with attribution *(planned)* |
-| `before-after/` | Split view — problem vs solution, cost vs return *(planned)* |
-| `definition/` | Term + explanation — glossary, concept card *(planned)* |
-| `checklist/` | Bullet/check marks list — tips, to-dos *(planned)* |
-| `cta/` | Final slide — follow/save/link *(planned)* |
-| `photo-overlay/` | Image background + text overlay *(planned, requires `allow_photos: true`)* |
-| `bento/` | Asymmetric grid of cards — features, services *(planned)* |
+
+Only `cover/` ships today. For other needs (mega stats, steps, quotes, before/after, definitions, checklists, CTAs, photo overlays, bento grids), compose custom HTML from `_shared/boilerplate.html` using the type-scales and safe-zones references. The planned-but-unshipped archetype list lives in `references/social-archetypes-planned.md`.
 
 Shared resources: `_shared/boilerplate.html`, `_shared/type-scales.md`, `_shared/safe-zones.md`.
-
-*(planned)* archetypes fall back to custom HTML composition via the boilerplate. When a follow-up plan lands with all archetypes, this table updates.
 
 ## Quick Type Reference
 

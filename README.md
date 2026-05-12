@@ -8,12 +8,12 @@ AI-generated PDFs look recognizably generic: inconsistent spacing, flat typograp
 
 ## What It Does
 
-- Generates **slide presentations** (16:9, 1920x1080) and **A4 documents** from any content
+- Generates **slide presentations** (16:9, 1920x1080), **A4 documents**, and **Instagram social** (post / carousel / story) from any content
 - Uses static HTML + Tailwind CSS via CDN — no React, no build step, no component libraries
-- Renders to PDF via Playwright (screenshots for slides, native PDF for documents)
-- Includes 15 ready-to-use templates (8 slides + 7 documents)
-- Applies a professional design system: zinc backbone, typographic contrast, restrained accents
-- Supports brand customization (colors, fonts, theme)
+- Renders to PDF via Playwright (screenshots for slides, native PDF for documents), with optional **PPTX export** via `python-pptx`
+- Includes 16 ready-to-use templates (8 slides + 7 documents + 1 social cover; more social archetypes planned)
+- Applies a professional design system: zinc backbone, typographic contrast, restrained accents, overflow guard for fixed-viewport formats
+- Supports brand customization (colors, fonts, theme) via per-project `.claude/pdf-forge.local.md` and bundled brand presets in `assets/themes/`
 
 ## Installation
 
@@ -162,7 +162,7 @@ The `social:` block is a **composition contract for Claude**, not a runtime conf
 | carousel-4-5 | 1080×1350 | Portrait carousel |
 | story | 1080×1920 | Story / Reels cover |
 
-Ten archetypes planned; `cover` ships with this release. Remaining archetypes (mega-stat, steps, quote, before-after, definition, checklist, cta, photo-overlay, bento) added in the archetype-library follow-up plan. Custom HTML composition always works as an escape hatch via `assets/templates/social/_shared/boilerplate.html`.
+Only `cover` ships as a proper template. The remaining archetype vocabulary (mega-stat, steps, quote, before-after, definition, checklist, cta, photo-overlay, bento) lives in `skills/pdf-forge/references/social-archetypes-planned.md` — compose custom HTML from `assets/templates/social/_shared/boilerplate.html` until they ship.
 
 ## Design Philosophy
 
@@ -172,11 +172,22 @@ Ten archetypes planned; `cover` ships with this release. Remaining archetypes (m
 - **Geometric spacing scale**: Spacing follows a geometric progression (4, 8, 12, 16, 24, 32, 48, 64, 80, 96px). No arbitrary values.
 - **Raw HTML**: No component libraries. Flat DOM for predictable Playwright rendering.
 
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `bun run render <pages-dir>` | Render HTML → PNG/PDF (auto-detects format) |
+| `bun run merge <rendered-dir>` | Merge rendered output into a single PDF |
+| `bun run pptx <rendered-dir>` | Build a full-bleed PPTX from rendered PNGs (requires `uv`) |
+| `bun run gen-images <project> <manifest.yaml>` | Generate deck imagery in parallel via Codex imagegen |
+
 ## Requirements
 
 - [Bun](https://bun.sh) runtime
 - Playwright (installed via setup script)
 - Internet connection (Tailwind CDN, Google Fonts)
+- Optional: `uv` (https://docs.astral.sh/uv/) for PPTX export
+- Optional: `codex` CLI for the parallel image generator
 
 ## License
 

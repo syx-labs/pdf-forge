@@ -1,0 +1,35 @@
+# Yorus dark — premium dark systems-interface, official Yorus brand.
+# Pure black void (#010101), ultra-fine line work, orange as action/conversion,
+# purple as intelligence/depth. Pairs with the yorus-visual-direction skill —
+# when both skills load, defer visual judgment to yorus-visual-direction and
+# use this preset as the implementation baseline.
+name: yorus-dark
+theme: dark
+palette:
+  bg: "#010101"
+  surface: "#0a0a0a"
+  surface_alt: "#171717"
+  text_primary: "#fafafa"
+  text_secondary: "#a3a3a3"
+  text_muted: "#525252"
+  border: "#262626"
+accent_gradient: "from-orange-500 to-purple-500"
+accent_solid: "#ef700b"
+accent_warm: "#8933e2"
+fonts:
+  display:
+    family: "Inter"
+    url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500"
+allow_photos: false
+mood: "premium dark systems-interface — operational confidence, anti-AI-slop, Yorus brand"
+brand:
+  name: "Yorus"
+  colors:
+    black: "#010101"      # base, 80%+ area
+    orange: "#ef700b"     # ação/conversão, max 10% area
+    purple: "#8933e2"     # inteligência/profundidade, max 5% area
+    zinc: "#fafafa"       # destaque crítico apenas
+  voice: "ativa, concreta, sem AI-agency cliché"

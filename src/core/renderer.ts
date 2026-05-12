@@ -54,7 +54,7 @@ async function resolveSocialFormat(
 }
 
 export async function renderPages(options: RenderOptions): Promise<RenderResult> {
-  const { inputDir, outputDir, scale = 2 } = options;
+  const { inputDir, outputDir, scale = 2, allowOverflow = false } = options;
 
   // Guard: socialFormat only applies to the social format. Silently ignoring
   // it for slides/docs would mask user misconfiguration.
@@ -121,7 +121,10 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
 
       await page.evaluate(() => document.fonts.ready);
 
-      if (format === "social") {
+      // Overflow guard runs for single-viewport formats (slides + social).
+      // Docs are exempt — page.pdf paginates natively, so scrollHeight > viewport is expected.
+      // Use allowOverflow: true to opt out (e.g. for cropped social composites).
+      if ((format === "slides" || format === "social") && !allowOverflow) {
         const overflow = await page.evaluate(
           (h) => {
             return {
@@ -134,9 +137,12 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
         // +2px tolerance for sub-pixel layout rounding (Chromium rasterizes
         // fractional heights that round up — tightening to `>` causes flaky failures).
         if (overflow.scrollHeight > overflow.viewportHeight + 2) {
+          const hint =
+            format === "slides"
+              ? `Slides have a fixed 1920×1080 viewport. Reduce content, tighten spacing, or split into multiple slides. Pass allowOverflow: true to bypass.`
+              : `Reduce content, shorten text, or lower font sizes. Pass allowOverflow: true to bypass.`;
           throw new Error(
-            `Content overflow in "${name}": body scrollHeight ${overflow.scrollHeight}px > viewport ${overflow.viewportHeight}px. ` +
-              `Reduce content, shorten text, or lower font sizes.`
+            `Content overflow in "${name}": body scrollHeight ${overflow.scrollHeight}px > viewport ${overflow.viewportHeight}px. ${hint}`
           );
         }
       }
