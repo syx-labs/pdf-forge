@@ -97,7 +97,7 @@ When the deliverable is a `.pptx` (boardroom decks, client proposals, anything t
 bun run $PDF_FORGE_HOME/scripts/png-to-pptx.ts ./rendered/ --output ./deck.pptx
 ```
 
-Defaults to 16:9 widescreen (13.333 × 7.5 in). Each PNG becomes one full-bleed slide via `python-pptx` (the only mature library for this). Override aspect with `--aspect 4:3|16:10|a4-landscape|a4-portrait` or pass `--width <in> --height <in>` for custom.
+Auto-detects the aspect from the rendered PNGs (16:9 decks snap to 13.333 × 7.5 in; social/portrait formats keep their true aspect — no stretching). Each PNG becomes one full-bleed slide via `python-pptx` (the only mature library for this). Override with `--aspect 16:9|4:3|16:10|a4-landscape|a4-portrait` or pass `--width <in> --height <in>` for custom.
 
 Pixel-perfect: the PNGs were rendered from your authored HTML, so the PPTX reproduces the design exactly — no template fighting, no font substitution surprises.
 

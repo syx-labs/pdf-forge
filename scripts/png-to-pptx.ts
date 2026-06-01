@@ -7,12 +7,15 @@
  * Usage:
  *   bun run scripts/png-to-pptx.ts <rendered-dir> [--output deck.pptx] [--aspect 16:9|4:3|16:10] [--width <in>] [--height <in>]
  *
- * Defaults: aspect 16:9 (13.333 × 7.5 in), output ./output.pptx.
+ * Defaults: output ./output.pptx. Aspect is auto-detected from the rendered PNGs
+ * (16:9 decks snap to 13.333 × 7.5 in; social formats keep their true aspect).
+ * Pass --aspect or --width/--height to override.
  */
 
 import { resolve, basename } from "node:path";
-import { readdir, stat } from "node:fs/promises";
+import { readdir, stat, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { readPngSize, pickPptxAspect } from "../src/core/image-size";
 
 const ASPECT_PRESETS: Record<string, { width: number; height: number }> = {
   "16:9": { width: 13.333, height: 7.5 },
@@ -28,6 +31,7 @@ const args = process.argv.slice(2);
 let renderedDir = "";
 let outputPath = "./output.pptx";
 let aspect = "16:9";
+let aspectExplicit = false;
 let widthOverride: number | undefined;
 let heightOverride: number | undefined;
 
@@ -53,6 +57,7 @@ for (let i = 0; i < args.length; i++) {
       );
       process.exit(1);
     }
+    aspectExplicit = true;
   } else if (arg === "--width") {
     widthOverride = parseFloat(requireNext(arg, args[++i]));
     if (isNaN(widthOverride) || widthOverride <= 0) {
@@ -101,9 +106,45 @@ if (pngFiles.length === 0) {
   process.exit(1);
 }
 
-const dim = ASPECT_PRESETS[aspect];
-const widthIn = widthOverride ?? dim.width;
-const heightIn = heightOverride ?? dim.height;
+// Resolve the slide size. Priority: explicit --width/--height > explicit
+// --aspect > auto-detect from the rendered PNGs (mirrors the renderer's
+// format auto-detection — 16:9 decks snap to a preset, social keeps its aspect).
+let widthIn: number;
+let heightIn: number;
+let aspectLabel: string;
+
+if (widthOverride !== undefined || heightOverride !== undefined) {
+  const dim = ASPECT_PRESETS[aspect];
+  widthIn = widthOverride ?? dim.width;
+  heightIn = heightOverride ?? dim.height;
+  aspectLabel = aspect;
+} else if (aspectExplicit) {
+  const dim = ASPECT_PRESETS[aspect];
+  widthIn = dim.width;
+  heightIn = dim.height;
+  aspectLabel = aspect;
+} else {
+  const sizes = await Promise.all(
+    pngFiles.map(async (f) => readPngSize(await readFile(resolve(renderedAbs, f))))
+  );
+  const first = sizes[0];
+  const mismatched = sizes.filter(
+    (s) => s.width !== first.width || s.height !== first.height
+  );
+  if (mismatched.length > 0) {
+    // A PPTX uses one slide size for every slide; loudly surface that the
+    // odd-sized PNGs will be stretched to the first PNG's aspect.
+    console.warn(
+      `Warning: PNGs have differing dimensions. A PPTX uses one slide size for all slides, ` +
+        `so sizing from the first PNG (${first.width}×${first.height}); ${mismatched.length} other PNG(s) ` +
+        `will be stretched to fit. Pass --aspect or --width/--height to override.`
+    );
+  }
+  const picked = pickPptxAspect(first.width, first.height);
+  widthIn = picked.width;
+  heightIn = picked.height;
+  aspectLabel = picked.label;
+}
 
 // EMU = inches × 914400
 const widthEmu = Math.round(widthIn * 914400);
@@ -140,7 +181,7 @@ const payload = JSON.stringify({
   output: outputAbs,
 });
 
-console.log(`Building PPTX (${aspect}, ${widthIn}×${heightIn} in) from ${pngFiles.length} PNG(s)...`);
+console.log(`Building PPTX (${aspectLabel}, ${widthIn}×${heightIn} in) from ${pngFiles.length} PNG(s)...`);
 
 const child = spawn("uv", ["run", "--with", "python-pptx", "python", "-c", pythonScript], {
   stdio: ["pipe", "pipe", "inherit"],
