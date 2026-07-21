@@ -180,13 +180,20 @@ Only `cover` ships as a proper template. The remaining archetype vocabulary (meg
 | `bun run merge <rendered-dir>` | Merge rendered output into a single PDF |
 | `bun run pptx <rendered-dir>` | Build a full-bleed PPTX from rendered PNGs (requires `uv`) |
 | `bun run gen-images <project> <manifest.yaml>` | Generate deck imagery in parallel via Codex imagegen |
+| `bun run psd:deck <file.psd>` | One-shot: `.psd` → editable deck → `deck.pdf` (extract+slides+render+merge; needs `uv`+Chromium) |
+| `bun run psd:extract <file.psd>` | Extract a `.psd` (composite + plates + texts + design metrics) via psd-tools (requires `uv`) |
+| `bun run psd:slides <extract-dir>` | Turn a PSD extract into editable `slides` HTML (plate + editable text) |
+
+PSD import reconstructs a Photoshop file as a **pixel-perfect background + editable HTML text**
+deck — text weight/alignment are measured from the ink (no `EngineData` needed). `psd:deck` does
+it in one shot. See [`skills/pdf-forge/references/psd-import.md`](skills/pdf-forge/references/psd-import.md).
 
 ## Requirements
 
 - [Bun](https://bun.sh) runtime
 - Playwright (installed via setup script)
 - Internet connection (Tailwind CDN, Google Fonts)
-- Optional: `uv` (https://docs.astral.sh/uv/) for PPTX export
+- Optional: `uv` (https://docs.astral.sh/uv/) for PPTX export and PSD import
 - Optional: `codex` CLI for the parallel image generator
 
 ## License

@@ -33,13 +33,34 @@ CI (`.github/workflows/ci.yml`) splits into a **browserless `check` job** (typec
 ### Pipeline scripts (also exposed as `bun run render|merge|pptx|gen-images`)
 
 ```bash
-bun run scripts/render-pdf.ts <pages-dir> [--format slides|docs|social] [--social-format <preset>] [--output <dir>] [--scale 2]
+bun run scripts/render-pdf.ts <pages-dir> [--format slides|docs|social] [--social-format <preset>] [--output <dir>] [--scale 2] [--viewport WxH]
 bun run scripts/merge-pages.ts <rendered-dir> [--output out.pdf]
 bun run scripts/png-to-pptx.ts <rendered-dir> [--aspect 16:9|4:3|16:10|a4-landscape|a4-portrait] [--output deck.pptx]   # needs `uv`
 bun run scripts/generate-manifest.ts <rendered-dir> --format <social-format> [--archetype a,b,c] [--theme] [--caption] [--hashtags]
 bun run scripts/generate-preview.ts <rendered-dir> [--output preview.html]
 bun run scripts/gen-images.ts <project-root> <manifest.yaml> [--concurrency 4]                                          # needs `codex` CLI
+bun run scripts/psd-to-deck.ts <file.psd> [--output <dir>] [--font "Montserrat"] [--scale 2] [--assets]                 # one-shot PSD→PDF; needs uv+Chromium
+bun run scripts/psd-extract.ts <file.psd> [--output <dir>] [--assets]                                                   # needs `uv` (psd-tools)
+bun run scripts/psd-to-slides.ts <extract-dir> [--output <dir>] [--font "Montserrat"]                                   # needs Chromium
 ```
+
+`--viewport WxH` overrides the `slides` 1920×1080 screenshot size (decks/posters of another fixed
+size, e.g. a non-16:9 PSD artboard). Ignored for `docs`/`social`. See `src/core/renderer.ts` (slides branch).
+
+### PSD import (`bun run psd:deck|psd:extract|psd:slides`)
+
+Converts a `.psd` into an editable deck. **`psd-to-deck.ts` is the one-shot** (extract→slides→render→merge,
+auto-passes `--viewport` when the deck isn't 1920×1080). Under it: `psd-extract.ts` runs `scripts/psd/extract.py`
+(psd-tools, deps via PEP 723 inline metadata + `uv run`) to emit the **composite**, per-artboard
+**reference** crops, per-artboard **plates** (composite with text hidden = pixel-perfect background),
+and `manifest.json`. Per text, beyond bbox+color it stores **design metrics measured from the ink**
+(diff reference×plate — robust even without `EngineData`): `cap_height`, `weight_hint` (400–900 from
+stroke thickness via distance-transform), `align`, `ink_bbox_rel`, `stroke_ratio`. `psd-to-slides.ts`
+turns that into `slides`-format HTML: the plate as a full-bleed `<img>` + each text as an editable
+`<div>` placed at its PSD bbox, width-matched via `transform:scaleX`, using the measured `weight_hint`/`align`.
+The original font is usually absent (`fonts_recoverable:false`) → a substitute Google Font is used; the
+generated HTML is a scaffold to refine (centering of point-text, italics) against the reference crops.
+Full spec: `skills/pdf-forge/references/psd-import.md`. Same uv pattern as `png-to-pptx.ts`.
 
 ## Architecture invariants
 
