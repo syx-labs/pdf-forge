@@ -1,22 +1,18 @@
 ---
 name: pdf-forge
-description: >
-  This skill should be used when the user asks to "create a PDF", "make a presentation",
-  "generate a pitch deck", "build a report", "design slides", "create a proposal",
-  "make a document look professional", "generate a sales deck", "create a whitepaper",
-  "build a financial report", "make a deck", "create an investor update",
-  "format a document for printing", "export as PDF", "create a one-pager",
-  or mentions PDF generation, slide design, or document formatting.
-  Also triggers when the user complains about AI-generated PDFs looking generic, ugly,
-  or "AI-sloppy", or wants high-quality visual output for print or screen.
-  Use this skill even for simple PDF requests — it ensures professional quality by default.
-  Also triggers for Instagram content: "create an Instagram post", "make a carousel",
-  "generate a story cover", "design social media creatives", "Instagram carrossel",
-  "reels cover", or mentions of posting to Instagram, aspect ratios (1:1, 4:5, 9:16),
-  or "creatives from references" (Reference Mode — feed images, extract visual grammar).
+description: Create polished PDFs, decks, reports, documents, and social creatives from HTML/Tailwind using the pdf-forge workflow.
 ---
 
 # pdf-forge
+
+## When to use
+
+Use this skill when the user asks to create a PDF, presentation, pitch deck, report,
+proposal, whitepaper, investor update, one-pager, print-formatted document, or polished
+document export. Also use it for Instagram posts, carousels, story covers, reels covers,
+social media creatives, aspect ratios like 1:1, 4:5, or 9:16, and reference-based visual
+grammar extraction. Also use it to **convert a Photoshop `.psd`** (deck, poster, proposal,
+fill-in template) into an editable, pixel-faithful deck — see `references/psd-import.md`.
 
 Generate professional, visually striking PDFs using pure HTML + Tailwind CSS. The output aesthetic follows the Vercel/Stripe design philosophy: dark zinc backgrounds, deliberate whitespace, typographic contrast, and restrained color accents. No component libraries, no React, no build step — just raw divs with Tailwind classes rendered via Playwright.
 
@@ -191,6 +187,27 @@ bun run $PDF_FORGE_HOME/scripts/generate-preview.ts ./rendered/
 
 Opens in browser — shows all slides as a grid, with captions and hashtags if present in the manifest.
 
+## Workflow — PSD Import
+
+Convert a Photoshop `.psd` into an editable, pixel-faithful deck. The `.psd` becomes a
+**pixel-perfect background plate (text hidden) + editable HTML text** on top. Full detail and
+honest limits (substitute fonts, scaffold refinement) in `references/psd-import.md`.
+
+```bash
+# One-shot: PSD → deck.pdf (extract+slides+render+merge; auto --viewport p/ não-16:9)
+bun run scripts/psd-to-deck.ts "modelo.psd" --output ./psd-deck
+
+# Ou passo a passo (controle fino):
+bun run scripts/psd-extract.ts "modelo.psd" --output ./psd-extract   # composite + plates + manifest + métricas de tinta
+bun run scripts/psd-to-slides.ts ./psd-extract --output ./psd-deck   # HTML editável (placa + textos calibrados)
+bun run scripts/render-pdf.ts ./psd-deck/pages --format slides --output ./psd-deck/rendered  # [--viewport WxH p/ cartaz]
+bun run scripts/merge-pages.ts ./psd-deck/rendered --output ./psd-deck/deck.pdf
+```
+
+O peso e a largura dos textos já vêm **medidos da tinta** (sem depender de `EngineData`). Refine
+o que sobrar no HTML (centralização de texto-ponto, itálico) contra as referências em
+`psd-extract/slides/`. Requer `uv` no PATH e o Chromium do Playwright.
+
 ## Reference Mode
 
 When the user attaches images of other creatives as inspiration, follow this workflow:
@@ -270,6 +287,7 @@ Read these as needed — do not load everything upfront:
 | `references/doc-layouts.md` | Building an A4 document |
 | `references/color-palettes.md` | User specified brand colors, or switching to light theme |
 | `references/tailwind-print.md` | Debugging rendering issues, or needing CSS technique reference |
+| `references/psd-import.md` | Converting a `.psd` (deck/poster/proposal/template) into an editable pdf-forge deck |
 
 ## Template Files
 
