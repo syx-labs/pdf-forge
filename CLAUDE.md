@@ -30,7 +30,7 @@ bun test -t "overflow"             # single test by name
 
 CI (`.github/workflows/ci.yml`) splits into a **browserless `check` job** (typecheck + `tests/core/utils.test.ts` + build) and an **`integration` job** that installs Chromium first. Anything touching `renderer`/`merger`/integration tests needs Chromium locally — run `setup.ts` or `bunx playwright install chromium` or it fails opaquely.
 
-### Pipeline scripts (also exposed as `bun run render|merge|pptx|gen-images`)
+### Pipeline scripts (also exposed as `bun run render|merge|pptx|gen-images|mermaid`)
 
 ```bash
 bun run scripts/render-pdf.ts <pages-dir> [--format slides|docs|social] [--social-format <preset>] [--output <dir>] [--scale 2] [--viewport WxH]
@@ -39,6 +39,7 @@ bun run scripts/png-to-pptx.ts <rendered-dir> [--aspect 16:9|4:3|16:10|a4-landsc
 bun run scripts/generate-manifest.ts <rendered-dir> --format <social-format> [--archetype a,b,c] [--theme] [--caption] [--hashtags]
 bun run scripts/generate-preview.ts <rendered-dir> [--output preview.html]
 bun run scripts/gen-images.ts <project-root> <manifest.yaml> [--concurrency 4]                                          # needs `codex` CLI
+bun run scripts/prerender-mermaid.ts <manifest.yaml> --output <dir>                                                     # mermaid → SVG estático (carrega a fonte real antes de medir); needs Chromium
 bun run scripts/psd-to-deck.ts <file.psd> [--output <dir>] [--font "Montserrat"] [--scale 2] [--assets]                 # one-shot PSD→PDF; needs uv+Chromium
 bun run scripts/psd-extract.ts <file.psd> [--output <dir>] [--assets]                                                   # needs `uv` (psd-tools)
 bun run scripts/psd-to-slides.ts <extract-dir> [--output <dir>] [--font "Montserrat"]                                   # needs Chromium

@@ -1,0 +1,46 @@
+# Ivory editorial — off-white quente + serif display, para material didático e
+# documentos de mentoria/consultoria em tom premium-print. Nasceu do material
+# "Do Excel ao banco de dados" (ago/2026). Pareia com a família de templates A4
+# em assets/templates/documents/ivory-editorial/ — ao compor páginas novas, use
+# os tokens do bloco `tokens:` abaixo (mesmos nomes dos templates).
+name: ivory-editorial
+theme: light
+palette:
+  bg: "#F7F3EA"
+  surface: "#EFE8D9"
+  surface_alt: "#E9EDE2"
+  text_primary: "#26241E"
+  text_secondary: "#5C574A"
+  text_muted: "#8B8271"
+  border: "#D9D1C0"
+accent_gradient: "from-[#1D4B38] to-[#B4532A]"
+accent_solid: "#1D4B38"
+accent_warm: "#B4532A"
+fonts:
+  display:
+    family: "Cormorant Garamond"
+    url: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap"
+  body:
+    family: "Plus Jakarta Sans"
+    url: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+  mono:
+    family: "JetBrains Mono"
+    url: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+allow_photos: false
+mood: "light editorial — ivory + pinho + terracota, serif display, material didático premium-print"
+tokens:
+  # Nomes semânticos usados pela família de templates (tailwind.config das páginas).
+  colors:
+    ivory: "#F7F3EA"      # fundo de página
+    ink: "#26241E"        # texto principal
+    muted: "#5C574A"      # texto secundário, rodapés, legendas
+    pine: "#1D4B38"       # acento frio: termos, links, perguntas, destaques
+    terra: "#B4532A"      # acento quente: labels de seção, numeração, barra da capa
+    hairline: "#D9D1C0"   # bordas e filetes
+    soft: "#EFE8D9"       # fill neutro: cards de citação, blocos de código
+    sage: "#E9EDE2"       # fill esverdeado: cards de regra/checklist/opção
+  letter_spacing:
+    heading: "-0.02em"    # títulos serif
+    body: "-0.01em"       # corpo
+    label: "0.14em"       # EXCEÇÃO deliberada: micro-rótulos uppercase 8–9px apenas
+  usage: "terra e pine com parcimônia: labels e numeração em terra, conteúdo destacado em pine; fills sage/soft nunca nas duas colunas da mesma dobra"

@@ -40,6 +40,7 @@
     "merge": "bun run scripts/merge-pages.ts",
     "pptx": "bun run scripts/png-to-pptx.ts",
     "gen-images": "bun run scripts/gen-images.ts",
+    "mermaid": "bun run scripts/prerender-mermaid.ts",
     "psd:extract": "bun run scripts/psd-extract.ts",
     "psd:slides": "bun run scripts/psd-to-slides.ts",
     "psd:deck": "bun run scripts/psd-to-deck.ts",

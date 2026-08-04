@@ -316,6 +316,8 @@ Ready-to-use HTML templates in `assets/templates/`:
 | `visual-full.html` | Charts, diagrams, full-width visuals |
 | `appendix.html` | Dense supplementary data |
 
+**Themed family — `ivory-editorial/`**: light-editorial A4 kit (ivory + pine + terracotta, Cormorant Garamond display) for didactic and mentoring material — cover, content page, term list, numbered steps, rule cards, task page, prompt blocks, data table, links, FAQ, and a diagram page for pre-rendered mermaid SVGs. Pairs with the `ivory-editorial` theme preset. Read the family's `NOTES.md` first: it documents the shared page shell, the deliberate positive-tracking exception for micro-labels, and the mermaid workflow (`scripts/prerender-mermaid.ts` renders mermaid to static SVG with the real font loaded — required because the doc renderer never awaits async scripts).
+
 ### Social — Instagram (`assets/templates/social/`)
 
 Each archetype has five format variants: `post-1-1.html`, `post-4-5.html`, `carousel-1-1.html`, `carousel-4-5.html`, `story.html`. See the archetype's `NOTES.md` for variants and slot conventions.
