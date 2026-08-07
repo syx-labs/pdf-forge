@@ -73,7 +73,8 @@ ajuste manual restante é menor. Para cada slide, compare o render com `psd-extr
 2. **Alinhamento**: `align` é medido, mas labels de card (texto-ponto) costumam sair `left` →
    centralize na mão: `text-align:center; width:<bbox.w>px;` (sem `scaleX`).
 3. **Largura** de 1 linha: `transform:scaleX(larguraAlvo/larguraNatural)` (origem `0 0`). Meça com
-   um span temporário; rótulos super espaçados → use `letter-spacing` no lugar.
+   um span temporário. Para rótulos “espaçados”, prefira `scaleX`/largura do bbox — **não** use
+   `letter-spacing` positivo (o design system só permite tracking negativo via tokens semânticos).
 4. **Multi-linha/justificado**: `white-space:normal; width:<bbox.w>px; line-height:~1.25`.
 5. **Itálico** onde a referência mostrar.
 Itere render → diff visual até casar. O "fantasma" fino de borda de letra é aceitável (fonte substituta).
@@ -82,5 +83,6 @@ Itere render → diff visual até casar. O "fantasma" fino de borda de letra é 
 Sem artboards, o documento inteiro vira 1 "artboard". O HTML sai no tamanho nativo e o render
 respeita via **`--format slides --viewport WxH`** (override do viewport 1920×1080). O one-shot
 **`psd:deck` detecta o tamanho e passa `--viewport` sozinho** quando o deck é uniforme e ≠ 1920×1080.
-Para PDF de impressão em alta resolução, suba `--scale` (o `merge-pages` normaliza a aresta longa
-para 1440px; renders muito grandes preservam nitidez antes da normalização).
+`--scale` melhora a nitidez do PNG *antes* do merge; o `merge-pages` ainda normaliza a aresta
+longa para **1440px**, então o PDF final não é “impressão em alta resolução” — é aspect-correct
+em resolução de deck.

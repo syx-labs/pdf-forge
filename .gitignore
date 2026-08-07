@@ -15,3 +15,6 @@ bun.lock
 
 # Generated content
 pages/
+
+.impeccable/hook.cache.json
+.cursor/

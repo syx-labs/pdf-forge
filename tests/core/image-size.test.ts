@@ -20,6 +20,15 @@ describe("readPngSize", () => {
     expect(() => readPngSize(new Uint8Array([1, 2, 3]))).toThrow();
     expect(() => readPngSize(new Uint8Array(32))).toThrow(/signature/i);
   });
+
+  test("throws when the first chunk is not IHDR", () => {
+    const bytes = new Uint8Array(32);
+    // Valid PNG signature…
+    bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    // …but a fake "tEXt" chunk type at offset 12.
+    bytes.set([0, 0, 0, 13, 0x74, 0x45, 0x58, 0x74], 8);
+    expect(() => readPngSize(bytes)).toThrow(/IHDR/i);
+  });
 });
 
 describe("fitToLongEdge", () => {

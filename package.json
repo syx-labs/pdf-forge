@@ -29,6 +29,7 @@
     "assets/",
     "scripts/",
     "skills/",
+    "src/core/image-size.ts",
     "install.sh",
     ".claude-plugin/"
   ],

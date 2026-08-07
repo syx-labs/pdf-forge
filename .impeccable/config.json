@@ -1,0 +1,9 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "scripts/psd-to-slides.ts"
+    ],
+    "ignoreValues": []
+  }
+}

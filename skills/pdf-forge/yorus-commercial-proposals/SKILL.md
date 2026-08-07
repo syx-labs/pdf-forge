@@ -16,9 +16,8 @@ metadata:
 - Pair with `openclaw-imports/pdf-forge` and `ocr-and-documents`.
 
 ## Reference Artifact
-- Canonical reference PDF: `/Users/ogabrielfalcao/.hermes/cache/documents/doc_a9f664915b14_Proposta-Estancorp-Yorus-sem-p1-p11.pdf`
-- Analysis folder: `/Users/ogabrielfalcao/.hermes/cache/documents/proposta-estancorp-learn-final/`
-- Extracted facts: A4, 9 pages, Safari/Quartz export, fonts include Archivo, Newsreader, IBM Plex Mono, SF/SFNS; palette is Yorus black/white/orange.
+- Prefer a local Estancorp/Yorus proposal PDF the user attaches (or an optional local cache if available). Do **not** hardcode machine-specific absolute paths.
+- Extracted facts from the canonical reference: A4, 9 pages, Safari/Quartz export, fonts include Archivo, Newsreader, IBM Plex Mono, SF/SFNS; palette is Yorus black/white/orange.
 
 ## Core Principle
 Turn the proposal into a **decision artifact**, not a pretty document. A director should answer in under 60 seconds: what is being approved, why now, proof it works, risks controlled, cost, go-live timing, and exact next action.
@@ -35,7 +34,7 @@ Turn the proposal into a **decision artifact**, not a pretty document. A directo
 9. **Próximo passo** — dark approval checklist with exact actions.
 
 ## Visual Grammar
-- Use restrained Yorus palette: near-black, white/off-white, and orange accent. Avoid generic AI gradients, robots, neural networks, and stock-business imagery.
+- Zinc backbone (~90% zinc shades) with white/off-white surfaces; orange is the single accent moment. Allow exactly one controlled accent gradient on the hero element per page — no additional gradients. Avoid robots, neural networks, and stock-business imagery.
 - Typography: Archivo-like sans for structure/body, Newsreader-like serif for selective editorial emphasis, IBM Plex Mono-like labels. Do not overuse tracked all-caps; use it only as a system label.
 - One focal point per page: hero proof number, mockup, boundary diagram, price anchor, or approval checklist.
 - Prefer asymmetric editorial layouts and structured tables over equal card grids. No three consecutive pages with the same pattern.
@@ -67,8 +66,8 @@ Use a dark page titled “Para aprovar e começar.” Keep 5 binary actions:
 1. Aprovar setup.
 2. Aprovar mensalidade.
 3. Confirmar responsável operacional do cliente.
-4. Liberar materials/data/prototype/docs.
-5. Start date + first visible milestone.
+4. Liberar materiais/dados/protótipo/documentos.
+5. Definir data de início e primeiro marco visível.
 
 ## Verification
 Before delivering a Yorus proposal:

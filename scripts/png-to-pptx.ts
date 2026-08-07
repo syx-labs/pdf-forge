@@ -114,10 +114,16 @@ let heightIn: number;
 let aspectLabel: string;
 
 if (widthOverride !== undefined || heightOverride !== undefined) {
-  const dim = ASPECT_PRESETS[aspect];
-  widthIn = widthOverride ?? dim.width;
-  heightIn = heightOverride ?? dim.height;
-  aspectLabel = aspect;
+  if (widthOverride === undefined || heightOverride === undefined) {
+    console.error(
+      "Both --width and --height are required when overriding slide size " +
+        "(partial override would silently mix a custom edge with a preset)."
+    );
+    process.exit(1);
+  }
+  widthIn = widthOverride;
+  heightIn = heightOverride;
+  aspectLabel = `custom ${widthIn}×${heightIn}`;
 } else if (aspectExplicit) {
   const dim = ASPECT_PRESETS[aspect];
   widthIn = dim.width;

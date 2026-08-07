@@ -6,14 +6,19 @@ import { join, resolve, basename } from "node:path";
 const args = process.argv.slice(2);
 const inputDir = resolve(args[0] ?? "./pages/");
 let outputDir = "./output/";
-let format: "slides" | "docs" = "docs";
+let format: "slides" | "docs" | undefined;
 let scale = 2;
 
 for (let i = 1; i < args.length; i++) {
   if (args[i] === "--output" && args[i + 1]) {
     outputDir = args[++i];
   } else if (args[i] === "--format" && args[i + 1]) {
-    format = args[++i] as "slides" | "docs";
+    const f = args[++i];
+    if (f !== "slides" && f !== "docs") {
+      console.error(`Invalid --format "${f}". Use "slides" or "docs".`);
+      process.exit(1);
+    }
+    format = f;
   } else if (args[i] === "--scale" && args[i + 1]) {
     scale = Number(args[++i]);
   }
@@ -31,10 +36,11 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-// Auto-detect docs from content
-const sample = await Bun.file(join(inputDir, files[0])).text();
-if (sample.includes("210mm") || sample.includes("297mm")) {
-  format = "docs";
+// Auto-detect format from content only when --format was not provided.
+if (!format) {
+  const sample = await Bun.file(join(inputDir, files[0])).text();
+  format =
+    sample.includes("210mm") || sample.includes("297mm") ? "docs" : "slides";
 }
 
 const browser = await chromium.launch();

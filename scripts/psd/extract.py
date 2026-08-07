@@ -202,7 +202,9 @@ def main():
         tr = list(getattr(x, "transform", []) or [])
         m = text_metrics(bb, l, t)
         texts[a["slug"]].append({
-            "idx": getattr(x, "_index", None) or len(texts[a["slug"]]),
+            # Sequential index within this artboard's text list (do not use
+            # private psd-tools `_index`, and avoid `or` which drops a real 0).
+            "idx": len(texts[a["slug"]]),
             "text": x.text,
             "bbox_rel": rel,
             "w": rel[2] - rel[0],

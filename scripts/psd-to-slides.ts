@@ -88,6 +88,7 @@ const esc = (s: string) =>
 await mkdir(imgDir, { recursive: true });
 
 const browser: Browser = await chromium.launch();
+try {
 const page: Page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 await page.setContent(
   `<!doctype html><html><head><meta charset="utf-8">${FONT_LINK}` +
@@ -202,8 +203,9 @@ ${parts.map((p) => "    " + p).join("\n")}
   generated.push(art.slug);
   console.log(`  ${art.slug}.html  (${entries.length} textos)`);
 }
-
-await browser.close();
+} finally {
+  await browser.close();
+}
 
 const imgCount = (await readdir(imgDir)).length;
 console.log(`\n${generated.length} slide(s) gerados em ${pagesDir} (${imgCount} placas).`);

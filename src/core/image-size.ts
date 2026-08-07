@@ -28,7 +28,18 @@ export function readPngSize(bytes: Uint8Array): PixelSize {
       throw new Error("Not a valid PNG: bad signature.");
     }
   }
+  // IHDR must be the first chunk: 4-byte length + 4-byte type at offsets 8..15.
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const chunkLen = view.getUint32(8, false);
+  const chunkType = String.fromCharCode(
+    bytes[12]!,
+    bytes[13]!,
+    bytes[14]!,
+    bytes[15]!
+  );
+  if (chunkType !== "IHDR" || chunkLen < 13) {
+    throw new Error("Not a valid PNG: first chunk is not a valid IHDR.");
+  }
   const width = view.getUint32(16, false);
   const height = view.getUint32(20, false);
   if (width <= 0 || height <= 0) {

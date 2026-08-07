@@ -195,13 +195,13 @@ honest limits (substitute fonts, scaffold refinement) in `references/psd-import.
 
 ```bash
 # One-shot: PSD → deck.pdf (extract+slides+render+merge; auto --viewport p/ não-16:9)
-bun run scripts/psd-to-deck.ts "modelo.psd" --output ./psd-deck
+bun run "$PDF_FORGE_HOME/scripts/psd-to-deck.ts" "modelo.psd" --output ./psd-deck
 
 # Ou passo a passo (controle fino):
-bun run scripts/psd-extract.ts "modelo.psd" --output ./psd-extract   # composite + plates + manifest + métricas de tinta
-bun run scripts/psd-to-slides.ts ./psd-extract --output ./psd-deck   # HTML editável (placa + textos calibrados)
-bun run scripts/render-pdf.ts ./psd-deck/pages --format slides --output ./psd-deck/rendered  # [--viewport WxH p/ cartaz]
-bun run scripts/merge-pages.ts ./psd-deck/rendered --output ./psd-deck/deck.pdf
+bun run "$PDF_FORGE_HOME/scripts/psd-extract.ts" "modelo.psd" --output ./psd-extract   # composite + plates + manifest + métricas de tinta
+bun run "$PDF_FORGE_HOME/scripts/psd-to-slides.ts" ./psd-extract --output ./psd-deck   # HTML editável (placa + textos calibrados)
+bun run "$PDF_FORGE_HOME/scripts/render-pdf.ts" ./psd-deck/pages --format slides --output ./psd-deck/rendered  # [--viewport WxH p/ cartaz]
+bun run "$PDF_FORGE_HOME/scripts/merge-pages.ts" ./psd-deck/rendered --output ./psd-deck/deck.pdf
 ```
 
 O peso e a largura dos textos já vêm **medidos da tinta** (sem depender de `EngineData`). Refine
