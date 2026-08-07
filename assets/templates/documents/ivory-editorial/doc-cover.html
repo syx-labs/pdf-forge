@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Cover</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[26mm] pb-[20mm] font-sans text-ink">
+
+  <!-- REPLACE: programa / marca -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold">Programa de capacitação · Acme</div>
+
+  <div class="mt-[34mm]">
+    <div class="w-[46px] h-[3px] bg-terra mb-8"></div>
+    <!-- REPLACE: título em dois tons (segunda linha em pine) -->
+    <h1 class="font-serif font-semibold text-[58px] leading-[1.04] tracking-heading">Da planilha ao<br/><span class="text-pine">sistema vivo</span></h1>
+    <!-- REPLACE: subtítulo -->
+    <p class="mt-7 text-[14px] leading-relaxed text-muted max-w-[125mm]">Material de estudo da Aula 1: os fundamentos vistos ao vivo, a demonstração passo a passo e a sua primeira tarefa prática.</p>
+  </div>
+
+  <div class="mt-[26mm] grid grid-cols-2 gap-x-10 gap-y-4 max-w-[130mm] text-[11.5px]">
+    <!-- REPLACE: metadados -->
+    <div><div class="uppercase tracking-label text-[8.5px] text-muted mb-1">Para</div><div class="font-semibold">Nome da pessoa</div></div>
+    <div><div class="uppercase tracking-label text-[8.5px] text-muted mb-1">De</div><div class="font-semibold">Nome de quem assina</div></div>
+    <div><div class="uppercase tracking-label text-[8.5px] text-muted mb-1">Sessão</div><div class="font-semibold">1 · 04 de agosto de 2026</div></div>
+    <div><div class="uppercase tracking-label text-[8.5px] text-muted mb-1">Programa</div><div class="font-semibold">Mentoria de 20 horas</div></div>
+  </div>
+
+  <div class="absolute bottom-[20mm] left-[20mm] right-[20mm]">
+    <div class="border-t border-hairline pt-5">
+      <div class="uppercase tracking-label text-[8.5px] text-muted mb-3">Neste material</div>
+      <!-- REPLACE: sumário em 2 colunas (uma div por item) -->
+      <div class="grid grid-cols-2 gap-x-10 gap-y-[5px] text-[10.5px] text-muted">
+        <div>1 · O que vimos, em um minuto</div>
+        <div>4 · Sua tarefa até a próxima sessão</div>
+        <div>2 · Dicionário da aula</div>
+        <div>5 · Links úteis</div>
+        <div>3 · A demonstração, passo a passo</div>
+        <div>6 · Dúvidas prováveis (FAQ)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

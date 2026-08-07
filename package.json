@@ -29,6 +29,7 @@
     "assets/",
     "scripts/",
     "skills/",
+    "src/core/image-size.ts",
     "install.sh",
     ".claude-plugin/"
   ],
@@ -40,17 +41,20 @@
     "merge": "bun run scripts/merge-pages.ts",
     "pptx": "bun run scripts/png-to-pptx.ts",
     "gen-images": "bun run scripts/gen-images.ts",
+    "mermaid": "bun run scripts/prerender-mermaid.ts",
+    "psd:extract": "bun run scripts/psd-extract.ts",
+    "psd:slides": "bun run scripts/psd-to-slides.ts",
+    "psd:deck": "bun run scripts/psd-to-deck.ts",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.0.0",
     "pdf-lib": "^1.17.1",
     "playwright": "^1.50.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.2",
     "tsup": "^8.5.1",
     "typescript": "^7.0.0"

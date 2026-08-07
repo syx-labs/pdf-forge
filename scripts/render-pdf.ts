@@ -21,10 +21,19 @@ let format: Format | undefined;
 let socialFormat: SocialFormat | undefined;
 let outputDir = "./output";
 let scale = 2;
+let viewport: { width: number; height: number } | undefined;
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
-  if (arg === "--format") {
+  if (arg === "--viewport") {
+    const val = args[++i];
+    const m = /^(\d+)x(\d+)$/.exec(val ?? "");
+    if (!m) {
+      console.error('Invalid --viewport "' + val + '". Use WxH, e.g. 1920x1080.');
+      process.exit(1);
+    }
+    viewport = { width: parseInt(m[1], 10), height: parseInt(m[2], 10) };
+  } else if (arg === "--format") {
     const val = args[++i];
     if (!isValidFormat(val)) {
       console.error(
@@ -61,7 +70,7 @@ for (let i = 0; i < args.length; i++) {
 
 if (!inputDir) {
   console.error(
-    "Usage: bun run scripts/render-pdf.ts <input-dir> [--format slides|docs|social] [--social-format <preset>] [--output <dir>] [--scale 2]"
+    "Usage: bun run scripts/render-pdf.ts <input-dir> [--format slides|docs|social] [--social-format <preset>] [--output <dir>] [--scale 2] [--viewport WxH]"
   );
   process.exit(1);
 }
@@ -73,6 +82,7 @@ try {
     format,
     socialFormat,
     scale,
+    viewport,
   });
   const suffix = result.format === "social" ? ` (${result.socialFormat})` : "";
   console.log(

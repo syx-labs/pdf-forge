@@ -85,7 +85,7 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
   let viewport: { width: number; height: number };
 
   if (format === "slides") {
-    viewport = { width: 1920, height: 1080 };
+    viewport = options.viewport ?? { width: 1920, height: 1080 };
   } else if (format === "docs") {
     viewport = { width: 794, height: 1123 };
   } else {

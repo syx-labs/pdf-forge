@@ -62,6 +62,38 @@ PLATFORMS=(
   "$HOME_DIR/.factory/skills"
 )
 
+# Auto-descoberta: qualquer ~/.{agente}/skills que JÁ exista. Agentes instalados depois
+# desta lista (Continue, Junie, Roo, Qwen, Zencoder…) entram sozinhos — a lista nunca
+# fica desatualizada. Só toca dirs `skills/` existentes; não cria para plataformas novas.
+discover_skill_dirs() {
+  local base name
+  shopt -s nullglob
+  for base in "$HOME_DIR"/.*/; do
+    name="$(basename "$base")"
+    # Exclui . / .. e o PRÓPRIO dir canônico (~/.agents/skills) — symlinkar o canônico para
+    # ../../.agents/skills/pdf-forge resolveria pra si mesmo (loop) e derrubaria a distribuição.
+    if [[ "$name" != "." && "$name" != ".." && -d "${base}skills" && "${base}skills" != "$CANONICAL_DIR" ]]; then
+      printf '%s\n' "${base}skills"
+    fi
+  done
+  shopt -u nullglob
+}
+
+# Conjunto-alvo unificado: plataformas canônicas cujo dir base existe (criadas mesmo sem
+# skills/ preexistente) ∪ as auto-descobertas, deduplicado. Usado por install E uninstall.
+build_target_dirs() {
+  local platform_dir parent
+  {
+    for platform_dir in "${PLATFORMS[@]}"; do
+      parent="$(dirname "$platform_dir")"
+      if [[ -d "$parent" ]]; then
+        printf '%s\n' "$platform_dir"
+      fi
+    done
+    discover_skill_dirs
+  } | sort -u
+}
+
 # ── Shell profile detection ──────────────────────────────────────────
 detect_shell_profile() {
   local shell_name
@@ -98,6 +130,28 @@ ENV_MARKER="# pdf-forge"
 ENV_LINE="export PDF_FORGE_HOME=\"$PDF_FORGE_ROOT\" $ENV_MARKER"
 
 # ── Helpers ──────────────────────────────────────────────────────────
+# True when an existing symlink is owned by this install (points at expected target
+# by readlink string, or resolves to the same path as expected / SKILL_SOURCE).
+is_our_symlink() {
+  local link="$1"
+  local expected="$2"
+  [[ -L "$link" ]] || return 1
+  local current
+  current="$(readlink "$link")"
+  [[ "$current" == "$expected" ]] && return 0
+  # Resolve both sides when possible — relative platform links and absolute
+  # canonical links should compare equal after realpath.
+  local resolved_link resolved_expected resolved_skill
+  resolved_link="$(cd "$(dirname "$link")" && realpath "$current" 2>/dev/null)" || return 1
+  if [[ "$expected" = /* ]]; then
+    resolved_expected="$(realpath "$expected" 2>/dev/null)" || resolved_expected=""
+  else
+    resolved_expected="$(cd "$(dirname "$link")" && realpath "$expected" 2>/dev/null)" || resolved_expected=""
+  fi
+  resolved_skill="$(realpath "$SKILL_SOURCE" 2>/dev/null)" || resolved_skill=""
+  [[ -n "$resolved_link" && ( "$resolved_link" == "$resolved_expected" || "$resolved_link" == "$resolved_skill" ) ]]
+}
+
 create_symlink() {
   local target="$1"
   local link="$2"
@@ -108,6 +162,10 @@ create_symlink() {
     current_target="$(readlink "$link")"
     if [[ "$current_target" == "$target" ]]; then
       skip "$label (já existe)"
+      return
+    fi
+    if ! is_our_symlink "$link" "$target"; then
+      warn "$label — symlink existe mas não aponta para o pdf-forge canônico ($current_target); preservando"
       return
     fi
     if $DRY_RUN; then
@@ -133,8 +191,13 @@ create_symlink() {
 remove_symlink() {
   local link="$1"
   local label="$2"
+  local expected_target="${3:-}"
 
   if [[ -L "$link" ]]; then
+    if [[ -n "$expected_target" ]] && ! is_our_symlink "$link" "$expected_target"; then
+      warn "$label — symlink não pertence ao pdf-forge ($(readlink "$link")); preservando"
+      return
+    fi
     if $DRY_RUN; then
       info "$label → removeria symlink"
     else
@@ -152,15 +215,16 @@ if $UNINSTALL; then
   echo -e "${CYAN}pdf-forge${RESET} · Desinstalando..."
   echo ""
 
-  # Remove platform symlinks
-  for platform_dir in "${PLATFORMS[@]}"; do
+  # Remove platform symlinks (canônicos + auto-descobertos) — só os nossos
+  while IFS= read -r platform_dir; do
+    [[ -n "$platform_dir" ]] || continue
     local_link="$platform_dir/pdf-forge"
     platform_name="$(basename "$(dirname "$platform_dir")")"
-    remove_symlink "$local_link" "$platform_name"
-  done
+    remove_symlink "$local_link" "$platform_name" "../../.agents/skills/pdf-forge"
+  done < <(build_target_dirs)
 
   # Remove canonical symlink
-  remove_symlink "$CANONICAL_LINK" "agents (canônico)"
+  remove_symlink "$CANONICAL_LINK" "agents (canônico)" "$SKILL_SOURCE"
 
   # Remove env var from shell profile
   if [[ -f "$SHELL_PROFILE" ]] && grep -q "$ENV_MARKER" "$SHELL_PROFILE"; then
@@ -202,20 +266,16 @@ echo ""
 
 # 2. Platform symlinks: ~/.{platform}/skills/pdf-forge → ../../.agents/skills/pdf-forge
 echo -e "${CYAN}Plataformas${RESET}"
-for platform_dir in "${PLATFORMS[@]}"; do
+# Itera o conjunto-alvo unificado (canônicas instaladas + auto-descobertas). O gating de
+# "dir base existe" já está no build_target_dirs; aqui é só criar o symlink relativo.
+while IFS= read -r platform_dir; do
+  [[ -n "$platform_dir" ]] || continue
   local_link="$platform_dir/pdf-forge"
   platform_name="$(basename "$(dirname "$platform_dir")")"
-
-  # Only create if parent platform dir exists (platform is installed)
-  parent_of_skills="$(dirname "$platform_dir")"
-  if [[ -d "$parent_of_skills" ]]; then
-    # Relative symlink: from ~/.{platform}/skills/pdf-forge → ../../.agents/skills/pdf-forge
-    relative_target="../../.agents/skills/pdf-forge"
-    create_symlink "$relative_target" "$local_link" "  $platform_name"
-  else
-    skip "  $platform_name (não instalado)"
-  fi
-done
+  # Relative symlink: from ~/.{platform}/skills/pdf-forge → ../../.agents/skills/pdf-forge
+  relative_target="../../.agents/skills/pdf-forge"
+  create_symlink "$relative_target" "$local_link" "  $platform_name"
+done < <(build_target_dirs)
 echo ""
 
 # 3. Environment variable

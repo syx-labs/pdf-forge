@@ -53,7 +53,7 @@ Self-check every generated PDF against this list. Each entry names the mistake, 
 ### Bad line height
 **Looks like:** Body text with `leading-none` (cramped) or `leading-loose` (floaty). Lines either collide or drift apart.
 **Why it looks AI-generated:** AI often ignores line height or applies it inconsistently. Both extremes make text physically uncomfortable to read.
-**Fix:** Body text: `leading-relaxed` (1.625) or `leading-normal` (1.5). Headings: `leading-tight` (1.25) or `leading-snug` (1.375). Never use `leading-none` on multi-line text.
+**Fix:** Use the custom leading tokens defined in every template's `tailwind.config` (not Tailwind's defaults): body text uses `leading-relaxed` (1.75); sub-headings and captions use `leading-snug` (1.3); headings use `leading-tight` (1.15). `leading-none` (1.0) is reserved for single-line mega numbers — never use it on multi-line text.
 
 ### Lines too long without compensation
 **Looks like:** Text spanning the full page width -- 90+ characters per line.
