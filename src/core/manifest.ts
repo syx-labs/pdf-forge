@@ -43,10 +43,9 @@ export async function writeManifest(input: ManifestInput): Promise<void> {
   if (input.hashtags && input.hashtags.length > 0)
     data.hashtag_suggestion = input.hashtags;
 
+  // js-yaml v5 removed quotingType; forceQuotes defaults to false.
   const yaml = yamlDump(data, {
     lineWidth: 120,
-    quotingType: '"',
-    forceQuotes: false,
   });
   await writeFile(input.outputPath, yaml, "utf-8");
 }
