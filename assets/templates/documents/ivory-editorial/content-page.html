@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Content Page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido (programa · sessão/data) -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-10">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label e título da seção -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 1</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-9">O que vimos, em um minuto</h2>
+
+  <!-- REPLACE: parágrafos com barra lateral de ênfase (um flex por parágrafo) -->
+  <div class="space-y-6 text-[12.5px] leading-relaxed max-w-[160mm]">
+    <div class="flex gap-4"><div class="w-[3px] bg-pine/60 shrink-0 rounded"></div><p>Primeiro parágrafo do resumo. Escreva como quem conversa: frases curtas, linguagem de negócio, zero jargão sem explicação.</p></div>
+    <div class="flex gap-4"><div class="w-[3px] bg-pine/60 shrink-0 rounded"></div><p>Use <strong>negrito</strong> só nos termos que a pessoa precisa levar da página. Um destaque por parágrafo costuma bastar.</p></div>
+    <div class="flex gap-4"><div class="w-[3px] bg-pine/60 shrink-0 rounded"></div><p>Feche apontando a próxima ação concreta: o que a pessoa faz com isso, e em qual seção do material está o caminho.</p></div>
+  </div>
+
+  <!-- REPLACE: citação destacada (a frase que resume a página) -->
+  <div class="mt-12 bg-soft border border-hairline border-l-4 border-l-pine rounded-lg px-7 py-6 max-w-[160mm]">
+    <div class="uppercase tracking-label text-[8.5px] text-terra font-semibold mb-2">A ideia central</div>
+    <p class="font-serif italic text-[19px] leading-snug text-ink">"A frase que a pessoa deveria conseguir repetir de cabeça uma semana depois de ler este material."</p>
+  </div>
+
+  <!-- REPLACE: rodapé (título do material · número da página) -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>2</span>
+  </div>
+
+</div>
+</body>
+</html>

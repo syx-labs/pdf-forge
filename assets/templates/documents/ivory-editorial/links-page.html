@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Links Page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-10">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label e título -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 8</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-9">Links úteis</h2>
+
+  <!-- REPLACE: um bloco por grupo (label terra · links pine sublinhados, sempre com contexto) -->
+  <div class="space-y-8 text-[12px] leading-relaxed max-w-[164mm]">
+    <div>
+      <div class="uppercase tracking-label text-[8.5px] text-terra font-semibold mb-3">Primeiro grupo de referências</div>
+      <div class="space-y-2">
+        <p>Nome da ferramenta e para que serve: <a href="https://example.com" class="text-pine underline underline-offset-2">example.com</a> · detalhe extra em <a href="https://example.com/docs" class="text-pine underline underline-offset-2">example.com/docs</a></p>
+        <p>Link com gerenciamento de expectativa ("não precisa olhar agora"): <a href="https://example.com" class="text-pine underline underline-offset-2">example.com</a></p>
+      </div>
+    </div>
+    <div>
+      <div class="uppercase tracking-label text-[8.5px] text-terra font-semibold mb-3">Segundo grupo</div>
+      <div class="space-y-2">
+        <p>Cada link diz <em>por que</em> clicar, nunca é URL solta: <a href="https://example.com" class="text-pine underline underline-offset-2">example.com</a></p>
+      </div>
+    </div>
+    <div>
+      <div class="uppercase tracking-label text-[8.5px] text-terra font-semibold mb-3">Materiais que ainda não têm link</div>
+      <div class="space-y-2">
+        <p><em>Título do material em itálico</em>: uma linha sobre o conteúdo. <span class="text-muted">(link vai junto com este material)</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPLACE: rodapé -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>9</span>
+  </div>
+
+</div>
+</body>
+</html>

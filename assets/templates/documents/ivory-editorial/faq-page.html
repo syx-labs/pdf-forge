@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — FAQ Page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-8">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label e título -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 9</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-8">Dúvidas que você provavelmente vai ter</h2>
+
+  <!-- REPLACE: um bloco por pergunta (pergunta serif itálico pine, na voz da pessoa) -->
+  <div class="space-y-6 text-[11.5px] leading-relaxed max-w-[164mm]">
+    <div><p class="font-serif italic text-[16px] text-pine mb-1">"A pergunta como a pessoa faria, entre aspas?"</p><p>A resposta direta na primeira frase. Depois o porquê, apontando para as seções do material onde o assunto foi tratado.</p></div>
+    <div><p class="font-serif italic text-[16px] text-pine mb-1">"E se der errado?"</p><p>Toda FAQ didática precisa da pergunta do medo. Responda com as camadas de proteção concretas, não com "fica tranquilo".</p></div>
+    <div><p class="font-serif italic text-[16px] text-pine mb-1">"Quanto custa?"</p><p>E da pergunta do bolso: números reais, o que é grátis e até onde, e onde nasce o custo quando nasce.</p></div>
+  </div>
+
+  <!-- REPLACE: fechamento assinado -->
+  <div class="mt-10 bg-soft border border-hairline rounded-lg px-7 py-5 max-w-[164mm]">
+    <p class="text-[11.5px] leading-relaxed"><em>O convite final em itálico: onde tirar dúvida, como pedir ajuda, e a permissão explícita para errar rápido.</em></p>
+    <p class="mt-3 text-[11px] font-semibold">— Quem assina · Organização</p>
+  </div>
+
+  <!-- REPLACE: rodapé -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>10</span>
+  </div>
+
+</div>
+</body>
+</html>

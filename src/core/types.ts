@@ -18,6 +18,10 @@ export interface RenderOptions {
   // Opt-out of the overflow guard for single-viewport formats (slides, social).
   // Docs are always exempt — page.pdf paginates natively.
   allowOverflow?: boolean;
+  // Override the screenshot viewport for the `slides` format. Defaults to
+  // 1920×1080. Use for decks/posters whose pages are a different fixed size
+  // (e.g. a PSD artboard that is not 16:9). Ignored for `docs`/`social`.
+  viewport?: { width: number; height: number };
 }
 
 // Discriminated by `format`: the social branch narrows `socialFormat` to a

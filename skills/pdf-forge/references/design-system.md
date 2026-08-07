@@ -16,6 +16,8 @@ Load Inter as a **variable font** from Google Fonts CDN. This enables fine-grain
 
 Apply `font-family: 'Inter', system-ui, -apple-system, sans-serif;` to the root element.
 
+In `tailwind.config`, set `mono: ['Menlo', 'monospace']` — a system monospace stack with no network dependency — for section labels and category markers. Only name a webfont in the `mono` array if you actually load it via `<link>`; declaring an unloaded family (e.g. `'JetBrains Mono'`) silently falls back and is dead config. The social templates intentionally load JetBrains Mono and list it first; slides and documents use the system stack.
+
 Variable font weights allow subtle hierarchy. Instead of jumping from 300 to 600, use intermediate values like 350 or 450 via `font-[350]` for nuanced contrast. Standard Tailwind weight classes remain valid but the variable font unlocks finer control when needed.
 
 ### Slide Scale (16:9 / 1920x1080)
@@ -64,6 +66,16 @@ Use these tokens when generating paginated documents at A4 dimensions (794x1123 
 These tokens are defined in each template's `tailwind.config` block and replace generic Tailwind tracking classes. The semantic names communicate intent — `tracking-heading` is clearer than `tracking-[-0.06em]`.
 
 **Never use `tracking-wide`, `tracking-wider`, or `tracking-widest`.** Positive letter-spacing is the single most recognizable marker of AI-generated PDFs. No production design system uses positive tracking — even the "widest" values in Figma (-0.009em), Stripe (-0.019em), and Framer (-0.009em) are still negative.
+
+**Line height is tokenized too.** Every template's `tailwind.config` overrides three Tailwind `leading` defaults with calibrated values. Use the semantic classes — do not assume Tailwind's stock numbers:
+
+| Token | Value | Use for |
+|-------|-------|---------|
+| `leading-tight` | 1.15 | Hero headings, display text, compact multi-line titles |
+| `leading-snug` | 1.3 | Sub-headings, captions, dense metadata |
+| `leading-relaxed` | 1.75 | Body text, long-form paragraphs |
+
+`leading-none` (1.0) is reserved for single-line mega numbers. Never use it on multi-line text.
 
 **Weight layering prevents visual fatigue.** Use `font-light` (300) for body text to keep large blocks of text from feeling heavy. Reserve `font-semibold` (600) for headings and `font-bold` (700) for numbers and emphasis. The weight differential between body and heading must be at least two steps (e.g., 300 to 600). With Inter's variable font, intermediate weights like `font-[350]` or `font-[450]` create more nuanced hierarchy.
 
@@ -137,7 +149,8 @@ Only values from this scale are permitted. Arbitrary pixel values are prohibited
 
 | Context | Value | Tailwind | Notes |
 |---------|-------|----------|-------|
-| Page padding | 96px | `p-24` | All four sides of the slide |
+| Page padding | 96px | `p-24` | All four sides — the baseline slide padding |
+| Page padding (wide) | 128 / 96px | `px-32 py-24` | Sanctioned wider side margins for content-heavy slides |
 | Header to content | 64-80px | `mb-16` to `mb-20` | Space below title block |
 | Grid gap | 24-48px | `gap-6` to `gap-12` | Between grid items |
 | Card inner padding | 32-40px | `p-8` to `p-10` | Content within cards |

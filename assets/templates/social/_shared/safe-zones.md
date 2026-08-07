@@ -10,7 +10,7 @@ No critical overlay zones. Feed posts render edge-to-edge inside the grid, cropp
 
 Apply interior padding anyway for visual breathing room:
 
-- Minimum padding: `p-[96px]` on all sides
+- Minimum padding: `p-24` (96px) on all sides
 - Preferred: `p-[120px]` for post-4-5 (more vertical space lets content breathe)
 - Bottom padding extra for `@handle` footer when `default_footer: true`: add `pb-[144px]`
 
