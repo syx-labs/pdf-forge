@@ -1,0 +1,57 @@
+# Example manifest for scripts/prerender-mermaid.ts
+# Theme variables below match the ivory-editorial preset
+# (assets/themes/ivory-editorial.yaml) — copy this file per project and edit.
+#
+#   bun run scripts/prerender-mermaid.ts scripts/mermaid-manifest.example.yaml --output ./svgs/
+#
+# Inline each generated SVG into the page (diagram-page.html slot). Never load
+# mermaid at render time: the doc renderer does not await async scripts.
+
+font:
+  # MUST be the same family the target pages use — mermaid measures text with
+  # this font to size the boxes. Wrong font here = clipped labels in the PDF.
+  family: "Plus Jakarta Sans"
+  url: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+
+theme_variables:
+  background: "#F7F3EA"
+  primaryColor: "#E9EDE2"
+  primaryTextColor: "#26241E"
+  primaryBorderColor: "#1D4B38"
+  secondaryColor: "#EFE8D9"
+  secondaryBorderColor: "#B4532A"
+  secondaryTextColor: "#26241E"
+  tertiaryColor: "#F7F3EA"
+  lineColor: "#5C574A"
+  fontFamily: "Plus Jakarta Sans, sans-serif"
+  fontSize: "14px"
+  # cScale0-N color the mindmap branches (label variants keep text readable)
+  cScale0: "#1D4B38"
+  cScale1: "#B4532A"
+  cScale2: "#5F7A5F"
+  cScale3: "#8A6D3B"
+  cScale4: "#54636F"
+  cScaleLabel0: "#F7F3EA"
+  cScaleLabel1: "#F7F3EA"
+  cScaleLabel2: "#F7F3EA"
+  cScaleLabel3: "#F7F3EA"
+  cScaleLabel4: "#F7F3EA"
+
+diagrams:
+  fluxo: |
+    flowchart TB
+      IN["Entrada<br/>de onde o dado vem"] -->|ingestão| CORE[("Núcleo<br/>onde o dado mora")]
+      OPS["Operação<br/>quem pede e aprova"] -->|"pede, confere, aprova"| CORE
+      SEC["Regras<br/>o que protege o núcleo"] -.->|protegem| CORE
+      CORE --> APP["Produto<br/>o que a equipe usa"]
+  mapa: |
+    mindmap
+      root((Tema central<br/>da aula))
+        Primeiro ramo
+          Ponto um
+          Ponto dois
+        Segundo ramo
+          Ponto um
+        Terceiro ramo
+          Ponto um
+          Ponto dois

@@ -2,9 +2,13 @@ import { stat as fsStat, readFile, writeFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import type { MergeOptions, MergeResult } from "./types.js";
 import { detectInputFormat, formatFileSize } from "./utils.js";
+import { fitToLongEdge } from "./image-size.js";
 
-const SLIDE_WIDTH = 1440;
-const SLIDE_HEIGHT = 810;
+// Each PNG page is sized to its own intrinsic aspect ratio, normalized so the
+// longer edge is PNG_LONG_EDGE points. A 16:9 slide lands on the legacy
+// 1440×810 page; social formats (1:1, 4:5, 9:16) keep their true shape instead
+// of being squashed into 16:9. Mixed-aspect inputs each get a correct page.
+const PNG_LONG_EDGE = 1440;
 
 async function mergePngs(
   files: string[],
@@ -14,13 +18,13 @@ async function mergePngs(
   for (const filePath of files) {
     const imageBytes = await readFile(filePath);
     const pngImage = await pdfDoc.embedPng(imageBytes);
-    const page = pdfDoc.addPage([SLIDE_WIDTH, SLIDE_HEIGHT]);
-    page.drawImage(pngImage, {
-      x: 0,
-      y: 0,
-      width: SLIDE_WIDTH,
-      height: SLIDE_HEIGHT,
-    });
+    const { width, height } = fitToLongEdge(
+      pngImage.width,
+      pngImage.height,
+      PNG_LONG_EDGE
+    );
+    const page = pdfDoc.addPage([width, height]);
+    page.drawImage(pngImage, { x: 0, y: 0, width, height });
   }
   const pdfBytes = await pdfDoc.save();
   await writeFile(outputPath, pdfBytes);

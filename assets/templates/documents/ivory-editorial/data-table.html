@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Data Table</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-8">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label, título e contexto -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 7</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-3">Para onde vamos</h2>
+  <p class="text-[11.5px] leading-relaxed text-muted mb-7 max-w-[164mm]">Contexto da tabela em uma frase, com o <strong class="text-ink">número que ancora</strong> a leitura.</p>
+
+  <!-- REPLACE: tabela (linha destacada com bg-sage/60; primeira coluna em serif terra) -->
+  <table class="w-full text-[10.5px] leading-snug border-collapse">
+    <thead>
+      <tr class="text-left uppercase tracking-label text-[8px] text-muted">
+        <th class="py-2 pr-3 border-b border-ink/30 font-semibold w-[12mm]">Bloco</th>
+        <th class="py-2 pr-3 border-b border-ink/30 font-semibold">Tema</th>
+        <th class="py-2 pr-3 border-b border-ink/30 font-semibold">Resultado</th>
+        <th class="py-2 border-b border-ink/30 font-semibold w-[14mm]">Horas</th>
+      </tr>
+    </thead>
+    <tbody class="align-top">
+      <tr><td class="py-[9px] pr-3 border-b border-hairline font-serif font-semibold text-terra text-[13px]">1 ✓</td><td class="py-[9px] pr-3 border-b border-hairline">Etapa já concluída (o ✓ na numeração comunica sozinho)</td><td class="py-[9px] pr-3 border-b border-hairline text-muted">O que ficou pronto</td><td class="py-[9px] border-b border-hairline">feita</td></tr>
+      <tr class="bg-sage/60"><td class="py-[9px] pr-3 border-b border-hairline font-serif font-semibold text-terra text-[13px]">2</td><td class="py-[9px] pr-3 border-b border-hairline"><strong>A etapa mais importante em negrito</strong>, com fundo sage/60 na linha inteira</td><td class="py-[9px] pr-3 border-b border-hairline text-muted">O resultado dela</td><td class="py-[9px] border-b border-hairline">4h</td></tr>
+      <tr><td class="py-[9px] pr-3 border-b border-hairline font-serif font-semibold text-terra text-[13px]">3</td><td class="py-[9px] pr-3 border-b border-hairline">Etapa comum</td><td class="py-[9px] pr-3 border-b border-hairline text-muted">O resultado dela</td><td class="py-[9px] border-b border-hairline">3h</td></tr>
+      <tr><td class="py-[9px] pr-3 font-serif font-semibold text-terra text-[13px]">—</td><td class="py-[9px] pr-3">Reserva para imprevistos (última linha sem borda)</td><td class="py-[9px] pr-3 text-muted">—</td><td class="py-[9px]">2h</td></tr>
+    </tbody>
+  </table>
+
+  <!-- REPLACE: cards de opção (remova o bloco se não houver escolha a fazer) -->
+  <div class="mt-8">
+    <div class="uppercase tracking-label text-[8.5px] text-terra font-semibold mb-3">Cadência: escolha o que encaixa (dá para misturar)</div>
+    <div class="grid grid-cols-3 gap-4 text-[10.3px] leading-relaxed">
+      <div class="bg-sage border border-hairline rounded-lg px-5 py-4"><div class="font-semibold mb-1">A · Primeira opção</div><p class="text-muted">Para quem ela serve e o trade-off dela em uma frase.</p></div>
+      <div class="bg-sage border border-hairline rounded-lg px-5 py-4"><div class="font-semibold mb-1">B · Segunda opção</div><p class="text-muted">Idem: cenário ideal + custo.</p></div>
+      <div class="bg-sage border border-hairline rounded-lg px-5 py-4"><div class="font-semibold mb-1">C · Terceira opção</div><p class="text-muted">Idem. Três opções é o teto; mais que isso vira paralisia.</p></div>
+    </div>
+    <p class="mt-4 text-[11px]"><strong>O call-to-action da escolha</strong>, dizendo onde responder.</p>
+  </div>
+
+  <!-- REPLACE: rodapé -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>8</span>
+  </div>
+
+</div>
+</body>
+</html>

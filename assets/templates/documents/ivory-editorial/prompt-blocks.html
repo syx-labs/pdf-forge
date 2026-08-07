@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Prompt Blocks</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-8">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label e título -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 6</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-6">Prompts prontos <span class="text-muted text-[20px] font-sans font-normal">(copie e cole)</span></h2>
+
+  <!-- REPLACE: bloco principal em largura cheia -->
+  <div class="mb-5">
+    <div class="text-[11px] font-semibold mb-2"><span class="text-terra">Prompt 1</span> · o que ele faz</div>
+    <pre class="whitespace-pre-wrap font-mono text-[9.3px] leading-[1.55] bg-soft border border-hairline rounded-lg px-5 py-4 text-ink">O texto integral do prompt, escrito para ser colado sem edição, exceto
+pelos trechos que a pessoa troca — esses ficam EM MAIÚSCULAS e o passo a
+passo avisa quais são.
+
+Regras do bom prompt didático:
+- peça perguntas antes de resposta ("antes de desenhar, me pergunte...")
+- embuta as regras de qualidade que você ensinou na aula
+- termine pedindo explicação em linguagem simples
+
+TRECHO QUE A PESSOA TROCA AQUI</pre>
+  </div>
+
+  <!-- REPLACE: blocos secundários em 2 colunas (linhas mais curtas!) -->
+  <div class="grid grid-cols-2 gap-5">
+    <div>
+      <div class="text-[11px] font-semibold mb-2"><span class="text-terra">Prompt 2</span> · revisão crítica</div>
+      <pre class="whitespace-pre-wrap font-mono text-[9.3px] leading-[1.55] bg-soft border border-hairline rounded-lg px-5 py-4 text-ink">Em coluna estreita, quebre as linhas
+você mesmo em ~45 caracteres para o
+bloco não estourar. O prompt de
+revisão pede: liste os problemas do
+mais grave ao mais leve, com a
+correção proposta para cada um.</pre>
+    </div>
+    <div>
+      <div class="text-[11px] font-semibold mb-2"><span class="text-terra">Prompt 3</span> · extra <span class="text-muted font-normal">(opcional)</span></div>
+      <pre class="whitespace-pre-wrap font-mono text-[9.3px] leading-[1.55] bg-soft border border-hairline rounded-lg px-5 py-4 text-ink">O prompt opcional que estende a
+tarefa para quem quiser ir além,
+sempre com as guardas de segurança
+escritas dentro do próprio prompt.</pre>
+    </div>
+  </div>
+
+  <!-- REPLACE: rodapé -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>7</span>
+  </div>
+
+</div>
+</body>
+</html>

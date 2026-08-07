@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=210mm" />
+<title>Ivory Editorial — Diagram Page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['"Plus Jakarta Sans"','system-ui','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors: { ivory:'#F7F3EA', ink:'#26241E', muted:'#5C574A', pine:'#1D4B38', terra:'#B4532A', hairline:'#D9D1C0', soft:'#EFE8D9', sage:'#E9EDE2' },
+  letterSpacing: { heading:'-0.02em', body:'-0.01em', label:'0.14em' },
+} } };
+</script>
+<!-- .diagrama contém o SVG; .diagrama-wide força largura total (bom para mindmaps) -->
+<style>.diagrama svg { max-width: 100%; height: auto; } .diagrama-wide svg { width: 100%; max-width: 100%; height: auto; }</style>
+</head>
+<body class="m-0 p-0">
+<div class="w-[210mm] min-h-[297mm] bg-ivory relative px-[20mm] pt-[14mm] pb-[24mm] font-sans text-ink">
+
+  <!-- REPLACE: header corrido -->
+  <div class="flex items-center justify-between text-[8.5px] uppercase tracking-label text-muted border-b border-hairline pb-3 mb-8">
+    <span>Programa de capacitação · Acme</span><span>Aula 1 · 04/08/2026</span>
+  </div>
+
+  <!-- REPLACE: label, título e leitura guiada do diagrama -->
+  <div class="text-[9px] uppercase tracking-label text-terra font-semibold mb-2">Seção 10 · o desenho</div>
+  <h2 class="font-serif font-semibold text-[34px] tracking-heading leading-tight mb-3">O que estamos montando</h2>
+  <p class="text-[11.5px] leading-relaxed text-muted mb-8 max-w-[164mm]">Uma frase que ensina a ler o diagrama: o que entra, o que sai, e onde a pessoa se encaixa nele.</p>
+
+  <!-- REPLACE: cole aqui o SVG gerado por scripts/prerender-mermaid.ts (inline, nunca <img> nem script async).
+       O placeholder abaixo só demonstra o slot. Para mindmaps, adicione a classe diagrama-wide. -->
+  <div class="diagrama flex justify-center max-w-[170mm]">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200" width="560" height="200" role="img" aria-label="placeholder do diagrama">
+      <rect x="20" y="70" width="150" height="60" rx="8" fill="#E9EDE2" stroke="#1D4B38"/>
+      <text x="95" y="105" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#26241E">Origem</text>
+      <line x1="170" y1="100" x2="240" y2="100" stroke="#5C574A" stroke-width="1.5"/>
+      <polygon points="240,100 231,95 231,105" fill="#5C574A"/>
+      <rect x="240" y="70" width="150" height="60" rx="8" fill="#EFE8D9" stroke="#B4532A"/>
+      <text x="315" y="105" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#26241E">Processo</text>
+      <line x1="390" y1="100" x2="460" y2="100" stroke="#5C574A" stroke-width="1.5"/>
+      <polygon points="460,100 451,95 451,105" fill="#5C574A"/>
+      <rect x="460" y="70" width="80" height="60" rx="8" fill="#E9EDE2" stroke="#1D4B38"/>
+      <text x="500" y="105" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#26241E">Fim</text>
+    </svg>
+  </div>
+
+  <!-- REPLACE: nota de rodapé do diagrama (onde está a versão editável, como pedir outro igual) -->
+  <div class="mt-8 bg-soft border border-hairline rounded-lg px-6 py-4 max-w-[164mm]">
+    <p class="text-[10.5px] leading-relaxed text-muted">Nota opcional: onde encontrar a versão editável do desenho, ou o prompt para gerar um diagrama assim.</p>
+  </div>
+
+  <!-- REPLACE: rodapé -->
+  <div class="absolute bottom-[12mm] left-[20mm] right-[20mm] flex items-center justify-between text-[8.5px] text-muted border-t border-hairline pt-3">
+    <span>Título do material</span><span>11</span>
+  </div>
+
+</div>
+</body>
+</html>

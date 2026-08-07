@@ -21,6 +21,7 @@ social:
 | `high-contrast-punch.yaml` | loud, direct, unmissable | dark | no |
 | `newsprint.yaml` | essayistic, long-form, literary | light | yes |
 | `yorus-dark.yaml` | premium dark systems-interface — operational confidence, Yorus brand | dark | no |
+| `ivory-editorial.yaml` | light editorial — ivory + pinho + terracota, serif display, didactic print | light | no |
 
 ## Brand presets
 
@@ -40,6 +41,12 @@ Every preset defines:
 - `fonts.display` / `fonts.mono`: Google Fonts family + URL
 - `allow_photos`: whether the `photo-overlay` archetype is enabled
 - `mood`: human-readable one-liner Claude uses when deciding fit
+
+Optional fields some presets add (still a composition contract, never parsed by `src/`):
+
+- `fonts.body`: a third family when display and body differ (e.g. `ivory-editorial` pairs Cormorant Garamond display with Plus Jakarta Sans body)
+- `tokens`: the semantic color/tracking names used by a sibling template family, so composed pages and templates speak the same vocabulary (see `ivory-editorial.yaml` + `assets/templates/documents/ivory-editorial/`)
+- `brand`: official brand palette/voice (see "Brand presets" above)
 
 ## Adding a new preset
 
