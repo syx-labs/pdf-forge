@@ -19,6 +19,7 @@
     "claude"
   ],
   "bin": {
+    "pdf-forge": "dist/bin/pdf-forge.js",
     "pdf-forge-mcp": "dist/bin/pdf-forge.js"
   },
   "exports": {
@@ -26,10 +27,12 @@
   },
   "files": [
     "dist/",
+    "bin/pdf-forge.ts",
     "assets/",
     "scripts/",
     "skills/",
-    "src/core/image-size.ts",
+    "src/core/",
+    "src/mcp/",
     "install.sh",
     ".claude-plugin/"
   ],
@@ -37,6 +40,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test --parallel=1 --timeout=60000",
+    "cli": "bun run bin/pdf-forge.ts",
     "render": "bun run scripts/render-pdf.ts",
     "merge": "bun run scripts/merge-pages.ts",
     "pptx": "bun run scripts/png-to-pptx.ts",

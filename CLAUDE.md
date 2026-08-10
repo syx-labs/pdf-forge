@@ -12,7 +12,7 @@ pdf-forge is **two things in one repo**, and the split is the key mental model:
 The agent writes HTML using the skill's rules; the pipeline renders it. When editing, keep that boundary clean: design decisions live in `skills/`, rendering mechanics live in `src/`.
 
 It distributes through **three surfaces** that all wrap the same `skills/` + `src/`:
-- **Skill symlinks** (`install.sh`) for Warp/Cursor/Codex/Gemini/etc., gated by `PDF_FORGE_HOME`.
+- **Skill symlinks** (`install.sh`) for Warp/Cursor/Codex/Gemini/etc. The colocated `skills/pdf-forge/bin/pdf-forge` wrapper resolves the physical active skill path and treats that release as authoritative; a stale or missing `PDF_FORGE_HOME` cannot select another checkout and is ignored with a warning.
 - **Claude Code plugin** (`.claude-plugin/`).
 - **MCP server** (`src/mcp/server.ts`, launched by `bin/pdf-forge.ts`) for Claude Desktop, published to npm as `pdf-forge-mcp`.
 
@@ -86,7 +86,7 @@ Full spec: `skills/pdf-forge/references/psd-import.md`. Same uv pattern as `png-
 
 - **ESM with explicit `.js` extensions inside `src/`** (e.g. `import ... from "./types.js"` from a `.ts` file). Scripts in `scripts/` import the source *without* extension (`../src/core/renderer`) because Bun runs them directly. Match the neighboring file's style.
 - **Strict TS, no `any`.** Validate external input at runtime (the codebase uses zod in MCP, hand-rolled `isValid*` guards elsewhere). `RenderResult` is a discriminated union on `format` — narrow with `if (result.format === "social")` to get non-optional `socialFormat`.
-- **Two root-resolution patterns.** `PLUGIN_ROOT`/path resolution checks whether `__dirname` contains `"dist"` to decide how many levels up the project root is (source vs built layout) — see `src/mcp/server.ts` and `bin/pdf-forge.ts`. The skill resolves `assets/`/`scripts/` via `$PDF_FORGE_HOME` and `references/` relative to `SKILL.md`.
+- **One fail-closed package-root resolver.** `discoverPackageRoot` in `src/core/package-root.ts` is shared by `bin/pdf-forge.ts` and `src/mcp/server.ts`. It starts from the entry realpath, walks ancestor `package.json` files, and accepts a root only when the package name, source/build entry layout, and bin/script/skill sentinels match; this covers tsup `dist/chunk*.js` without path-substring heuristics. At the skill surface, the wrapper's physical active skill path is authoritative and `PDF_FORGE_HOME` is honored only when its realpath matches that release. Assets derive from that active root; references remain relative to `SKILL.md`.
 - **Version lives in two files.** `package.json` and `.claude-plugin/plugin.json` versions must match; the MCP server reads `package.json` at runtime to report its version (intentional — fixes prior 0.1.0/0.3.x drift). Bump both on release. Publishing is tag-driven (`v*` → `.github/workflows/publish.yml`).
 - **`bun.lock` is gitignored** (along with `dist/`, `*.pdf`, `output/`, `rendered/`, `pages/`, `.claude/*.local.md`). Generated render output is never committed.
 - **External-tool scripts degrade loudly, not silently.** `gen-images.ts` (codex) and `png-to-pptx.ts` (uv) surface spawn errors as failed items / exit codes rather than swallowing them — preserve that when editing.

@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+set -eu
+
+resolve_entry() {
+  entry=$1
+  while [ -L "$entry" ]; do
+    entry_dir=$(CDPATH='' cd -P "$(dirname "$entry")" && pwd)
+    link=$(readlink "$entry")
+    case "$link" in
+      /*) entry=$link ;;
+      *) entry=$entry_dir/$link ;;
+    esac
+  done
+  entry_dir=$(CDPATH='' cd -P "$(dirname "$entry")" && pwd)
+  printf '%s/%s\n' "$entry_dir" "$(basename "$entry")"
+}
+
+ENTRY=$(resolve_entry "$0")
+SKILL_DIR=$(CDPATH='' cd -P "$(dirname "$ENTRY")/.." && pwd)
+ACTIVE_ROOT=$(CDPATH='' cd -P "$SKILL_DIR/../.." && pwd)
+
+if [ ! -f "$ACTIVE_ROOT/package.json" ] || \
+   ! grep -Eq '"name"[[:space:]]*:[[:space:]]*"pdf-forge-mcp"' "$ACTIVE_ROOT/package.json" || \
+   [ ! -f "$ACTIVE_ROOT/bin/pdf-forge.ts" ]; then
+  echo "pdf-forge: active skill does not belong to a valid pdf-forge checkout: $SKILL_DIR" >&2
+  exit 1
+fi
+
+if [ -n "${PDF_FORGE_HOME:-}" ]; then
+  if ENV_ROOT=$(CDPATH='' cd -P "$PDF_FORGE_HOME" 2>/dev/null && pwd); then
+    if [ "$ENV_ROOT" != "$ACTIVE_ROOT" ]; then
+      echo "pdf-forge: Ignoring stale PDF_FORGE_HOME=\"$PDF_FORGE_HOME\"; active release is \"$ACTIVE_ROOT\"." >&2
+    fi
+  else
+    echo "pdf-forge: Ignoring stale PDF_FORGE_HOME=\"$PDF_FORGE_HOME\"; directory is unavailable." >&2
+  fi
+fi
+
+PDF_FORGE_HOME=$ACTIVE_ROOT
+export PDF_FORGE_HOME
+exec bun run "$ACTIVE_ROOT/bin/pdf-forge.ts" "$@"

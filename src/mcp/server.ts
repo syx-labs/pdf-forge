@@ -1,28 +1,21 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { resolve, join, dirname } from "node:path";
+import { resolve, join } from "node:path";
 import { readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
+import { discoverPackageRoot } from "../core/package-root.js";
 import { renderPages } from "../core/renderer.js";
 import { mergePages } from "../core/merger.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageRootPromise = discoverPackageRoot(import.meta.url);
 
-// Resolve PLUGIN_ROOT: from source (src/mcp/) go up 2, from dist (dist/src/mcp/) go up 3
-const PLUGIN_ROOT = __dirname.includes("dist")
-  ? resolve(__dirname, "../../..")
-  : resolve(__dirname, "../..");
-
-async function readPackageVersion(): Promise<string> {
-  // Read package.json so the MCP server version mirrors the distributed package —
-  // avoids the 0.1.0/0.3.x drift that used to ship.
-  try {
-    const raw = await readFile(join(PLUGIN_ROOT, "package.json"), "utf-8");
-    return (JSON.parse(raw) as { version?: string }).version ?? "0.0.0";
-  } catch {
-    return "0.0.0";
+async function readPackageVersion(packageRoot: string): Promise<string> {
+  const raw = await readFile(join(packageRoot, "package.json"), "utf-8");
+  const version = (JSON.parse(raw) as { version?: unknown }).version;
+  if (typeof version !== "string" || version.length === 0 || version === "0.0.0") {
+    throw new Error(`Invalid pdf-forge package version at "${packageRoot}".`);
   }
+  return version;
 }
 
 const RESOURCE_MAP: Record<string, string> = {
@@ -35,7 +28,8 @@ const RESOURCE_MAP: Record<string, string> = {
 };
 
 export async function createServer(): Promise<McpServer> {
-  const version = await readPackageVersion();
+  const packageRoot = await packageRootPromise;
+  const version = await readPackageVersion(packageRoot);
   const server = new McpServer({
     name: "pdf-forge",
     version,
@@ -45,7 +39,7 @@ export async function createServer(): Promise<McpServer> {
   for (const [uri, filePath] of Object.entries(RESOURCE_MAP)) {
     const name = uri.replace("pdf-forge://", "");
     server.resource(name, uri, async () => {
-      const content = await readFile(join(PLUGIN_ROOT, filePath), "utf-8");
+      const content = await readFile(join(packageRoot, filePath), "utf-8");
       return {
         contents: [{ uri, text: content, mimeType: "text/markdown" }],
       };

@@ -1,6 +1,6 @@
 ---
 name: pdf-forge
-description: Create polished PDFs, decks, reports, documents, and social creatives from HTML/Tailwind using the pdf-forge workflow.
+description: Author HTML/Tailwind slides, A4 documents, and shipped social templates, then render and merge them to PDF through the bundled pdf-forge CLI.
 ---
 
 # pdf-forge
@@ -15,6 +15,34 @@ grammar extraction. Also use it to **convert a Photoshop `.psd`** (deck, poster,
 fill-in template) into an editable, pixel-faithful deck — see `references/psd-import.md`.
 
 Generate professional, visually striking PDFs using pure HTML + Tailwind CSS. The output aesthetic follows the Vercel/Stripe design philosophy: dark zinc backgrounds, deliberate whitespace, typographic contrast, and restrained color accents. No component libraries, no React, no build step — just raw divs with Tailwind classes rendered via Playwright.
+
+## Engine Entry Point
+
+This skill is the **brain** (design rules and references); the repository-level TypeScript
+pipeline is the **engine**. The colocated `bin/pdf-forge` file is only a locator: it
+resolves the physical skill path, validates the matching release root, and delegates to
+the engine without duplicating it.
+
+Before using assets or the engine, get the active skill directory from the runtime that
+loaded this `SKILL.md`—never reuse a path from an earlier release. Resolve symlinks and
+derive `PDF_FORGE_HOME` from that active skill:
+
+```bash
+# Replace this value with the absolute directory containing this loaded SKILL.md.
+PDF_FORGE_SKILL_DIR="<active-skill-directory>"
+PDF_FORGE_SKILL_DIR="$(CDPATH='' cd -P "$PDF_FORGE_SKILL_DIR" && pwd)"
+PDF_FORGE_HOME="$(CDPATH='' cd -P "$PDF_FORGE_SKILL_DIR/../.." && pwd)"
+export PDF_FORGE_HOME
+
+test -x "$PDF_FORGE_SKILL_DIR/bin/pdf-forge"
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" --help
+```
+
+Use that wrapper for every command below. It preserves the caller's working directory and
+accepts `PDF_FORGE_HOME` only when its physical path matches the active skill release;
+a stale or missing override is ignored with a warning. Prefer absolute project paths when
+the working directory is not guaranteed. Do not put engine implementations or dependencies
+inside the skill directory.
 
 ## Workflow
 
@@ -49,7 +77,7 @@ Typical sequences:
 
 ### 4. Generate HTML Pages
 
-For each page, create a standalone HTML file. Templates live in `assets/templates/slides/` and `assets/templates/documents/`. Either:
+For each page, create a standalone HTML file. Templates live in `$PDF_FORGE_HOME/assets/templates/slides/` and `$PDF_FORGE_HOME/assets/templates/documents/`. Either:
 - **Copy and adapt** a template — replace content marked with `<!-- REPLACE: ... -->` comments
 - **Compose from scratch** — follow the design system principles in `references/design-system.md`
 
@@ -71,13 +99,13 @@ Run the rendering pipeline:
 
 ```bash
 # First time only: install dependencies
-bun run $PDF_FORGE_HOME/scripts/setup.ts
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" setup-browser
 
 # Render HTML pages to images/PDFs
-bun run $PDF_FORGE_HOME/scripts/render-pdf.ts ./pages/ --output ./rendered/
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" render "$PWD/pages" --output "$PWD/rendered"
 
 # Merge into final PDF
-bun run $PDF_FORGE_HOME/scripts/merge-pages.ts ./rendered/ --output ./output.pdf
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" merge "$PWD/rendered" --output "$PWD/output.pdf"
 ```
 
 The render script auto-detects the format (slides vs docs) from the HTML content.
@@ -90,7 +118,7 @@ When the deliverable is a `.pptx` (boardroom decks, client proposals, anything t
 
 ```bash
 # Requires `uv` on PATH (https://docs.astral.sh/uv/)
-bun run $PDF_FORGE_HOME/scripts/png-to-pptx.ts ./rendered/ --output ./deck.pptx
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" pptx "$PWD/rendered" --output "$PWD/deck.pptx"
 ```
 
 Auto-detects the aspect from the rendered PNGs (16:9 decks snap to 13.333 × 7.5 in; social/portrait formats keep their true aspect — no stretching). Each PNG becomes one full-bleed slide via `python-pptx` (the only mature library for this). Override with `--aspect 16:9|4:3|16:10|a4-landscape|a4-portrait` or pass `--width <in> --height <in>` for custom.
@@ -102,10 +130,10 @@ Pixel-perfect: the PNGs were rendered from your authored HTML, so the PPTX repro
 For decks that need original imagery (abstract hero cards, conceptual illustrations), use the parameterized generator. It dispatches `codex` jobs in parallel through the imagegen skill, sharing a common style brief across all slugs:
 
 ```bash
-bun run $PDF_FORGE_HOME/scripts/gen-images.ts /path/to/project ./image-manifest.yaml --concurrency 4
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" gen-images "$PWD" "$PWD/image-manifest.yaml" --concurrency 4
 ```
 
-The manifest is YAML (see `scripts/image-manifest.example.yaml`) with `common_style`, `common_palette`, and an `images[]` list of `{slug, concept, aspect?, dimensions?}`. Idempotent — slugs whose PNG already exists are skipped, so reruns are safe.
+The manifest is YAML (see `$PDF_FORGE_HOME/scripts/image-manifest.example.yaml`) with `common_style`, `common_palette`, and an `images[]` list of `{slug, concept, aspect?, dimensions?}`. Idempotent — slugs whose PNG already exists are skipped, so reruns are safe.
 
 For Yorus decks, the example manifest already encodes the official palette (`#010101 / #ef700b / #8933e2`) and the dark premium systems-interface brief — copy and edit the `images[]` list per project.
 
@@ -153,7 +181,7 @@ For carousels, pick 3-10 slides following a narrative:
 
 For single posts, pick one archetype matching the content goal.
 
-Archetype catalog: `assets/templates/social/<archetype>/<format>.html`.
+Archetype catalog: `$PDF_FORGE_HOME/assets/templates/social/<archetype>/<format>.html`.
 
 ### 4. Generate HTML Pages
 
@@ -166,7 +194,7 @@ For custom compositions (escape hatch, no matching archetype), write HTML from s
 ### 5. Render to PNG
 
 ```bash
-bun run $PDF_FORGE_HOME/scripts/render-pdf.ts ./pages/ --format social --output ./rendered/
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" render "$PWD/pages" --format social --output "$PWD/rendered"
 ```
 
 One PNG per HTML, named from the source filename. Renderer aborts on overflow (body taller than viewport) and on carousel format mismatch.
@@ -174,7 +202,7 @@ One PNG per HTML, named from the source filename. Renderer aborts on overflow (b
 ### 6. Generate Manifest
 
 ```bash
-bun run $PDF_FORGE_HOME/scripts/generate-manifest.ts ./rendered/ --format carousel-4-5 --theme dark-editorial --archetype cover,cover,cover,cover,cover
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" manifest "$PWD/rendered" --format carousel-4-5 --theme dark-editorial --archetype cover,cover,cover,cover,cover
 ```
 
 Writes `manifest.yaml` with slide metadata ready for publish tooling or archival. Use one archetype name per PNG — currently only `cover` ships; remaining archetypes land in the archetype-library follow-up plan. The CLI rejects the command if the archetype count doesn't match the PNG count.
@@ -182,7 +210,7 @@ Writes `manifest.yaml` with slide metadata ready for publish tooling or archival
 ### 7. (Optional) Generate Preview
 
 ```bash
-bun run $PDF_FORGE_HOME/scripts/generate-preview.ts ./rendered/
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" preview "$PWD/rendered"
 ```
 
 Opens in browser — shows all slides as a grid, with captions and hashtags if present in the manifest.
@@ -195,13 +223,13 @@ honest limits (substitute fonts, scaffold refinement) in `references/psd-import.
 
 ```bash
 # One-shot: PSD → deck.pdf (extract+slides+render+merge; auto --viewport p/ não-16:9)
-bun run "$PDF_FORGE_HOME/scripts/psd-to-deck.ts" "modelo.psd" --output ./psd-deck
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" psd-deck "$PWD/modelo.psd" --output "$PWD/psd-deck"
 
 # Ou passo a passo (controle fino):
-bun run "$PDF_FORGE_HOME/scripts/psd-extract.ts" "modelo.psd" --output ./psd-extract   # composite + plates + manifest + métricas de tinta
-bun run "$PDF_FORGE_HOME/scripts/psd-to-slides.ts" ./psd-extract --output ./psd-deck   # HTML editável (placa + textos calibrados)
-bun run "$PDF_FORGE_HOME/scripts/render-pdf.ts" ./psd-deck/pages --format slides --output ./psd-deck/rendered  # [--viewport WxH p/ cartaz]
-bun run "$PDF_FORGE_HOME/scripts/merge-pages.ts" ./psd-deck/rendered --output ./psd-deck/deck.pdf
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" psd-extract "$PWD/modelo.psd" --output "$PWD/psd-extract"   # composite + plates + manifest + métricas de tinta
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" psd-slides "$PWD/psd-extract" --output "$PWD/psd-deck"   # HTML editável (placa + textos calibrados)
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" render "$PWD/psd-deck/pages" --format slides --output "$PWD/psd-deck/rendered"  # [--viewport WxH p/ cartaz]
+"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" merge "$PWD/psd-deck/rendered" --output "$PWD/psd-deck/deck.pdf"
 ```
 
 O peso e a largura dos textos já vêm **medidos da tinta** (sem depender de `EngineData`). Refine
@@ -272,8 +300,9 @@ No React components, no Shadcn, no Radix UI. Only raw `<div>` elements with Tail
 ## Path Resolution
 
 - `references/` paths are relative to this skill directory (where this `SKILL.md` lives)
-- `assets/` and `scripts/` paths are relative to `$PDF_FORGE_HOME` (the project root)
-- `$PDF_FORGE_HOME` is set during installation via `install.sh` — it points to the pdf-forge project root
+- `assets/` are resolved from `$PDF_FORGE_HOME`, derived from the physical active skill path
+- engine commands go through `$PDF_FORGE_SKILL_DIR/bin/pdf-forge`; stale `PDF_FORGE_HOME` values never select another release
+- `install.sh` may set `PDF_FORGE_HOME` for compatibility, but active-skill discovery is authoritative
 
 ## Reference Files
 
@@ -316,7 +345,7 @@ Ready-to-use HTML templates in `assets/templates/`:
 | `visual-full.html` | Charts, diagrams, full-width visuals |
 | `appendix.html` | Dense supplementary data |
 
-**Themed family — `ivory-editorial/`**: light-editorial A4 kit (ivory + pine + terracotta, Cormorant Garamond display) for didactic and mentoring material — cover, content page, term list, numbered steps, rule cards, task page, prompt blocks, data table, links, FAQ, and a diagram page for pre-rendered mermaid SVGs. Pairs with the `ivory-editorial` theme preset. Read the family's `NOTES.md` first: it documents the shared page shell, the deliberate positive-tracking exception for micro-labels, and the mermaid workflow (`scripts/prerender-mermaid.ts` renders mermaid to static SVG with the real font loaded — required because the doc renderer never awaits async scripts).
+**Themed family — `ivory-editorial/`**: light-editorial A4 kit (ivory + pine + terracotta, Cormorant Garamond display) for didactic and mentoring material — cover, content page, term list, numbered steps, rule cards, task page, prompt blocks, data table, links, FAQ, and a diagram page for pre-rendered mermaid SVGs. Pairs with the `ivory-editorial` theme preset. Read the family's `NOTES.md` first: it documents the shared page shell, the deliberate positive-tracking exception for micro-labels, and the mermaid workflow (`"$PDF_FORGE_SKILL_DIR/bin/pdf-forge" mermaid ...` renders mermaid to static SVG with the real font loaded — required because the doc renderer never awaits async scripts).
 
 ### Social — Instagram (`assets/templates/social/`)
 
