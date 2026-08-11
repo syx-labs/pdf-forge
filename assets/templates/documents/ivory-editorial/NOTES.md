@@ -25,11 +25,10 @@ Definidos no `tailwind.config` de cada página (mesmos nomes do preset):
 perguntas) · `terra` acento quente (labels, numeração) · `hairline` bordas ·
 `soft` fill neutro (citações, código) · `sage` fill esverdeado (regras, checklists).
 
-**Exceção deliberada ao design system:** `tracking-label` aqui é **positivo** (0.14em)
-e só aparece em micro-rótulos uppercase de 8–9px — prática editorial clássica
-(a regra "negative tracking only" vale para headings e corpo, que usam
-`tracking-heading`/`tracking-body` negativos normalmente). Não usar o label
-positivo em nada maior que 9px.
+**Tracking:** use somente os quatro tokens semânticos negativos do design system —
+`tracking-display` / `tracking-heading` / `tracking-body` / `tracking-label` (-0.01em).
+Micro-rótulos uppercase de 8–9px também usam `tracking-label` negativo; nunca
+`tracking-wide`/`wider`/`widest` nem letter-spacing positivo.
 
 ## Catálogo
 
