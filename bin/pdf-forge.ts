@@ -102,7 +102,7 @@ function runEngineCommand(command: EngineCommand, args: string[]): Promise<numbe
       cwd: process.cwd(),
       env: {
         ...process.env,
-        PDF_FORGE_HOME: process.env.PDF_FORGE_HOME ?? PLUGIN_ROOT,
+        PDF_FORGE_HOME: PLUGIN_ROOT,
       },
       stdio: "inherit",
     });

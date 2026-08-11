@@ -42,5 +42,5 @@ tokens:
   letter_spacing:
     heading: "-0.02em"    # títulos serif
     body: "-0.01em"       # corpo
-    label: "0.14em"       # EXCEÇÃO deliberada: micro-rótulos uppercase 8–9px apenas
+    label: "-0.01em"      # tracking-label semântico negativo (design system)
   usage: "terra e pine com parcimônia: labels e numeração em terra, conteúdo destacado em pine; fills sage/soft nunca nas duas colunas da mesma dobra"
