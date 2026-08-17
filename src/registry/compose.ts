@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { JSON_SCHEMA, load as loadYaml } from "js-yaml";
+import { z } from "zod";
 import type { DocumentManifest } from "./document-manifest.js";
 import { resolveRegistryEntry } from "./resolver.js";
 
@@ -34,6 +36,7 @@ const DATA_TABLE_DIRECTIVES = new Set([
   "empty",
   "colspan",
 ]);
+const EXECUTIVE_REPORT_DIRECTIVES = new Set(["each", "slot"]);
 const SUPPORTED_SCHEMA_KEYWORDS = new Set([
   "$schema",
   "$id",
@@ -55,6 +58,72 @@ const SUPPORTED_SCHEMA_KEYWORDS = new Set([
   "maxItems",
   "items",
 ]);
+
+const blockStringPropertySchema = z.strictObject({
+  type: z.literal("string"),
+  minLength: z.number().int().nonnegative(),
+});
+const blockObjectPropertySchema = z.strictObject({
+  type: z.literal("object"),
+});
+const executiveReportPropsDeclarationSchema = z.strictObject({
+  type: z.literal("object"),
+  additionalProperties: z.literal(false),
+  required: z.tuple([
+    z.literal("title"),
+    z.literal("summary"),
+    z.literal("metrics"),
+    z.literal("table"),
+    z.literal("recommendations"),
+  ]),
+  properties: z.strictObject({
+    title: blockStringPropertySchema,
+    summary: blockStringPropertySchema,
+    metrics: z.strictObject({
+      type: z.literal("array"),
+      minItems: z.number().int().nonnegative(),
+      maxItems: z.number().int().positive(),
+      items: blockObjectPropertySchema,
+    }),
+    table: blockObjectPropertySchema,
+    recommendations: z.strictObject({
+      type: z.literal("array"),
+      minItems: z.number().int().nonnegative(),
+      maxItems: z.number().int().positive(),
+      items: blockStringPropertySchema,
+    }),
+  }),
+});
+const blockTextSectionSchema = z.strictObject({
+  source: z.string().min(1),
+  slot: z.string().min(1),
+  repeat: z.boolean(),
+});
+const blockPrimitiveReferenceSchema = z.strictObject({
+  id: z.string().min(1),
+  source: z.string().min(1),
+  slot: z.string().min(1),
+  repeat: z.boolean(),
+});
+const executiveReportDefinitionSchema = z.strictObject({
+  version: z.literal("1"),
+  schema: executiveReportPropsDeclarationSchema,
+  sections: z.strictObject({
+    title: blockTextSectionSchema,
+    summary: blockTextSectionSchema,
+    recommendations: blockTextSectionSchema,
+  }),
+  primitives: z.strictObject({
+    metrics: blockPrimitiveReferenceSchema,
+    table: blockPrimitiveReferenceSchema,
+  }),
+});
+
+type ExecutiveReportDefinition = z.infer<
+  typeof executiveReportDefinitionSchema
+>;
+type BlockTextSection = z.infer<typeof blockTextSectionSchema>;
+type BlockPrimitiveReference = z.infer<typeof blockPrimitiveReferenceSchema>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -764,6 +833,359 @@ function assertCssVariablesSafe(cssVariables: string): void {
   }
 }
 
+function parseExecutiveReportDefinition(
+  rawDefinition: string,
+  schemaPath: string
+): ExecutiveReportDefinition {
+  let document: unknown;
+  try {
+    document = loadYaml(rawDefinition, { schema: JSON_SCHEMA });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to parse block YAML at schemaPath "${schemaPath}": ${detail}`,
+      { cause: error }
+    );
+  }
+
+  const result = executiveReportDefinitionSchema.safeParse(document);
+  if (!result.success) {
+    throw new Error(
+      `Invalid executive-report block definition at schemaPath "${schemaPath}": ${z.prettifyError(result.error)}`
+    );
+  }
+  return result.data;
+}
+
+function countOccurrences(source: string, marker: string): number {
+  let count = 0;
+  let cursor = 0;
+  while (cursor <= source.length - marker.length) {
+    const index = source.indexOf(marker, cursor);
+    if (index === -1) {
+      break;
+    }
+    count += 1;
+    cursor = index + marker.length;
+  }
+  return count;
+}
+
+function escapeRegularExpression(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function assertCompositionIdentifier(
+  value: string,
+  label: string,
+  pattern: RegExp
+): void {
+  if (!pattern.test(value)) {
+    throw new Error(
+      `Invalid executive-report ${label} "${value}" in block definition.`
+    );
+  }
+}
+
+function assertExecutiveReportDefinitionContract(
+  definition: ExecutiveReportDefinition
+): void {
+  const identifierPattern = /^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/u;
+  const sourcePattern = /^[A-Za-z][A-Za-z0-9]*$/u;
+  const sections = definition.sections;
+  const primitives = definition.primitives;
+
+  if (
+    sections.title.source !== "title" ||
+    sections.title.repeat ||
+    sections.summary.source !== "summary" ||
+    sections.summary.repeat ||
+    sections.recommendations.source !== "recommendations" ||
+    !sections.recommendations.repeat ||
+    primitives.metrics.source !== "metrics" ||
+    !primitives.metrics.repeat ||
+    primitives.table.source !== "table" ||
+    primitives.table.repeat
+  ) {
+    throw new Error(
+      "Executive-report block references must preserve the declared title, summary, recommendations, metrics, and table cardinalities."
+    );
+  }
+
+  for (const [name, section] of Object.entries(sections)) {
+    assertCompositionIdentifier(section.source, `${name} source`, sourcePattern);
+    assertCompositionIdentifier(section.slot, `${name} slot`, identifierPattern);
+  }
+  for (const [name, reference] of Object.entries(primitives)) {
+    assertCompositionIdentifier(reference.id, `${name} primitive id`, identifierPattern);
+    assertCompositionIdentifier(reference.source, `${name} source`, sourcePattern);
+    assertCompositionIdentifier(reference.slot, `${name} slot`, identifierPattern);
+  }
+}
+
+function assertExecutiveReportTemplateContract(
+  template: string,
+  definition: ExecutiveReportDefinition
+): void {
+  assertTemplateSafe(template, "executive-report");
+  if (/<!doctype\b|<\/?(?:html|head|body)\b/iu.test(template)) {
+    throw new Error(
+      "Executive-report registry template must be a fragment without document shell elements."
+    );
+  }
+
+  const sections = definition.sections;
+  const primitives = definition.primitives;
+  const allowedPlaceholders = new Set([
+    sections.title.source,
+    sections.summary.source,
+    `${sections.recommendations.source}[]`,
+  ]);
+  assertKnownPlaceholders(
+    template,
+    allowedPlaceholders,
+    EXECUTIVE_REPORT_DIRECTIVES,
+    "executive-report"
+  );
+
+  const declaredSlots = [
+    sections.title.slot,
+    sections.summary.slot,
+    sections.recommendations.slot,
+    primitives.metrics.slot,
+    primitives.table.slot,
+  ];
+  const declaredSlotSet = new Set(declaredSlots);
+  if (declaredSlotSet.size !== declaredSlots.length) {
+    throw new Error("Executive-report block definition contains duplicate slots.");
+  }
+
+  const templateSlots: string[] = [];
+  const slotPattern = /\bdata-pdf-forge-slot="([^"]*)"/gu;
+  let slotMatch = slotPattern.exec(template);
+  while (slotMatch !== null) {
+    const slot = slotMatch[1] ?? "";
+    if (!declaredSlotSet.has(slot)) {
+      throw new Error(
+        `Unknown executive-report template slot "${slot}" is not declared by block.yaml.`
+      );
+    }
+    templateSlots.push(slot);
+    slotMatch = slotPattern.exec(template);
+  }
+  for (const slot of declaredSlots) {
+    const occurrences = templateSlots.filter(
+      (templateSlot) => templateSlot === slot
+    ).length;
+    if (occurrences !== 1) {
+      throw new Error(
+        `Executive-report template slot "${slot}" must occur exactly once; found ${occurrences}.`
+      );
+    }
+  }
+
+  const recommendationSource = sections.recommendations.source;
+  const eachValues = Array.from(
+    template.matchAll(/\bdata-pdf-forge-each="([^"]*)"/gu),
+    (match) => match[1] ?? ""
+  );
+  if (
+    eachValues.length !== 1 ||
+    eachValues[0] !== recommendationSource
+  ) {
+    throw new Error(
+      `Executive-report template must declare exactly one recommendations iterator for "${recommendationSource}".`
+    );
+  }
+
+  for (const placeholder of allowedPlaceholders) {
+    const marker = `{{escape:${placeholder}}}`;
+    const occurrences = countOccurrences(template, marker);
+    if (occurrences !== 1) {
+      throw new Error(
+        `Executive-report placeholder "${marker}" must occur exactly once; found ${occurrences}.`
+      );
+    }
+  }
+}
+
+type SlotElement = Readonly<{
+  full: string;
+  opening: string;
+  content: string;
+  closing: string;
+}>;
+
+function requireSlotElement(template: string, slot: string): SlotElement {
+  const escapedSlot = escapeRegularExpression(slot);
+  const pattern = new RegExp(
+    `(<([a-z][a-z0-9-]*)\\b(?=[^>]*\\bdata-pdf-forge-slot="${escapedSlot}")[^>]*>)([\\s\\S]*?)(<\\/\\2>)`,
+    "u"
+  );
+  const match = template.match(pattern);
+  if (
+    match?.[0] === undefined ||
+    match[1] === undefined ||
+    match[3] === undefined ||
+    match[4] === undefined
+  ) {
+    throw new Error(
+      `Executive-report template is missing a valid element for slot "${slot}".`
+    );
+  }
+  return {
+    full: match[0],
+    opening: match[1],
+    content: match[3],
+    closing: match[4],
+  };
+}
+
+function renderSingleTextSection(
+  template: string,
+  section: BlockTextSection,
+  props: unknown,
+  sectionName: string
+): string {
+  const value = readPath(props, section.source);
+  if (typeof value !== "string") {
+    throw new Error(
+      `Validated executive-report ${sectionName} source "${section.source}" is not a string.`
+    );
+  }
+  const slot = requireSlotElement(template, section.slot);
+  const marker = `{{escape:${section.source}}}`;
+  if (countOccurrences(slot.content, marker) !== 1) {
+    throw new Error(
+      `Executive-report ${sectionName} placeholder is not inside slot "${section.slot}".`
+    );
+  }
+  return template.replace(
+    slot.full,
+    `${slot.opening}${slot.content.replace(marker, escapeHtml(value))}${slot.closing}`
+  );
+}
+
+function renderRecommendations(
+  template: string,
+  section: BlockTextSection,
+  props: unknown
+): string {
+  const values = readPath(props, section.source);
+  if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) {
+    throw new Error(
+      `Validated executive-report recommendations source "${section.source}" is not a string array.`
+    );
+  }
+
+  const slot = requireSlotElement(template, section.slot);
+  const escapedSource = escapeRegularExpression(section.source);
+  const itemPattern = new RegExp(
+    `<([a-z][a-z0-9-]*)\\b(?=[^>]*\\bdata-pdf-forge-each="${escapedSource}")[^>]*>[\\s\\S]*?<\\/\\1>`,
+    "u"
+  );
+  const item = slot.content.match(itemPattern)?.[0];
+  if (item === undefined) {
+    throw new Error(
+      `Executive-report recommendations slot "${section.slot}" has no iterator element.`
+    );
+  }
+  const marker = `{{escape:${section.source}[]}}`;
+  if (countOccurrences(item, marker) !== 1) {
+    throw new Error(
+      "Executive-report recommendations iterator has no unique escaped placeholder."
+    );
+  }
+
+  const directivePattern = new RegExp(
+    `\\s+data-pdf-forge-each="${escapedSource}"`,
+    "u"
+  );
+  const preparedItem = item.replace(directivePattern, "");
+  const renderedItems = values
+    .map((value) => preparedItem.replace(marker, escapeHtml(value)))
+    .join("\n");
+  return template.replace(
+    slot.full,
+    `${slot.opening}${slot.content.replace(item, renderedItems)}${slot.closing}`
+  );
+}
+
+function extractPrimitiveFragment(html: string, primitiveId: string): string {
+  const body = html.match(/<body\b[^>]*>\n([\s\S]*)\n<\/body>\n<\/html>\n$/u)?.[1];
+  if (body === undefined) {
+    throw new Error(
+      `Composed primitive "${primitiveId}" did not return the expected document shell.`
+    );
+  }
+  if (/<!doctype\b|<\/?(?:html|head|body)\b/iu.test(body)) {
+    throw new Error(
+      `Composed primitive "${primitiveId}" contains a nested document shell.`
+    );
+  }
+  return body.trim();
+}
+
+async function composePrimitiveReference(
+  manifest: DocumentManifest,
+  page: DocumentPage,
+  reference: BlockPrimitiveReference,
+  packageRoot?: string
+): Promise<string[]> {
+  const sourceValue = readPath(page.props, reference.source);
+  const values = reference.repeat ? sourceValue : [sourceValue];
+  if (!Array.isArray(values)) {
+    throw new Error(
+      `Validated executive-report primitive source "${reference.source}" is not repeatable.`
+    );
+  }
+
+  const fragments: string[] = [];
+  for (const value of values) {
+    const primitivePage: DocumentPage = {
+      id: page.id,
+      selection: { kind: "primitive", id: reference.id },
+      props: value,
+    };
+    const html = await composePrimitivePage(manifest, primitivePage, packageRoot);
+    fragments.push(extractPrimitiveFragment(html, reference.id));
+  }
+  return fragments;
+}
+
+function injectPrimitiveFragments(
+  template: string,
+  slotName: string,
+  fragments: readonly string[]
+): string {
+  const slot = requireSlotElement(template, slotName);
+  if (slot.content.trim().length !== 0) {
+    throw new Error(
+      `Executive-report primitive slot "${slotName}" must be empty before composition.`
+    );
+  }
+  return template.replace(
+    slot.full,
+    `${slot.opening}\n${fragments.join("\n")}\n${slot.closing}`
+  );
+}
+
+function finishBlockFragment(fragment: string): string {
+  const output = fragment.replace(
+    /\s+data-pdf-forge-slot="[^"]*"/gu,
+    ""
+  );
+  if (/\{\{|\}\}|\bdata-pdf-forge-/u.test(output)) {
+    throw new Error(
+      "Executive-report composition left an unresolved placeholder or directive."
+    );
+  }
+  if (/<!doctype\b|<\/?(?:html|head|body)\b/iu.test(output)) {
+    throw new Error("Executive-report composition produced a nested document shell.");
+  }
+  return output;
+}
+
 function pageShell(
   manifest: DocumentManifest,
   page: DocumentPage,
@@ -789,6 +1211,7 @@ function pageShell(
   <title>${escapeHtml(manifest.documentId)} — ${escapeHtml(page.id)}</title>
   <style>
 ${cssVariables}
+    html { --tw-pdf-forge-ready: 1; }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
@@ -863,4 +1286,97 @@ export async function composePrimitivePage(
   }
 
   return pageShell(manifest, page, resolved.cssVariables, componentHtml);
+}
+
+export async function composeDocumentPage(
+  manifest: DocumentManifest,
+  page: DocumentPage,
+  packageRoot?: string
+): Promise<string> {
+  if (page.selection.kind === "primitive") {
+    return composePrimitivePage(manifest, page, packageRoot);
+  }
+
+  const resolved = await resolveRegistryEntry({
+    id: page.selection.id,
+    kind: page.selection.kind,
+    format: manifest.format,
+    theme: manifest.theme,
+    packageRoot,
+  });
+  if (resolved.entry.id !== "executive-report") {
+    throw new Error(
+      `Block composition is not implemented for registry entry "${resolved.entry.id}".`
+    );
+  }
+
+  const [template, rawDefinition] = await Promise.all([
+    readFile(resolved.templatePath, "utf-8"),
+    readFile(resolved.schemaPath, "utf-8"),
+  ]);
+  const definition = parseExecutiveReportDefinition(
+    rawDefinition,
+    resolved.schemaPath
+  );
+  assertExecutiveReportDefinitionContract(definition);
+
+  const issue = validateSchema(definition.schema, page.props, definition.schema);
+  if (issue !== undefined) {
+    throw new Error(
+      `Invalid props for registry entry "${resolved.entry.id}" using schema file "${resolved.schemaPath}": dataPath "${issue.dataPath}", schemaPath "${issue.schemaPath}": ${issue.message}.`
+    );
+  }
+
+  assertCssVariablesSafe(resolved.cssVariables);
+  assertExecutiveReportTemplateContract(template, definition);
+
+  let blockFragment = renderSingleTextSection(
+    template,
+    definition.sections.title,
+    page.props,
+    "title"
+  );
+  blockFragment = renderSingleTextSection(
+    blockFragment,
+    definition.sections.summary,
+    page.props,
+    "summary"
+  );
+  blockFragment = renderRecommendations(
+    blockFragment,
+    definition.sections.recommendations,
+    page.props
+  );
+
+  const [metrics, table] = await Promise.all([
+    composePrimitiveReference(
+      manifest,
+      page,
+      definition.primitives.metrics,
+      packageRoot
+    ),
+    composePrimitiveReference(
+      manifest,
+      page,
+      definition.primitives.table,
+      packageRoot
+    ),
+  ]);
+  blockFragment = injectPrimitiveFragments(
+    blockFragment,
+    definition.primitives.metrics.slot,
+    metrics
+  );
+  blockFragment = injectPrimitiveFragments(
+    blockFragment,
+    definition.primitives.table.slot,
+    table
+  );
+
+  return pageShell(
+    manifest,
+    page,
+    resolved.cssVariables,
+    finishBlockFragment(blockFragment)
+  );
 }
