@@ -1,0 +1,9 @@
+{
+  "label": "Monthly recurring revenue",
+  "value": "$1.2M",
+  "trend": {
+    "direction": "up",
+    "value": "12%",
+    "label": "vs. previous quarter"
+  }
+}

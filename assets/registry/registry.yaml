@@ -1,2 +1,9 @@
 version: "1"
-entries: []
+entries:
+  - id: metric-card
+    kind: primitive
+    version: 1.0.0
+    template: primitives/metric-card/component.html
+    schema: primitives/metric-card/schema.json
+    formats: [docs, slides]
+    themes: [ivory-editorial]
