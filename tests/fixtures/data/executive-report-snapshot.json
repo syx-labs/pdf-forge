@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1",
+  "snapshotId": "executive-report-2026-q3",
+  "providerId": "static-json",
+  "sourceRef": "fixtures.executive-report-2026-q3",
+  "mode": "read-only",
+  "capturedAt": "2026-08-17T10:30:00+00:00",
+  "columns": [
+    { "name": "region", "type": "string" },
+    { "name": "revenue", "type": "number" },
+    { "name": "target", "type": "number" },
+    { "name": "recommendation", "type": "string" }
+  ],
+  "rows": [
+    ["North", 125000, 120000, "Protect enterprise retention."],
+    ["South", 98000, 105000, "Accelerate qualified pipeline."]
+  ]
+}

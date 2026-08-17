@@ -154,6 +154,7 @@ function printHelp() {
   console.log("  pdf-forge preview <rendered> [...]            Generate a social preview");
   console.log("  pdf-forge registry list [--json]              List registry entries");
   console.log("  pdf-forge registry inspect <id> [--json]      Inspect a registry entry");
+  console.log("  pdf-forge compose executive-report --data <path> --theme <id> --output <pdf> --receipt <json>");
   console.log("  pdf-forge psd-deck|psd-extract|psd-slides [...]  PSD import tools (require uv)");
   console.log("\nRun a pipeline command with --help for its arguments when supported.");
 }
@@ -223,6 +224,11 @@ async function main() {
   }
   if (command === "registry") {
     const code = await runRegistryCommand(args);
+    process.exitCode = code;
+    return;
+  }
+  if (command === "compose") {
+    const code = await runRegistryScript("compose-document.ts", args);
     process.exitCode = code;
     return;
   }
