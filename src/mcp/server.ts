@@ -1,8 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { resolve, join } from "node:path";
-import { readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
+import { dirname, resolve, join } from "node:path";
+import { mkdir, readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { discoverPackageRoot } from "../core/package-root.js";
 import { renderPages } from "../core/renderer.js";
@@ -28,6 +28,58 @@ const SafeComponentIdSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/)
   .describe("Safe canonical component ID returned by list_pdf_components");
+
+const ExplicitPathSchema = z
+  .string()
+  .min(1)
+  .max(4_096)
+  .refine((path: string) => path.trim().length > 0, {
+    message: "Path must not be blank.",
+  })
+  .refine((path: string) => !path.includes("\0"), {
+    message: "Path must not contain NUL bytes.",
+  });
+
+const ComposePdfInputSchema = z.strictObject({
+  manifest: z.unknown().describe("Governed document manifest to compose"),
+  data: z.discriminatedUnion("kind", [
+    z.strictObject({
+      kind: z.literal("embedded"),
+      snapshot: z.unknown(),
+    }),
+    z.strictObject({
+      kind: z.literal("static-json"),
+      filePath: ExplicitPathSchema,
+    }),
+  ]),
+  outputPath: ExplicitPathSchema.refine((path: string) => path.endsWith(".pdf"), {
+    message: "Output path must end with .pdf.",
+  }),
+});
+
+type ComposePdfInput = z.infer<typeof ComposePdfInputSchema>;
+type ComposeErrorCode =
+  | "INVALID_MANIFEST"
+  | "INVALID_SNAPSHOT"
+  | "SNAPSHOT_LIMIT_EXCEEDED"
+  | "BINDING_FAILED"
+  | "COMPOSITION_FAILED";
+
+class ComposePdfError extends Error {
+  readonly code: ComposeErrorCode;
+  readonly issues: readonly ManifestIssue[] | undefined;
+
+  constructor(
+    code: ComposeErrorCode,
+    message: string,
+    issues?: readonly ManifestIssue[]
+  ) {
+    super(message);
+    this.name = "ComposePdfError";
+    this.code = code;
+    this.issues = issues;
+  }
+}
 
 function jsonTextResult(
   value: JsonValue,
@@ -117,6 +169,150 @@ export async function parseDocumentManifestForMcp(
     return bridge.parseDocumentManifestForMcp(input);
   }
   return manifestModule.parseDocumentManifest(input);
+}
+
+function manifestIssuesFromZod(error: z.ZodError): ManifestIssue[] {
+  return sortManifestIssues(
+    error.issues.map((issue: z.core.$ZodIssue) => ({
+      path: formatIssuePath(issue.path),
+      message: issue.message,
+    }))
+  );
+}
+
+function validateManifestAgainstRegistry(
+  manifest: DocumentManifest,
+  registry: LoadedRegistry
+): ManifestIssue[] {
+  const issues: ManifestIssue[] = [];
+  for (const [index, page] of manifest.pages.entries()) {
+    const path = `$.pages[${index}].selection.id`;
+    const component = registry.entries.find(
+      (entry) => entry.id === page.selection.id
+    );
+    if (component === undefined) {
+      issues.push({
+        path,
+        message: "Selected component is not registered.",
+      });
+      continue;
+    }
+    if (component.kind !== page.selection.kind) {
+      issues.push({
+        path,
+        message: "Selected component kind does not match the registry.",
+      });
+    }
+    if (!component.formats.includes(manifest.format)) {
+      issues.push({
+        path,
+        message: "Selected component does not support the manifest format.",
+      });
+    }
+    if (!component.themes.includes(manifest.theme)) {
+      issues.push({
+        path,
+        message: "Selected component does not support the manifest theme.",
+      });
+    }
+  }
+  return sortManifestIssues(issues);
+}
+
+function validateComposeManifestInvariants(
+  manifest: DocumentManifest
+): ManifestIssue[] {
+  const issues: ManifestIssue[] = [];
+  if (manifest.pages.length !== 1) {
+    issues.push({
+      path: "$.pages",
+      message: "compose_pdf v1 requires exactly one page.",
+    });
+    return issues;
+  }
+
+  const page = manifest.pages[0];
+  if (page === undefined) {
+    return issues;
+  }
+  if (
+    page.selection.kind !== "block" ||
+    page.selection.id !== "executive-report"
+  ) {
+    issues.push({
+      path: "$.pages[0].selection",
+      message: "compose_pdf v1 requires the executive-report block.",
+    });
+  }
+  if (!isRecord(page.props) || Object.keys(page.props).length !== 0) {
+    issues.push({
+      path: "$.pages[0].props",
+      message: "compose_pdf supplies governed props; manifest props must be empty.",
+    });
+  }
+  if (manifest.snapshotRef === undefined) {
+    issues.push({
+      path: "$.snapshotRef",
+      message: "compose_pdf requires a snapshot reference.",
+    });
+  }
+  return sortManifestIssues(issues);
+}
+
+function isSnapshotLimitError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.message.includes("Encoded snapshot exceeds ") ||
+      error.message.includes(" exceeds maximum size of ") ||
+      error.message.includes('"code": "too_big"'))
+  );
+}
+
+async function loadComposeSnapshot(data: ComposePdfInput["data"]) {
+  try {
+    if (data.kind === "embedded") {
+      const { parseDataSnapshot } = await import("../data/schemas.js");
+      return parseDataSnapshot(data.snapshot);
+    }
+
+    const [{ DataProviderRegistry }, { StaticJsonProvider }] = await Promise.all([
+      import("../data/provider-registry.js"),
+      import("../data/providers/static-json.js"),
+    ]);
+    const providers = new DataProviderRegistry();
+    providers.register(new StaticJsonProvider());
+    const abortController = new AbortController();
+    return await providers.load(
+      "static-json",
+      { filePath: resolve(data.filePath) },
+      { signal: abortController.signal }
+    );
+  } catch (error) {
+    if (isSnapshotLimitError(error)) {
+      throw new ComposePdfError(
+        "SNAPSHOT_LIMIT_EXCEEDED",
+        "Snapshot exceeds the configured compose_pdf limits."
+      );
+    }
+    throw new ComposePdfError(
+      "INVALID_SNAPSHOT",
+      "Snapshot failed governed data validation."
+    );
+  }
+}
+
+function composeErrorResult(error: ComposePdfError): CallToolResult {
+  return jsonTextResult(
+    {
+      ok: false,
+      error: {
+        code: error.code,
+        message: error.message,
+        ...(error.issues === undefined ? {} : { issues: error.issues }),
+      },
+    },
+    true
+  );
 }
 
 async function readPackageVersion(packageRoot: string): Promise<string> {
@@ -234,6 +430,182 @@ export async function createServer(): Promise<McpServer> {
   );
 
   server.registerTool(
+    "compose_pdf",
+    {
+      description:
+        "Compose one governed executive-report manifest from a bounded data snapshot and return an auditable PDF receipt.",
+      inputSchema: ComposePdfInputSchema,
+    },
+    async ({ manifest: manifestInput, data, outputPath }: ComposePdfInput) => {
+      try {
+        let manifest: DocumentManifest;
+        try {
+          manifest = await parseDocumentManifestForMcp(manifestInput);
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            throw new ComposePdfError(
+              "INVALID_MANIFEST",
+              "Manifest failed semantic validation.",
+              manifestIssuesFromZod(error)
+            );
+          }
+          throw error;
+        }
+
+        const registry = await loadCanonicalRegistry();
+        const registryIssues = validateManifestAgainstRegistry(
+          manifest,
+          registry
+        );
+        const invariantIssues = validateComposeManifestInvariants(manifest);
+        const manifestIssues = sortManifestIssues([
+          ...registryIssues,
+          ...invariantIssues,
+        ]);
+        if (manifestIssues.length > 0) {
+          throw new ComposePdfError(
+            "INVALID_MANIFEST",
+            "Manifest is not eligible for compose_pdf v1.",
+            manifestIssues
+          );
+        }
+
+        const snapshot = await loadComposeSnapshot(data);
+        if (manifest.snapshotRef !== snapshot.snapshotId) {
+          throw new ComposePdfError(
+            "INVALID_MANIFEST",
+            "Manifest snapshot reference does not match the governed snapshot.",
+            [
+              {
+                path: "$.snapshotRef",
+                message: "Snapshot reference mismatch.",
+              },
+            ]
+          );
+        }
+
+        let redacted: typeof snapshot;
+        let props: Awaited<
+          ReturnType<
+            typeof import("../data/bindings/executive-report.js").bindExecutiveReport
+          >
+        >;
+        try {
+          const [{ redactDataSnapshot }, { bindExecutiveReport }] =
+            await Promise.all([
+              import("../data/redact.js"),
+              import("../data/bindings/executive-report.js"),
+            ]);
+          redacted = redactDataSnapshot(snapshot, {
+            mode: "allow",
+            columns: ["region", "revenue", "target", "recommendation"],
+          });
+          props = bindExecutiveReport(redacted);
+        } catch {
+          throw new ComposePdfError(
+            "BINDING_FAILED",
+            "Snapshot could not be bound to the executive-report contract."
+          );
+        }
+
+        const sourcePage = manifest.pages[0];
+        if (sourcePage === undefined) {
+          throw new ComposePdfError(
+            "INVALID_MANIFEST",
+            "Manifest is not eligible for compose_pdf v1."
+          );
+        }
+        const effectiveManifest = await parseDocumentManifestForMcp({
+          ...manifest,
+          pages: [{ ...sourcePage, props }],
+        });
+        const effectivePage = effectiveManifest.pages[0];
+        if (effectivePage === undefined) {
+          throw new ComposePdfError(
+            "COMPOSITION_FAILED",
+            "Effective manifest could not be composed."
+          );
+        }
+        let html: string;
+        try {
+          const { composeDocumentPage } = await import("../registry/compose.js");
+          html = await composeDocumentPage(
+            effectiveManifest,
+            effectivePage,
+            packageRoot
+          );
+        } catch {
+          throw new ComposePdfError(
+            "COMPOSITION_FAILED",
+            "Effective manifest could not be composed."
+          );
+        }
+
+        const tempDir = await mkdtemp(
+          join(tmpdir(), "pdf-forge-compose-mcp-")
+        );
+        try {
+          const pagesDir = join(tempDir, "pages");
+          const renderDir = join(tempDir, "rendered");
+          await mkdir(pagesDir, { recursive: true });
+          await writeFile(
+            join(pagesDir, "01-executive-report.html"),
+            html,
+            "utf-8"
+          );
+          await renderPages({
+            inputDir: pagesDir,
+            outputDir: renderDir,
+            format: effectiveManifest.format,
+            scale: 1,
+          });
+
+          const finalPath = resolve(outputPath);
+          await mkdir(dirname(finalPath), { recursive: true });
+          const mergeResult = await mergePages({
+            inputDir: renderDir,
+            outputPath: finalPath,
+          });
+          const receiptRegistry = await loadCanonicalRegistry();
+          const { buildPdfBuildReceipt } = await import(
+            "../registry/receipt.js"
+          );
+          const receipt = await buildPdfBuildReceipt({
+            manifest: effectiveManifest,
+            registry: receiptRegistry,
+            componentIds: [
+              "executive-report",
+              "metric-card",
+              "data-table",
+            ],
+            snapshot: redacted,
+            mergeResult,
+            warnings: [],
+            createdAt: new Date().toISOString(),
+          });
+          return jsonTextResult({
+            ok: true,
+            path: mergeResult.path,
+            receipt,
+          });
+        } finally {
+          await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+        }
+      } catch (error) {
+        if (error instanceof ComposePdfError) {
+          return composeErrorResult(error);
+        }
+        return composeErrorResult(
+          new ComposePdfError(
+            "COMPOSITION_FAILED",
+            "Structured PDF composition failed."
+          )
+        );
+      }
+    }
+  );
+
+  server.registerTool(
     "list_pdf_components",
     {
       description:
@@ -308,38 +680,7 @@ export async function createServer(): Promise<McpServer> {
       try {
         const manifest = await parseDocumentManifestForMcp(manifestInput);
         const registry = await loadCanonicalRegistry();
-        const registryIssues: ManifestIssue[] = [];
-        for (const [index, page] of manifest.pages.entries()) {
-          const path = `$.pages[${index}].selection.id`;
-          const component = registry.entries.find(
-            (entry) => entry.id === page.selection.id
-          );
-          if (component === undefined) {
-            registryIssues.push({
-              path,
-              message: "Selected component is not registered.",
-            });
-            continue;
-          }
-          if (component.kind !== page.selection.kind) {
-            registryIssues.push({
-              path,
-              message: "Selected component kind does not match the registry.",
-            });
-          }
-          if (!component.formats.includes(manifest.format)) {
-            registryIssues.push({
-              path,
-              message: "Selected component does not support the manifest format.",
-            });
-          }
-          if (!component.themes.includes(manifest.theme)) {
-            registryIssues.push({
-              path,
-              message: "Selected component does not support the manifest theme.",
-            });
-          }
-        }
+        const registryIssues = validateManifestAgainstRegistry(manifest, registry);
         if (registryIssues.length > 0) {
           return jsonTextResult(
             {
