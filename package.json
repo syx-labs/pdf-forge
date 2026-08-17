@@ -41,7 +41,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "lint:anti-slop": "oxlint -c oxlint.config.ts src bin scripts tests",
+    "lint:anti-slop": "oxlint -c oxlint.config.ts --deny-warnings src bin scripts tests",
     "test": "bun test --parallel=1 --timeout=60000",
     "cli": "bun run bin/pdf-forge.ts",
     "render": "bun run scripts/render-pdf.ts",
