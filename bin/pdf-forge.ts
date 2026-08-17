@@ -22,6 +22,10 @@ const ENGINE_COMMANDS = {
 
 type EngineCommand = keyof typeof ENGINE_COMMANDS;
 
+function isUnknownRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function getConfigPath(): string {
   const home = homedir();
   const os = platform();
@@ -55,7 +59,10 @@ async function setup() {
     await mkdir(configDir, { recursive: true });
   }
 
-  const mcpServers = (config.mcpServers ?? {}) as Record<string, unknown>;
+  const configuredMcpServers = config.mcpServers;
+  const mcpServers = isUnknownRecord(configuredMcpServers)
+    ? { ...configuredMcpServers }
+    : {};
 
   if (mcpServers["pdf-forge"]) {
     console.log("pdf-forge already configured in Claude Desktop.");
@@ -112,6 +119,25 @@ function runEngineCommand(command: EngineCommand, args: string[]): Promise<numbe
   });
 }
 
+function runRegistryScript(scriptName: string, args: string[]): Promise<number> {
+  const script = join(PLUGIN_ROOT, "scripts", scriptName);
+  const bunExecutable = "bun" in process.versions ? process.execPath : "bun";
+
+  return new Promise((resolveCommand, rejectCommand) => {
+    const child = spawn(bunExecutable, ["run", script, ...args], {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        PDF_FORGE_HOME: PLUGIN_ROOT,
+      },
+      stdio: "inherit",
+    });
+
+    child.once("error", rejectCommand);
+    child.once("close", (code) => resolveCommand(code ?? 1));
+  });
+}
+
 function printHelp() {
   console.log("pdf-forge - HTML/Tailwind rendering pipeline\n");
   console.log("Usage:");
@@ -126,8 +152,53 @@ function printHelp() {
   console.log("  pdf-forge mermaid <manifest> [...]           Pre-render Mermaid SVGs");
   console.log("  pdf-forge manifest <rendered> [...]           Generate a social manifest");
   console.log("  pdf-forge preview <rendered> [...]            Generate a social preview");
+  console.log("  pdf-forge registry list [--json]              List registry entries");
+  console.log("  pdf-forge registry inspect <id> [--json]      Inspect a registry entry");
   console.log("  pdf-forge psd-deck|psd-extract|psd-slides [...]  PSD import tools (require uv)");
   console.log("\nRun a pipeline command with --help for its arguments when supported.");
+}
+
+const REGISTRY_HELP = [
+  "pdf-forge registry - Discover shipped registry entries",
+  "",
+  "Usage:",
+  "  pdf-forge registry list [--json]",
+  "  pdf-forge registry inspect <id> [--json]",
+].join("\n");
+
+function printRegistryHelp(): void {
+  console.log(REGISTRY_HELP);
+}
+
+function printRegistryError(message: string): void {
+  console.error(message);
+  console.error("");
+  console.error(REGISTRY_HELP);
+}
+
+async function runRegistryCommand(args: string[]): Promise<number> {
+  const subcommand = args[0];
+  if (subcommand === undefined) {
+    printRegistryHelp();
+    return 0;
+  }
+  if (["help", "--help", "-h"].includes(subcommand)) {
+    if (args.length > 1) {
+      printRegistryError(`Unexpected registry argument "${args[1]}".`);
+      return 2;
+    }
+    printRegistryHelp();
+    return 0;
+  }
+  if (subcommand === "list") {
+    return runRegistryScript("registry-list.ts", args.slice(1));
+  }
+  if (subcommand === "inspect") {
+    return runRegistryScript("registry-inspect.ts", args.slice(1));
+  }
+
+  printRegistryError(`Unknown registry subcommand "${subcommand}".`);
+  return 2;
 }
 
 async function main() {
@@ -148,6 +219,11 @@ async function main() {
   }
   if (command === "help" || command === "--help" || command === "-h") {
     printHelp();
+    return;
+  }
+  if (command === "registry") {
+    const code = await runRegistryCommand(args);
+    process.exitCode = code;
     return;
   }
   if (isEngineCommand(command)) {
