@@ -14,3 +14,10 @@ entries:
     schema: primitives/data-table/schema.json
     formats: [docs, slides]
     themes: [ivory-editorial]
+  - id: executive-report
+    kind: block
+    version: 1.0.0
+    template: blocks/executive-report/template.html
+    schema: blocks/executive-report/block.yaml
+    formats: [docs, slides]
+    themes: [ivory-editorial]

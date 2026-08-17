@@ -1,0 +1,51 @@
+version: "1"
+schema:
+  type: object
+  additionalProperties: false
+  required: [title, summary, metrics, table, recommendations]
+  properties:
+    title:
+      type: string
+      minLength: 1
+    summary:
+      type: string
+      minLength: 1
+    metrics:
+      type: array
+      minItems: 1
+      maxItems: 4
+      items:
+        type: object
+    table:
+      type: object
+    recommendations:
+      type: array
+      minItems: 1
+      maxItems: 6
+      items:
+        type: string
+        minLength: 1
+sections:
+  title:
+    source: title
+    slot: title
+    repeat: false
+  summary:
+    source: summary
+    slot: summary
+    repeat: false
+  recommendations:
+    source: recommendations
+    slot: recommendations
+    repeat: true
+primitives:
+  metrics:
+    id: metric-card
+    source: metrics
+    slot: metrics
+    repeat: true
+  table:
+    id: data-table
+    source: table
+    slot: table
+    repeat: false
