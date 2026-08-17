@@ -34,7 +34,7 @@ describe("getSocialViewport", () => {
   });
 
   test("throws on invalid format", () => {
-    expect(() => getSocialViewport("post-16-9" as never)).toThrow(
+    expect(() => getSocialViewport("post-16-9")).toThrow(
       /Unknown social format/
     );
   });

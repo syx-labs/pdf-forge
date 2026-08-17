@@ -14,10 +14,10 @@ export default defineConfig({
     },
   ],
   rules: {
-    "anti-slop/no-chained-type-assertions": "warn",
-    "anti-slop/no-known-value-widening": "warn",
-    "anti-slop/no-widen-then-assert": "warn",
-    "anti-slop/no-object-parameters": "warn",
-    "anti-slop/require-safety-comment-for-type-assertion": "warn",
+    "anti-slop/no-chained-type-assertions": "error",
+    "anti-slop/no-known-value-widening": "error",
+    "anti-slop/no-widen-then-assert": "error",
+    "anti-slop/no-object-parameters": "error",
+    "anti-slop/require-safety-comment-for-type-assertion": "error",
   },
 });

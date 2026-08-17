@@ -20,6 +20,37 @@ interface ManifestShape {
   hashtag_suggestion?: string[];
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isManifestSlide(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    (value.file === undefined || typeof value.file === "string") &&
+    (value.archetype === undefined || typeof value.archetype === "string")
+  );
+}
+
+function isManifestShape(value: unknown): value is ManifestShape | null {
+  if (value === null) return true;
+  if (!isRecord(value)) return false;
+  const carousel = value.carousel;
+  return (
+    (carousel === undefined ||
+      (isRecord(carousel) &&
+        (carousel.format === undefined || typeof carousel.format === "string") &&
+        (carousel.theme === undefined || typeof carousel.theme === "string") &&
+        (carousel.generated_at === undefined || typeof carousel.generated_at === "string") &&
+        (carousel.slides === undefined ||
+          (Array.isArray(carousel.slides) && carousel.slides.every(isManifestSlide))))) &&
+    (value.caption_suggestion === undefined || typeof value.caption_suggestion === "string") &&
+    (value.hashtag_suggestion === undefined ||
+      (Array.isArray(value.hashtag_suggestion) &&
+        value.hashtag_suggestion.every((tag) => typeof tag === "string")))
+  );
+}
+
 const args = process.argv.slice(2);
 let renderedDir = "";
 let outputPath: string | undefined;
@@ -53,7 +84,11 @@ let manifest: ManifestShape | null = null;
 if (entries.includes("manifest.yaml")) {
   const raw = await readFile(join(dir, "manifest.yaml"), "utf-8");
   try {
-    manifest = yamlLoad(raw) as ManifestShape;
+    const parsed: unknown = yamlLoad(raw);
+    if (!isManifestShape(parsed)) {
+      throw new Error("manifest must match the documented carousel preview shape");
+    }
+    manifest = parsed;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`Failed to parse ${join(dir, "manifest.yaml")}: ${msg}`);

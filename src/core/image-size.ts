@@ -71,13 +71,15 @@ export function fitToLongEdge(
   };
 }
 
-const PPTX_PRESETS: Record<string, { width: number; height: number }> = {
+type PptxPresetDimensions = Pick<PptxSlideSize, "width" | "height">;
+
+const PPTX_PRESETS = {
   "16:9": { width: 13.333, height: 7.5 },
   "4:3": { width: 10, height: 7.5 },
   "16:10": { width: 13.333, height: 8.333 },
   "a4-landscape": { width: 11.69, height: 8.27 },
   "a4-portrait": { width: 8.27, height: 11.69 },
-};
+} satisfies Record<string, PptxPresetDimensions>;
 
 // Longer slide edge for derived (non-preset) aspects, in inches. Matches the
 // 16:9 preset's long edge so landscape decks stay a familiar physical size.

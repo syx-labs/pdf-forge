@@ -6,6 +6,7 @@ import {
   getSocialViewport,
   isValidSocialFormat,
   SOCIAL_FORMAT_VALUES,
+  type Viewport,
 } from "./social-presets.js";
 
 async function resolveSocialFormat(
@@ -82,7 +83,7 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
   await mkdir(outputDir, { recursive: true });
 
   let socialFormat: SocialFormat | undefined;
-  let viewport: { width: number; height: number };
+  let viewport: Viewport;
 
   if (format === "slides") {
     viewport = options.viewport ?? { width: 1920, height: 1080 };
