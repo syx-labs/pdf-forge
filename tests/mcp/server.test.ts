@@ -100,6 +100,7 @@ describe("MCP Server", () => {
 
       expect(names).toEqual([
         "generate_pdf",
+        "compose_pdf",
         "list_pdf_components",
         "inspect_pdf_component",
         "validate_pdf_manifest",
