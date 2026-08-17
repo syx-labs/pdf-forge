@@ -1,0 +1,41 @@
+{
+  "id": "ivory-editorial",
+  "version": "1.0.0",
+  "colors": {
+    "background": "#F7F3EA",
+    "surface": "#EFE8D9",
+    "border": "#D9D1C0",
+    "textPrimary": "#26241E",
+    "textSecondary": "#5C574A",
+    "positive": "#1D4B38",
+    "negative": "#B4532A",
+    "neutral": "#8B8271"
+  },
+  "typography": {
+    "fontDisplay": "\"Cormorant Garamond\", serif",
+    "fontBody": "\"Plus Jakarta Sans\", sans-serif",
+    "fontSizeBody": "16px",
+    "fontSizeLabel": "12px",
+    "fontSizeCaption": "14px",
+    "fontSizeMetric": "48px",
+    "fontWeightSemibold": "600",
+    "lineHeightBody": "1.5",
+    "lineHeightLabel": "1.25",
+    "lineHeightTight": "1",
+    "trackingBody": "-0.01em",
+    "trackingHeading": "-0.02em",
+    "trackingLabel": "-0.01em"
+  },
+  "spacing": {
+    "space3": "12px",
+    "space4": "16px",
+    "space6": "24px",
+    "space8": "32px"
+  },
+  "borders": {
+    "width": "1px"
+  },
+  "radii": {
+    "card": "12px"
+  }
+}
