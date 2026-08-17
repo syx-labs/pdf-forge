@@ -1,0 +1,30 @@
+{
+  "columns": [
+    {
+      "key": "quarter",
+      "label": "Quarter",
+      "align": "left"
+    },
+    {
+      "key": "revenue",
+      "label": "Revenue",
+      "align": "right"
+    },
+    {
+      "key": "growth",
+      "label": "Growth",
+      "align": "right"
+    }
+  ],
+  "rows": [
+    {
+      "cells": ["Q1 2026", "$1.05M", "8%"]
+    },
+    {
+      "cells": ["Q2 2026", "$1.20M", "12%"]
+    },
+    {
+      "cells": ["Q3 2026", "$1.32M", null]
+    }
+  ]
+}

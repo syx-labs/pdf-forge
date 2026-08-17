@@ -227,7 +227,7 @@ entries:
     expect(exitCode, stderr).toBe(0);
     expect(JSON.parse(stdout)).toEqual({
       version: "1",
-      entries: ["metric-card"],
+      entries: ["data-table", "metric-card"],
     });
   });
 });

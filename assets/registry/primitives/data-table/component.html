@@ -1,0 +1,86 @@
+<style>
+  .data-table-frame {
+    overflow: hidden;
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  .data-table__heading,
+  .data-table__cell {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: var(--border-width) solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .data-table__heading {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-label);
+    line-height: var(--line-height-label);
+    text-transform: uppercase;
+  }
+
+  .data-table__heading[data-column-align="center"],
+  .data-table__cell[data-column-align="center"] {
+    text-align: center;
+  }
+
+  .data-table__heading[data-column-align="right"],
+  .data-table__cell[data-column-align="right"] {
+    text-align: right;
+  }
+
+  .data-table__row:last-child .data-table__cell {
+    border-bottom: 0;
+  }
+
+  .data-table__empty {
+    padding: var(--space-8) var(--space-6);
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+</style>
+
+<div class="data-table-frame">
+  <table class="data-table" aria-label="Data table">
+    <thead>
+      <tr>
+        <th
+          class="data-table__heading"
+          scope="col"
+          data-pdf-forge-each="columns"
+          data-column-key="{{escape:columns[].key}}"
+          data-column-align="{{escape:columns[].align}}"
+        >{{escape:columns[].label}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="data-table__row" data-pdf-forge-each="rows">
+        <td
+          class="data-table__cell"
+          data-pdf-forge-each="rows[].cells"
+          data-pdf-forge-column-by-index="columns"
+          data-column-align="{{escape:columns[].align}}"
+          data-pdf-forge-null="—"
+        >{{escape:rows[].cells[]}}</td>
+      </tr>
+      <tr data-pdf-forge-empty="rows">
+        <td class="data-table__empty" data-pdf-forge-colspan="columns">
+          No data available.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

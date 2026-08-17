@@ -7,3 +7,10 @@ entries:
     schema: primitives/metric-card/schema.json
     formats: [docs, slides]
     themes: [ivory-editorial]
+  - id: data-table
+    kind: primitive
+    version: 1.0.0
+    template: primitives/data-table/component.html
+    schema: primitives/data-table/schema.json
+    formats: [docs, slides]
+    themes: [ivory-editorial]

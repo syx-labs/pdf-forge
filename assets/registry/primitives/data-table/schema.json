@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pdf-forge.local/registry/primitives/data-table/schema.json",
+  "title": "Data table props",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["columns", "rows"],
+  "properties": {
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/column"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "columns": { "minItems": 1, "maxItems": 1 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 1, "maxItems": 1 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "columns": { "minItems": 2, "maxItems": 2 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 2, "maxItems": 2 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "columns": { "minItems": 3, "maxItems": 3 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 3, "maxItems": 3 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "columns": { "minItems": 4, "maxItems": 4 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 4, "maxItems": 4 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "columns": { "minItems": 5, "maxItems": 5 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 5, "maxItems": 5 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "columns": { "minItems": 6, "maxItems": 6 },
+            "rows": {
+              "items": {
+                "properties": {
+                  "cells": { "minItems": 6, "maxItems": 6 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "label", "align"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "align": {
+          "type": "string",
+          "enum": ["left", "center", "right"]
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cells"],
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell"
+          }
+        }
+      }
+    },
+    "cell": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    }
+  }
+}
