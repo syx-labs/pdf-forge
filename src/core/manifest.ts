@@ -19,6 +19,17 @@ export interface ManifestInput {
   hashtags?: string[];
 }
 
+interface ManifestDocument {
+  carousel: {
+    format: SocialFormat;
+    theme?: string;
+    generated_at: string;
+    slides: ManifestSlide[];
+  };
+  caption_suggestion?: string;
+  hashtag_suggestion?: string[];
+}
+
 export async function writeManifest(input: ManifestInput): Promise<void> {
   // Slide `file` is a basename relative to the manifest's directory — both the
   // manifest writer and the preview generator rely on this contract.
@@ -30,18 +41,18 @@ export async function writeManifest(input: ManifestInput): Promise<void> {
     }
   }
 
-  const data: Record<string, unknown> = {
+  const data = {
     carousel: {
       format: input.format,
       ...(input.theme ? { theme: input.theme } : {}),
       generated_at: new Date().toISOString(),
       slides: input.slides,
     },
-  };
-
-  if (input.caption) data.caption_suggestion = input.caption;
-  if (input.hashtags && input.hashtags.length > 0)
-    data.hashtag_suggestion = input.hashtags;
+    ...(input.caption ? { caption_suggestion: input.caption } : {}),
+    ...(input.hashtags && input.hashtags.length > 0
+      ? { hashtag_suggestion: input.hashtags }
+      : {}),
+  } satisfies ManifestDocument;
 
   // js-yaml v5 removed quotingType; forceQuotes defaults to false.
   const yaml = yamlDump(data, {

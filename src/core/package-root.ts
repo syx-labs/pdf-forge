@@ -9,6 +9,10 @@ const PACKAGE_SENTINELS = [
   "skills/pdf-forge/SKILL.md",
 ] as const;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function entryPath(entry: string | URL): string {
   if (entry instanceof URL || entry.startsWith("file:")) {
     return fileURLToPath(entry);
@@ -40,7 +44,8 @@ async function packageJsonOrNull(
 ): Promise<Record<string, unknown> | null> {
   try {
     const raw = await readFile(join(candidate, "package.json"), "utf-8");
-    return JSON.parse(raw) as Record<string, unknown>;
+    const parsed: unknown = JSON.parse(raw);
+    return isRecord(parsed) ? parsed : null;
   } catch (error) {
     if (
       error &&

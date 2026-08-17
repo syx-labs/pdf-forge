@@ -8,6 +8,10 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 const REPO_ROOT = resolve(import.meta.dir, "../..");
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 describe("MCP package-root discovery", () => {
   test("source MCP reads its physical package when the checkout path contains dist", async () => {
     const tempDir = await mkdtemp(join(tmpdir(), "pdf-forge-mcp-root-"));
@@ -15,9 +19,13 @@ describe("MCP package-root discovery", () => {
       const sourceRoot = join(tempDir, "distributed-source");
       await mkdir(sourceRoot, { recursive: true });
 
-      const packageJson = JSON.parse(
+      const parsedPackageJson: unknown = JSON.parse(
         await readFile(join(REPO_ROOT, "package.json"), "utf-8")
-      ) as Record<string, unknown>;
+      );
+      if (!isRecord(parsedPackageJson)) {
+        throw new Error("package.json fixture must contain an object");
+      }
+      const packageJson = parsedPackageJson;
       packageJson.version = "9.8.7";
       await writeFile(
         join(sourceRoot, "package.json"),
@@ -63,10 +71,11 @@ describe("MCP package-root discovery", () => {
       const moduleUrl = `${pathToFileURL(
         join(sourceRoot, "src/mcp/server.ts")
       ).href}?fixture=${Date.now()}`;
-      const { createServer } = (await import(moduleUrl)) as {
-        createServer: () => Promise<import("@modelcontextprotocol/sdk/server/mcp.js").McpServer>;
-      };
-      const server = await createServer();
+      const importedModule: unknown = await import(moduleUrl);
+      if (!isRecord(importedModule) || typeof importedModule.createServer !== "function") {
+        throw new Error("MCP module fixture must export createServer()");
+      }
+      const server = await importedModule.createServer();
       const [clientTransport, serverTransport] =
         InMemoryTransport.createLinkedPair();
       await server.connect(serverTransport);

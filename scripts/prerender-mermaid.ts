@@ -20,7 +20,7 @@
  */
 import { chromium } from "playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join } from "node:path";
 import { load } from "js-yaml";
 
 interface MermaidManifest {
@@ -29,20 +29,21 @@ interface MermaidManifest {
   diagrams: Record<string, string>;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isStringDictionary(value: unknown): value is Record<string, string> {
+  return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
+}
+
 function isValidManifest(value: unknown): value is MermaidManifest {
-  if (typeof value !== "object" || value === null) return false;
-  const m = value as Record<string, unknown>;
-  const font = m.font as Record<string, unknown> | undefined;
+  if (!isRecord(value) || !isRecord(value.font)) return false;
   return (
-    typeof font === "object" &&
-    font !== null &&
-    typeof font.family === "string" &&
-    typeof font.url === "string" &&
-    typeof m.theme_variables === "object" &&
-    m.theme_variables !== null &&
-    typeof m.diagrams === "object" &&
-    m.diagrams !== null &&
-    Object.values(m.diagrams as Record<string, unknown>).every((d) => typeof d === "string")
+    typeof value.font.family === "string" &&
+    typeof value.font.url === "string" &&
+    isStringDictionary(value.theme_variables) &&
+    isStringDictionary(value.diagrams)
   );
 }
 
@@ -86,16 +87,30 @@ try {
 
   const svgs = await page.evaluate(
     async ({ defs, vars }) => {
-      interface MermaidApi {
-        initialize(config: Record<string, unknown>): void;
-        render(id: string, definition: string): Promise<{ svg: string }>;
+      const mermaid: unknown = Reflect.get(window, "mermaid");
+      if (
+        typeof mermaid !== "object" ||
+        mermaid === null ||
+        !("initialize" in mermaid) ||
+        typeof mermaid.initialize !== "function" ||
+        !("render" in mermaid) ||
+        typeof mermaid.render !== "function"
+      ) {
+        throw new Error("Mermaid script did not expose initialize() and render().");
       }
-      const m = (window as unknown as { mermaid: MermaidApi }).mermaid;
-      m.initialize({ startOnLoad: false, theme: "base", themeVariables: vars });
+      mermaid.initialize({ startOnLoad: false, theme: "base", themeVariables: vars });
       const out: Record<string, string> = {};
       for (const [name, definition] of Object.entries(defs)) {
-        const { svg } = await m.render(`prerender_${name}`, definition);
-        out[name] = svg;
+        const rendered: unknown = await mermaid.render(`prerender_${name}`, definition);
+        if (
+          typeof rendered !== "object" ||
+          rendered === null ||
+          !("svg" in rendered) ||
+          typeof rendered.svg !== "string"
+        ) {
+          throw new Error(`Mermaid returned an invalid SVG for diagram "${name}".`);
+        }
+        out[name] = rendered.svg;
       }
       return out;
     },

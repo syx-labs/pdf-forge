@@ -16,7 +16,7 @@
  *   - PROJECT_ROOT must be a real, sandbox-accessible directory
  */
 
-import { resolve, dirname } from "node:path";
+import { resolve } from "node:path";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { load as yamlLoad } from "js-yaml";
@@ -38,6 +38,42 @@ interface Manifest {
   asset_type?: string;
   use_case?: string;
   images: ImageSpec[];
+}
+
+type ImageOutcome = "done" | "skipped" | "failed";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === "string";
+}
+
+function isImageSpec(value: unknown): value is ImageSpec {
+  return (
+    isRecord(value) &&
+    typeof value.slug === "string" &&
+    typeof value.concept === "string" &&
+    isOptionalString(value.aspect) &&
+    isOptionalString(value.dimensions)
+  );
+}
+
+function isManifest(value: unknown): value is Manifest {
+  return (
+    isRecord(value) &&
+    isOptionalString(value.images_dir) &&
+    isOptionalString(value.log_dir) &&
+    isOptionalString(value.default_aspect) &&
+    isOptionalString(value.default_dimensions) &&
+    isOptionalString(value.common_style) &&
+    isOptionalString(value.common_palette) &&
+    isOptionalString(value.asset_type) &&
+    isOptionalString(value.use_case) &&
+    Array.isArray(value.images) &&
+    value.images.every(isImageSpec)
+  );
 }
 
 const args = process.argv.slice(2);
@@ -81,12 +117,13 @@ if (!projStat || !projStat.isDirectory()) {
 }
 
 const manifestRaw = await readFile(manifestPath, "utf-8");
-const manifest = yamlLoad(manifestRaw) as Manifest;
+const parsedManifest: unknown = yamlLoad(manifestRaw);
 
-if (!manifest || !Array.isArray(manifest.images) || manifest.images.length === 0) {
+if (!isManifest(parsedManifest) || parsedManifest.images.length === 0) {
   console.error(`Manifest "${manifestPath}" has no images[] array.`);
   process.exit(1);
 }
+const manifest = parsedManifest;
 
 // slug becomes a filename — reject path separators, .., and other shell metacharacters.
 // Allowed: lowercase/uppercase letters, digits, hyphen, underscore, dot.
@@ -127,7 +164,7 @@ Color palette: ${commonPalette}
 After generating, copy/move the output to ${outPath} and confirm the final saved path with sips dimensions.`;
 }
 
-async function runOne(spec: ImageSpec): Promise<"done" | "skipped" | "failed"> {
+async function runOne(spec: ImageSpec): Promise<ImageOutcome> {
   const outPath = resolve(imagesDir, `${spec.slug}.png`);
   const logPath = resolve(logDir, `${spec.slug}.log`);
 
@@ -191,7 +228,10 @@ async function runOne(spec: ImageSpec): Promise<"done" | "skipped" | "failed"> {
 }
 
 async function runPool(specs: ImageSpec[], limit: number) {
-  const results: Record<string, number> = { done: 0, skipped: 0, failed: 0 };
+  const results = { done: 0, skipped: 0, failed: 0 } satisfies Record<
+    ImageOutcome,
+    number
+  >;
   let index = 0;
 
   const workers = Array.from({ length: Math.min(limit, specs.length) }, async () => {

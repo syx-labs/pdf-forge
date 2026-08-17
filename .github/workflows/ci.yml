@@ -18,6 +18,9 @@ jobs:
 
       - run: bun install
 
+      - name: Anti-slop lint
+        run: bun run lint:anti-slop
+
       - name: Type check
         run: bun run typecheck
 
