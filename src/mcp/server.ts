@@ -526,10 +526,15 @@ export async function createServer(): Promise<McpServer> {
             "Effective manifest could not be composed."
           );
         }
-        let html: string;
+        let composition: Readonly<{
+          html: string;
+          componentIds: readonly string[];
+        }>;
         try {
-          const { composeDocumentPage } = await import("../registry/compose.js");
-          html = await composeDocumentPage(
+          const { composeDocumentPageWithMetadata } = await import(
+            "../registry/compose.js"
+          );
+          composition = await composeDocumentPageWithMetadata(
             effectiveManifest,
             effectivePage,
             packageRoot
@@ -550,7 +555,7 @@ export async function createServer(): Promise<McpServer> {
           await mkdir(pagesDir, { recursive: true });
           await writeFile(
             join(pagesDir, "01-executive-report.html"),
-            html,
+            composition.html,
             "utf-8"
           );
           await renderPages({
@@ -573,11 +578,7 @@ export async function createServer(): Promise<McpServer> {
           const receipt = await buildPdfBuildReceipt({
             manifest: effectiveManifest,
             registry: receiptRegistry,
-            componentIds: [
-              "executive-report",
-              "metric-card",
-              "data-table",
-            ],
+            componentIds: composition.componentIds,
             snapshot: redacted,
             mergeResult,
             warnings: [],

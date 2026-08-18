@@ -95,6 +95,27 @@ class DeepSqlProviderError extends Error {
   }
 }
 
+async function raceWithAbort<T>(
+  operation: Promise<T>,
+  signal: AbortSignal
+): Promise<T> {
+  signal.throwIfAborted();
+  let rejectAbort: ((reason: unknown) => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectAbort = reject;
+  });
+  const onAbort = () => rejectAbort?.(signal.reason);
+  signal.addEventListener("abort", onAbort, { once: true });
+  if (signal.aborted) {
+    onAbort();
+  }
+  try {
+    return await Promise.race([operation, aborted]);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
+}
+
 async function rejectResponseBody(response: Response): Promise<void> {
   await response.body
     ?.cancel("DeepSQL response rejected.")
@@ -200,24 +221,6 @@ export class DeepSqlProvider implements DataProvider {
       throw new Error("DeepSQL query is not allowed.");
     }
 
-    const parameters = parsedRequest.parameters;
-    if (parameters !== undefined && Object.keys(parameters).length > 0) {
-      const validateParameters = this.#validateParameters;
-      if (validateParameters === undefined) {
-        throw new Error("DeepSQL parameters require host policy approval.");
-      }
-      let approved: boolean;
-      try {
-        approved = await validateParameters(parsedRequest.queryId, parameters);
-      } catch {
-        throw new Error("DeepSQL parameter policy rejected the request.");
-      }
-      if (approved !== true) {
-        throw new Error("DeepSQL parameter policy rejected the request.");
-      }
-    }
-
-    context.signal.throwIfAborted();
     const timeoutController = new AbortController();
     const timeout = setTimeout(() => timeoutController.abort(), this.#timeoutMs);
     const signal = AbortSignal.any([
@@ -225,6 +228,38 @@ export class DeepSqlProvider implements DataProvider {
       timeoutController.signal,
     ]);
     try {
+      const parameters = parsedRequest.parameters;
+      if (parameters !== undefined && Object.keys(parameters).length > 0) {
+        const validateParameters = this.#validateParameters;
+        if (validateParameters === undefined) {
+          throw new DeepSqlProviderError(
+            "DeepSQL parameters require host policy approval."
+          );
+        }
+        let approved: boolean;
+        try {
+          approved = await raceWithAbort(
+            Promise.resolve(
+              validateParameters(parsedRequest.queryId, parameters)
+            ),
+            signal
+          );
+        } catch (error) {
+          if (signal.aborted) {
+            throw error;
+          }
+          throw new DeepSqlProviderError(
+            "DeepSQL parameter policy rejected the request."
+          );
+        }
+        if (approved !== true) {
+          throw new DeepSqlProviderError(
+            "DeepSQL parameter policy rejected the request."
+          );
+        }
+      }
+
+      signal.throwIfAborted();
       const response = await fetch(this.#baseUrl, {
         method: "POST",
         headers: {

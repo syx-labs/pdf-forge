@@ -3,7 +3,11 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { composePrimitivePage } from "../../src/registry/compose";
+import {
+  composeDocumentPage,
+  composeDocumentPageWithMetadata,
+  composePrimitivePage,
+} from "../../src/registry/compose";
 import { parseDocumentManifest } from "../../src/registry/document-manifest";
 
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -140,6 +144,24 @@ describe("composePrimitivePage", () => {
     expect(first).not.toContain('<script>alert("metric")</script>');
     expect(first).not.toContain("{{");
     expect(first).toEndWith("\n</body>\n</html>\n");
+  });
+
+  test("returns exact immutable provenance metadata for a primitive composition without changing the legacy HTML API", async () => {
+    const manifest = metricCardManifest();
+    const page = manifest.pages[0];
+
+    const composition = await composeDocumentPageWithMetadata(
+      manifest,
+      page,
+      packageRoot
+    );
+
+    expect(composition.html).toBe(
+      await composeDocumentPage(manifest, page, packageRoot)
+    );
+    expect(composition.componentIds).toEqual(["metric-card"]);
+    expect(Object.isFrozen(composition)).toBe(true);
+    expect(Object.isFrozen(composition.componentIds)).toBe(true);
   });
 
   test("omits the optional metric trend without leaving compiler syntax", async () => {

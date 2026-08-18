@@ -6,6 +6,21 @@ import { resolveRegistryEntry } from "./resolver.js";
 
 type DocumentPage = DocumentManifest["pages"][number];
 
+export type DocumentPageComposition = Readonly<{
+  html: string;
+  componentIds: readonly string[];
+}>;
+
+function compositionResult(
+  html: string,
+  componentIds: readonly string[]
+): DocumentPageComposition {
+  return Object.freeze({
+    html,
+    componentIds: Object.freeze([...new Set(componentIds)].sort()),
+  });
+}
+
 type ValidationIssue = Readonly<{
   schemaPath: string;
   dataPath: string;
@@ -1288,13 +1303,16 @@ export async function composePrimitivePage(
   return pageShell(manifest, page, resolved.cssVariables, componentHtml);
 }
 
-export async function composeDocumentPage(
+export async function composeDocumentPageWithMetadata(
   manifest: DocumentManifest,
   page: DocumentPage,
   packageRoot?: string
-): Promise<string> {
+): Promise<DocumentPageComposition> {
   if (page.selection.kind === "primitive") {
-    return composePrimitivePage(manifest, page, packageRoot);
+    return compositionResult(
+      await composePrimitivePage(manifest, page, packageRoot),
+      [page.selection.id]
+    );
   }
 
   const resolved = await resolveRegistryEntry({
@@ -1373,10 +1391,25 @@ export async function composeDocumentPage(
     table
   );
 
-  return pageShell(
+  const html = pageShell(
     manifest,
     page,
     resolved.cssVariables,
     finishBlockFragment(blockFragment)
   );
+  return compositionResult(html, [
+    page.selection.id,
+    definition.primitives.metrics.id,
+    definition.primitives.table.id,
+  ]);
+}
+
+export async function composeDocumentPage(
+  manifest: DocumentManifest,
+  page: DocumentPage,
+  packageRoot?: string
+): Promise<string> {
+  return (
+    await composeDocumentPageWithMetadata(manifest, page, packageRoot)
+  ).html;
 }

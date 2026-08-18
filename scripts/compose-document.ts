@@ -7,7 +7,7 @@ import { bindExecutiveReport } from "../src/data/bindings/executive-report";
 import { DataProviderRegistry } from "../src/data/provider-registry";
 import { StaticJsonProvider } from "../src/data/providers/static-json";
 import { redactDataSnapshot } from "../src/data/redact";
-import { composeDocumentPage } from "../src/registry/compose";
+import { composeDocumentPageWithMetadata } from "../src/registry/compose";
 import { parseDocumentManifest } from "../src/registry/document-manifest";
 import { loadRegistry } from "../src/registry/loader";
 import { buildPdfBuildReceipt } from "../src/registry/receipt";
@@ -183,14 +183,22 @@ async function compose(options: ComposeOptions, packageRoot: string): Promise<vo
   if (page === undefined) {
     throw new Error("Composed document manifest has no page.");
   }
-  const html = await composeDocumentPage(manifest, page, packageRoot);
+  const composition = await composeDocumentPageWithMetadata(
+    manifest,
+    page,
+    packageRoot
+  );
 
   const temporaryRoot = await mkdtemp(join(tmpdir(), "pdf-forge-compose-"));
   try {
     const pagesDir = join(temporaryRoot, "pages");
     const renderedDir = join(temporaryRoot, "rendered");
     await mkdir(pagesDir, { recursive: true });
-    await writeFile(join(pagesDir, "01-executive-report.html"), html, "utf8");
+    await writeFile(
+      join(pagesDir, "01-executive-report.html"),
+      composition.html,
+      "utf8"
+    );
     await renderPages({
       inputDir: pagesDir,
       outputDir: renderedDir,
@@ -206,7 +214,7 @@ async function compose(options: ComposeOptions, packageRoot: string): Promise<vo
     const receipt = await buildPdfBuildReceipt({
       manifest,
       registry,
-      componentIds: ["executive-report", "metric-card", "data-table"],
+      componentIds: composition.componentIds,
       snapshot: redacted,
       mergeResult,
       warnings: [],
