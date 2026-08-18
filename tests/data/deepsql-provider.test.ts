@@ -87,6 +87,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     const snapshot = await provider.load(validRequest, {
@@ -131,6 +132,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds,
+      validateFreshness: () => true,
     });
     allowedQueryIds.splice(0, 1, "document-injected-query");
 
@@ -151,6 +153,7 @@ describe("DeepSqlProvider", () => {
           authToken: "host-owned-token",
           timeoutMs: 1_000,
           allowedQueryIds: ["monthly-revenue", "monthly-revenue"],
+          validateFreshness: () => true,
         })
     ).toThrow("Invalid DeepSQL provider configuration.");
   });
@@ -166,6 +169,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     await expect(
@@ -186,6 +190,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       validateParameters(queryId, parameters) {
         receivedQueryId = queryId;
         receivedParameters = parameters;
@@ -225,6 +230,7 @@ describe("DeepSqlProvider", () => {
         authToken,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
         validateParameters,
       });
       const rejection = await rejectionOf(() =>
@@ -255,6 +261,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
     const sensitiveValue = "request-control-value-must-not-leak";
     const invalidRequests = [
@@ -287,6 +294,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
     const controller = new AbortController();
     const reason = new DOMException("cancelled by host", "AbortError");
@@ -309,6 +317,7 @@ describe("DeepSqlProvider", () => {
       authToken,
       timeoutMs: 20,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     const rejection = await rejectionOf(() =>
@@ -336,6 +345,7 @@ describe("DeepSqlProvider", () => {
       authToken,
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     const rejection = await rejectionOf(() =>
@@ -364,6 +374,7 @@ describe("DeepSqlProvider", () => {
       authToken,
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     const rejection = await rejectionOf(() =>
@@ -393,6 +404,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       maxResponseBytes: 128,
     });
 
@@ -428,6 +440,7 @@ describe("DeepSqlProvider", () => {
       authToken: "stream-token-must-not-leak",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       maxResponseBytes: 128,
     });
 
@@ -453,6 +466,7 @@ describe("DeepSqlProvider", () => {
       authToken: "json-token-must-not-leak",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
     });
 
     const rejection = await rejectionOf(() =>
@@ -489,6 +503,7 @@ describe("DeepSqlProvider", () => {
         authToken: "contract-token-must-not-leak",
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       });
       const rejection = await rejectionOf(() =>
         provider.load(validRequest, { signal: new AbortController().signal })
@@ -499,6 +514,40 @@ describe("DeepSqlProvider", () => {
     }
   });
 
+  test("requires host freshness approval before creating a snapshot", async () => {
+    const server = startServer(() => Response.json(validResponse));
+    const provider = new DeepSqlProvider({
+      baseUrl: endpoint(server),
+      authToken: "freshness-token-must-not-leak",
+      timeoutMs: 1_000,
+      allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => false,
+    });
+    const rejection = await rejectionOf(() =>
+      provider.load(validRequest, { signal: new AbortController().signal })
+    );
+    expect(rejection.message).toBe(
+      "DeepSQL freshness policy rejected the response."
+    );
+    expect(rejection.message).not.toContain("freshness-token-must-not-leak");
+  });
+
+  test("bounds a pending async freshness policy by the request timeout", async () => {
+    const server = startServer(() => Response.json(validResponse));
+    const provider = new DeepSqlProvider({
+      baseUrl: endpoint(server),
+      authToken: "freshness-timeout-token-must-not-leak",
+      timeoutMs: 20,
+      allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => new Promise<boolean>(() => {}),
+    });
+    const rejection = await rejectionOf(() =>
+      provider.load(validRequest, { signal: new AbortController().signal })
+    );
+    expect(rejection.message).toBe("DeepSQL request timed out.");
+    expect(rejection.message).not.toContain("freshness-timeout-token-must-not-leak");
+  }, 1_000);
+
   test("fails closed on invalid trusted configuration without echoing secrets", () => {
     const secret = "configuration-token-must-not-leak";
     const invalidConfigurations = [
@@ -507,54 +556,63 @@ describe("DeepSqlProvider", () => {
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://user:password@example.test/deep/sql",
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql?endpoint=document-controlled",
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: "   ",
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: "unsafe\r\nheader",
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: secret,
         timeoutMs: 0,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: [],
+        validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue", "monthly-revenue"],
+        validateFreshness: () => true,
       },
       {
         baseUrl: "https://example.test/deep/sql",
         authToken: secret,
         timeoutMs: 1_000,
         allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
         maxResponseBytes: 5_242_881,
       },
     ];

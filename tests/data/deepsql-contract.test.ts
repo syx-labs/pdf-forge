@@ -33,6 +33,7 @@ const validResponse = {
   provenance: {
     sourceRef: "deepsql/reports/monthly-revenue",
     freshnessAt: "2026-08-17T10:30:00+00:00",
+    queryId: "monthly-revenue",
   },
 };
 
@@ -154,17 +155,22 @@ describe("DeepSQL response contract", () => {
     expect(parseDeepSqlResponse(validResponse)).toEqual(validResponse);
   });
 
-  test("accepts optional query identity and lowercase SHA-256 digest metadata", () => {
+  test("accepts optional lowercase SHA-256 digest metadata", () => {
     const response = {
       ...validResponse,
       provenance: {
         ...validResponse.provenance,
-        queryId: "monthly-revenue",
         queryDigest: "a".repeat(64),
       },
     };
 
     expect(parseDeepSqlResponse(response)).toEqual(response);
+  });
+
+  test("requires query identity in provenance", () => {
+    const provenance = { ...validResponse.provenance };
+    Reflect.deleteProperty(provenance, "queryId");
+    expect(() => parseDeepSqlResponse({ ...validResponse, provenance })).toThrow();
   });
 
   test("requires freshness with explicit timezone information", () => {

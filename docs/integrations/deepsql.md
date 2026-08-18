@@ -101,7 +101,7 @@ The root, every column, and `provenance` are strict objects. Unknown fields fail
 | `rows` | Scalar arrays whose widths and cell types exactly match `columns`. Nested values and non-finite numbers are rejected. String cells remain inert report data and are never interpreted as SQL, credentials, or instructions. |
 | `provenance.sourceRef` | Required opaque source identifier, at most 256 characters. SQL verbs, credential labels, URLs carrying connection material, and unsafe characters are rejected. |
 | `provenance.freshnessAt` | Required ISO 8601 timestamp with explicit `Z` or numeric timezone offset. |
-| `provenance.queryId` | Optional safe allowlisted-query identifier. |
+| `provenance.queryId` | Required safe allowlisted-query identifier; it must exactly match the request. |
 | `provenance.queryDigest` | Optional lowercase 64-hex SHA-256 digest of the host-defined governed query identity/version. It is not raw query text. |
 
 Responses use the canonical default ceilings: 10,000 rows, 100 columns, and 5,242,880 serialized UTF-8 bytes. The parser returns a serializable, deeply frozen copy and does not mutate its input.
@@ -115,11 +115,11 @@ The invariants are:
 - **No raw SQL.** Documents and callers select only allowlisted query IDs. SQL or a generic raw `query` field is never part of the request, response, provenance, document, or receipt contract.
 - **No credentials in documents, responses, receipts, or logs.** Tokens, API keys, authorization values, connection strings, passwords, credential objects, and host authentication headers stay outside control fields and sanitized errors. Because report strings are inert data rather than instructions, the host must prevent sensitive values at acquisition and apply explicit redaction policy before composition; the parser does not guess from text content.
 - **Read-only only.** Both operation and response mode are literals; mutation and unsupported operations are rejected before transport or composition.
-- **Host authority.** The host owns allowlisted query IDs, endpoint and redirect policy, auth scope, tenant binding, and parameter policy. A document cannot mint any of them.
+- **Host authority.** The host owns allowlisted query IDs, endpoint and redirect policy, auth scope, tenant binding, parameter policy, and the required async freshness eligibility callback. A document cannot mint any of them.
 - **Resource bounds.** Parameter counts and lengths plus canonical row, column, cell, and bounded payload limits are enforced before domain use.
-- **Auditable provenance.** Every accepted response has a snapshot ID, opaque source reference, mandatory freshness timestamp, and optional query ID and query digest. Receipts may record these safe identifiers and a canonical snapshot digest, never acquisition secrets or query text.
+- **Auditable provenance.** Every accepted response has a snapshot ID, opaque source reference, mandatory freshness timestamp, and a required matching query ID; the query digest remains optional. Receipts may record these safe identifiers and a canonical snapshot digest, never acquisition secrets or query text.
 - **Controlled transport.** Optional network acquisition requires a fixed endpoint, cancellation via `AbortSignal`, a finite timeout, response-byte enforcement while reading, redirects disabled or allowlisted, and an egress audit that records only safe endpoint identity and outcome metadata.
-- **Policy before data use.** The host policy validates parameters, freshness tolerance, redaction, tenant scope, and result eligibility. Structural parsing cannot override host policy.
+- **Policy before data use.** The required host freshness callback validates freshness tolerance and result eligibility under the same timeout/abort budget as acquisition. Parameter policy, redaction and tenant scope remain host-owned. Structural parsing cannot override host policy.
 
 Errors may identify the rejected field or rule but must not interpolate rejected values. Logs and receipts must use safe identifiers and bounded outcome metadata only.
 
