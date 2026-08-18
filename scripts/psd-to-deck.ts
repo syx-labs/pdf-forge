@@ -47,6 +47,7 @@ function isPsdDeckManifest(value: unknown): value is PsdDeckManifest {
   return (
     isRecord(value) &&
     Array.isArray(value.artboards) &&
+    value.artboards.length > 0 &&
     value.artboards.every(isArtboardSize)
   );
 }

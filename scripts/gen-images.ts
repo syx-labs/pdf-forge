@@ -119,7 +119,11 @@ if (!projStat || !projStat.isDirectory()) {
 const manifestRaw = await readFile(manifestPath, "utf-8");
 const parsedManifest: unknown = yamlLoad(manifestRaw);
 
-if (!isManifest(parsedManifest) || parsedManifest.images.length === 0) {
+if (!isManifest(parsedManifest)) {
+  console.error(`Manifest "${manifestPath}" has an invalid structure.`);
+  process.exit(1);
+}
+if (parsedManifest.images.length === 0) {
   console.error(`Manifest "${manifestPath}" has no images[] array.`);
   process.exit(1);
 }

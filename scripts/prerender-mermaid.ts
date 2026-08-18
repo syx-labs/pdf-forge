@@ -20,7 +20,7 @@
  */
 import { chromium } from "playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { relative, resolve, sep } from "node:path";
 import { load } from "js-yaml";
 
 interface MermaidManifest {
@@ -30,11 +30,27 @@ interface MermaidManifest {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 function isStringDictionary(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
+}
+
+const SAFE_DIAGRAM_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const SAFE_FONT_FAMILY = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{0,99}$/u;
+
+function isAllowedFontUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "fonts.googleapis.com";
+  } catch {
+    return false;
+  }
 }
 
 function isValidManifest(value: unknown): value is MermaidManifest {
@@ -42,8 +58,11 @@ function isValidManifest(value: unknown): value is MermaidManifest {
   return (
     typeof value.font.family === "string" &&
     typeof value.font.url === "string" &&
+    SAFE_FONT_FAMILY.test(value.font.family) &&
+    isAllowedFontUrl(value.font.url) &&
     isStringDictionary(value.theme_variables) &&
-    isStringDictionary(value.diagrams)
+    isStringDictionary(value.diagrams) &&
+    Object.keys(value.diagrams).every((name) => SAFE_DIAGRAM_NAME.test(name))
   );
 }
 
@@ -75,11 +94,28 @@ try {
     `<!DOCTYPE html><html><head>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link href="${manifest.font.url}" rel="stylesheet" />
-      <style>body{font-family:'${manifest.font.family}',sans-serif}</style>
-    </head><body><span style="font-family:'${manifest.font.family}'">aferição</span></body></html>`,
-    { waitUntil: "networkidle" }
+    </head><body><span>aferição</span></body></html>`
   );
+  await page.evaluate(async ({ family, url }) => {
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = url;
+    const loaded = new Promise<void>((resolve, reject) => {
+      stylesheet.addEventListener("load", () => resolve(), { once: true });
+      stylesheet.addEventListener(
+        "error",
+        () => reject(new Error("Approved font stylesheet failed to load.")),
+        { once: true }
+      );
+    });
+    document.head.append(stylesheet);
+    document.body.style.fontFamily = `${family}, sans-serif`;
+    const probe = document.querySelector("span");
+    if (probe instanceof HTMLElement) {
+      probe.style.fontFamily = `${family}, sans-serif`;
+    }
+    await loaded;
+  }, manifest.font);
   await page.evaluate(() => document.fonts.ready);
   await page.addScriptTag({
     url: "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js",
@@ -118,7 +154,11 @@ try {
   );
 
   for (const [name, svg] of Object.entries(svgs)) {
-    const path = join(outDir, `${name}.svg`);
+    const path = resolve(outDir, `${name}.svg`);
+    const relativePath = relative(resolve(outDir), path);
+    if (relativePath === ".." || relativePath.startsWith(`..${sep}`)) {
+      throw new Error(`Diagram output escapes the output directory: "${name}".`);
+    }
     writeFileSync(path, svg, "utf-8");
     console.log(`${path}: ${svg.length} bytes`);
   }

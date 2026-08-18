@@ -47,13 +47,13 @@ Evoluir o PDF Forge sem substituir o fluxo HTML/Playwright existente, adicionand
 9. O pacote inclui os assets e source internos necessários ao skill wrapper, sem novos exports públicos de provider.
 10. A galeria deriva somente de registry + examples + composer + Playwright e falha fechada se qualquer entry não puder ser renderizada.
 
-## Evidência-base anterior à remediação dos P1
+## Evidência final pós-remediação
 
-Executado pelo agente pai antes da revisão adversarial. Como os arquivos mudaram depois destes resultados, o agente pai deve rerodar os gates finais no estado pós-remediação:
+Executado no estado final revisado da stack:
 
 ```text
 bun run lint:anti-slop
-Found 0 warnings and 0 errors. (94 files, 101 rules)
+Found 0 warnings and 0 errors. (95 files, 101 rules), exit 0
 
 bun run typecheck
 exit 0
@@ -65,7 +65,8 @@ bun test tests/core/utils.test.ts
 12 pass, 0 fail
 
 bun test tests/ --parallel=1 --timeout 60000
-329 pass, 0 fail, 1684 expect() calls, 47 files
+CI integration: pass, 0 fail (run 32100672569, antes da última remediação de segurança)
+Local macOS no diff final: 345 pass e 1 timeout intermitente do Playwright; os casos direcionados de renderer e os 8 testes de galeria/validação de manifestos passaram isoladamente. O CI do head final permanece gate obrigatório antes do merge.
 ```
 
 Aceitação E2E adicionada em `tests/integration/data-backed-executive-report.test.ts`:
@@ -85,7 +86,7 @@ DeepSQL request/response contract
 
 A aceitação verifica que a canary de auth não aparece em snapshot, HTML, metadados extraídos do PDF ou receipt. O PDF temporário inicia com `%PDF-`, contém ao menos uma página e é removido no `finally`.
 
-Compatibilidade legado verificada separadamente:
+Compatibilidade legada verificada separadamente:
 
 ```text
 compose_pdf MCP tool > keeps legacy generate_pdf callable with its exact raw-HTML response contract
