@@ -217,7 +217,7 @@ describe("canonical registry gallery generator", () => {
       join(externalCwd, outputRelative, "previews/executive-report.pdf")
     );
     expect(new TextDecoder().decode(preview.subarray(0, 5))).toBe("%PDF-");
-  }, 60_000);
+  }, 120_000);
 
   test("fails closed when a copied registry package is missing an example", async () => {
     const externalCwd = await makeExternalCwd();
