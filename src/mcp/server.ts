@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { isSafePdfOutputPath } from "../registry/receipt.js";
 import { dirname, resolve, join } from "node:path";
 import { mkdir, readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -54,6 +55,8 @@ const ComposePdfInputSchema = z.strictObject({
   ]),
   outputPath: ExplicitPathSchema.refine((path: string) => path.endsWith(".pdf"), {
     message: "Output path must end with .pdf.",
+  }).refine(isSafePdfOutputPath, {
+    message: "Output PDF must have a safe basename.",
   }),
 });
 

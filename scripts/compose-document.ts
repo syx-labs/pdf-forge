@@ -10,7 +10,10 @@ import { redactDataSnapshot } from "../src/data/redact";
 import { composeDocumentPageWithMetadata } from "../src/registry/compose";
 import { parseDocumentManifest } from "../src/registry/document-manifest";
 import { loadRegistry } from "../src/registry/loader";
-import { buildPdfBuildReceipt } from "../src/registry/receipt";
+import {
+  buildPdfBuildReceipt,
+  isSafePdfOutputPath,
+} from "../src/registry/receipt";
 
 const COMPOSE_USAGE = [
   "pdf-forge compose - Compose a data-backed document",
@@ -132,6 +135,12 @@ function parseArguments(args: readonly string[], callerCwd: string): ParseResult
 
   const outputPath = resolve(callerCwd, outputValue);
   const receiptPath = resolve(callerCwd, receiptValue);
+  if (!isSafePdfOutputPath(outputPath)) {
+    return {
+      kind: "error",
+      message: "Output PDF must have a safe basename.",
+    };
+  }
   if (outputPath === receiptPath) {
     return {
       kind: "error",
