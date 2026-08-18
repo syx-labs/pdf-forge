@@ -138,6 +138,34 @@ describe("bindExecutiveReport", () => {
     );
   });
 
+  test("fails closed before returning props outside block cardinality limits", () => {
+    const columns = [
+      { name: "region", type: "string" },
+      { name: "revenue", type: "number" },
+      { name: "target", type: "number" },
+      { name: "recommendation", type: "string" },
+    ];
+    const thirteenRows = Array.from({ length: 13 }, (_, index) => [
+      `Region ${index}`,
+      index,
+      index + 1,
+      "Shared recommendation",
+    ]);
+    const sevenRecommendations = Array.from({ length: 7 }, (_, index) => [
+      `Region ${index}`,
+      index,
+      index + 1,
+      `Recommendation ${index}`,
+    ]);
+
+    expect(() =>
+      bindExecutiveReport(snapshotWithData(columns, thirteenRows))
+    ).toThrow("accepts at most 12 rows");
+    expect(() =>
+      bindExecutiveReport(snapshotWithData(columns, sevenRecommendations))
+    ).toThrow("accepts at most 6 unique recommendations");
+  });
+
   test("fails closed when a finite numeric column overflows during summation", () => {
     const columns = [
       { name: "region", type: "string" },
