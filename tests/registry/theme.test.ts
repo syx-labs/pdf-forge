@@ -88,6 +88,27 @@ describe("registry theme contract", () => {
     ).toBe(false);
   });
 
+  test("rejects theme tokens that can escape declarations or load network resources", async () => {
+    const theme = ThemeSchema.parse(await readTheme());
+    const hostileValues = [
+      "red; background: url(https://example.com/a.png)",
+      "url(https://example.com/a.png)",
+      "image-set(https://example.com/a.png 1x)",
+      "u\\72l(https://example.com/a.png)",
+      "red\n; color: blue",
+      "red}",
+    ];
+
+    for (const hostileValue of hostileValues) {
+      expect(
+        ThemeSchema.safeParse({
+          ...theme,
+          colors: { ...theme.colors, positive: hostileValue },
+        }).success
+      ).toBe(false);
+    }
+  });
+
   test("serializes canonical CSS variables in deterministic token order", async () => {
     const rawTheme = await readTheme();
     const expected = `:root {

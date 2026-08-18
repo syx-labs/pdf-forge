@@ -291,6 +291,11 @@ describe("governed DeepSQL to registry PDF acceptance", () => {
         theme: "ivory-editorial",
         registryVersion: "1",
         componentIds: ["data-table", "executive-report", "metric-card"],
+        componentVersions: {
+          "data-table": "1.0.0",
+          "executive-report": "1.0.0",
+          "metric-card": "1.0.0",
+        },
         snapshotSha256: independentSnapshotHash,
         output: {
           fileName: "executive-report.pdf",

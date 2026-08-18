@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-const ThemeTokenValueSchema = z.string().trim().min(1);
+const FORBIDDEN_CSS_TOKEN_PATTERN =
+  /[;{}\\\r\n]|(?:@import|javascript\s*:|url\s*\(|(?:-webkit-)?image-set\s*\(|\bimage\s*\()/iu;
+const ThemeTokenValueSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(256)
+  .refine((value) => !FORBIDDEN_CSS_TOKEN_PATTERN.test(value), {
+    message: "Theme token must be a single network-free CSS value.",
+  });
 
 const ThemeColorsSchema = z.strictObject({
   background: ThemeTokenValueSchema,

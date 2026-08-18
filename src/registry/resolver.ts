@@ -1,6 +1,7 @@
 import { readFile, realpath } from "node:fs/promises";
 import { extname, isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { z } from "zod";
 import { discoverPackageRoot } from "../core/package-root.js";
 import { loadRegistry } from "./loader.js";
 import type { LoadedRegistryEntry } from "./loader.js";
@@ -14,6 +15,20 @@ export type ResolveRegistryEntryOptions = Readonly<{
   theme: string;
   packageRoot?: string;
 }>;
+
+const RegistryIdentifierSchema = z
+  .string()
+  .max(128)
+  .regex(/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/u);
+const ResolveRegistryEntryOptionsSchema = z
+  .strictObject({
+    id: RegistryIdentifierSchema,
+    kind: z.enum(["primitive", "block"]),
+    format: z.enum(["slides", "docs", "social"]),
+    theme: RegistryIdentifierSchema,
+    packageRoot: z.string().trim().min(1).max(4_096).optional(),
+  })
+  .readonly();
 
 export type ResolvedRegistryEntry = Readonly<{
   entry: LoadedRegistryEntry;
@@ -57,28 +72,33 @@ function assertContainedPath(
 export async function resolveRegistryEntry(
   options: ResolveRegistryEntryOptions
 ): Promise<ResolvedRegistryEntry> {
-  const packageRoot = await resolvePackageRoot(options.packageRoot);
+  const parsedOptions = ResolveRegistryEntryOptionsSchema.safeParse(options);
+  if (!parsedOptions.success) {
+    throw new Error("Invalid registry entry resolution options.");
+  }
+  const validated = parsedOptions.data;
+  const packageRoot = await resolvePackageRoot(validated.packageRoot);
   const registry = await loadRegistry(packageRoot);
-  const entry = registry.entries.find((candidate) => candidate.id === options.id);
+  const entry = registry.entries.find((candidate) => candidate.id === validated.id);
   if (entry === undefined) {
     const availableIds = registry.entries.map((candidate) => candidate.id).join(", ");
     throw new Error(
-      `Unknown registry entry id "${options.id}". Available ids: ${availableIds || "none"}.`
+      `Unknown registry entry id "${validated.id}". Available ids: ${availableIds || "none"}.`
     );
   }
-  if (entry.kind !== options.kind) {
+  if (entry.kind !== validated.kind) {
     throw new Error(
-      `Registry entry "${entry.id}" has kind "${entry.kind}", not requested kind "${options.kind}".`
+      `Registry entry "${entry.id}" has kind "${entry.kind}", not requested kind "${validated.kind}".`
     );
   }
-  if (!entry.formats.includes(options.format)) {
+  if (!entry.formats.includes(validated.format)) {
     throw new Error(
-      `Registry entry "${entry.id}" does not support format "${options.format}". Supported formats: ${entry.formats.join(", ")}.`
+      `Registry entry "${entry.id}" does not support format "${validated.format}". Supported formats: ${entry.formats.join(", ")}.`
     );
   }
-  if (!entry.themes.includes(options.theme)) {
+  if (!entry.themes.includes(validated.theme)) {
     throw new Error(
-      `Registry entry "${entry.id}" does not support theme "${options.theme}". Supported themes: ${entry.themes.join(", ")}.`
+      `Registry entry "${entry.id}" does not support theme "${validated.theme}". Supported themes: ${entry.themes.join(", ")}.`
     );
   }
 
@@ -88,14 +108,14 @@ export async function resolveRegistryEntry(
   const schemaPath = await realpath(join(registryRoot, entry.schema));
   assertContainedPath(registryRoot, schemaPath, "schema", entry.id);
   const themePath = await realpath(
-    join(registryRoot, "themes", `${options.theme}.json`)
+    join(registryRoot, "themes", `${validated.theme}.json`)
   );
   assertContainedPath(registryRoot, themePath, "theme", entry.id);
   const rawTheme = await readFile(themePath, "utf-8");
   const theme = ThemeSchema.parse(JSON.parse(rawTheme));
-  if (theme.id !== options.theme) {
+  if (theme.id !== validated.theme) {
     throw new Error(
-      `Loaded theme id "${theme.id}" does not match requested theme "${options.theme}".`
+      `Loaded theme id "${theme.id}" does not match requested theme "${validated.theme}".`
     );
   }
 

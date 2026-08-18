@@ -133,6 +133,11 @@ describe("pdf-forge compose CLI", () => {
       theme: "ivory-editorial",
       registryVersion: "1",
       componentIds: ["data-table", "executive-report", "metric-card"],
+      componentVersions: {
+        "data-table": "1.0.0",
+        "executive-report": "1.0.0",
+        "metric-card": "1.0.0",
+      },
       snapshotSha256: hashDataSnapshot(redacted),
       output: {
         fileName: basename(outputPath),

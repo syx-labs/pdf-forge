@@ -21,8 +21,9 @@ function isConstAssertion(node: TypeAssertion): boolean {
 }
 
 function hasSafetyComment(sourceCode: SourceCode, node: TypeAssertion): boolean {
-  let current: ESTree.Node = node;
+  let current: ESTree.Node | null = node;
   while (true) {
+    if (current === null) return false;
     if (
       sourceCode
         .getCommentsBefore(current)
@@ -30,7 +31,7 @@ function hasSafetyComment(sourceCode: SourceCode, node: TypeAssertion): boolean 
     ) {
       return true;
     }
-    if (commentOwnerKinds.has(current.type) || current.parent.type === "Program") return false;
+    if (commentOwnerKinds.has(current.type) || current.parent?.type === "Program") return false;
     current = current.parent;
   }
 }
