@@ -73,7 +73,7 @@ const DeepSqlProvenanceSchema = z
   .strictObject({
     sourceRef: SourceRefSchema,
     freshnessAt: z.iso.datetime({ offset: true }),
-    queryId: SafeIdentifierSchema.optional(),
+    queryId: SafeIdentifierSchema,
     queryDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   })
   .readonly();

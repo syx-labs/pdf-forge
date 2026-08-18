@@ -18,6 +18,11 @@ export type DeepSqlParameterValidator = (
   queryId: string,
   parameters: DeepSqlParameters
 ) => boolean | Promise<boolean>;
+export type DeepSqlFreshnessValidator = (
+  freshnessAt: string,
+  queryId: string,
+  sourceRef: string
+) => boolean | Promise<boolean>;
 
 function containsHttpHeaderControl(value: string): boolean {
   for (const character of value) {
@@ -81,6 +86,9 @@ const DeepSqlProviderConfigSchema = z
         (value) => value === undefined || typeof value === "function"
       )
       .optional(),
+    validateFreshness: z.custom<DeepSqlFreshnessValidator>(
+      (value) => typeof value === "function"
+    ),
   })
   .readonly();
 
@@ -92,6 +100,27 @@ class DeepSqlProviderError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "DeepSqlProviderError";
+  }
+}
+
+async function raceFreshnessWithAbort<T>(
+  operation: Promise<T>,
+  signal: AbortSignal
+): Promise<T> {
+  signal.throwIfAborted();
+  let rejectAbort: ((reason: unknown) => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectAbort = reject;
+  });
+  const onAbort = () => rejectAbort?.(signal.reason);
+  signal.addEventListener("abort", onAbort, { once: true });
+  if (signal.aborted) {
+    onAbort();
+  }
+  try {
+    return await Promise.race([operation, aborted]);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
   }
 }
 
@@ -170,6 +199,7 @@ export class DeepSqlProvider implements DataProvider {
   readonly #allowedQueryIds: ReadonlySet<string>;
   readonly #maxResponseBytes: number;
   readonly #validateParameters: DeepSqlParameterValidator | undefined;
+  readonly #validateFreshness: DeepSqlFreshnessValidator;
 
   constructor(config: DeepSqlProviderConfig) {
     const parsed = DeepSqlProviderConfigSchema.safeParse(config);
@@ -183,6 +213,7 @@ export class DeepSqlProvider implements DataProvider {
     this.#maxResponseBytes =
       parsed.data.maxResponseBytes ?? DEFAULT_DATA_LIMITS.maxEncodedBytes;
     this.#validateParameters = parsed.data.validateParameters;
+    this.#validateFreshness = parsed.data.validateFreshness;
   }
 
   async load(
@@ -265,12 +296,34 @@ export class DeepSqlProvider implements DataProvider {
           "DeepSQL response failed contract validation."
         );
       }
-      if (
-        parsedResponse.provenance.queryId !== undefined &&
-        parsedResponse.provenance.queryId !== parsedRequest.queryId
-      ) {
+      if (parsedResponse.provenance.queryId !== parsedRequest.queryId) {
         throw new DeepSqlProviderError(
           "DeepSQL response query ID does not match the request."
+        );
+      }
+      let fresh: boolean;
+      try {
+        fresh = await raceFreshnessWithAbort(
+          Promise.resolve(
+            this.#validateFreshness(
+              parsedResponse.provenance.freshnessAt,
+              parsedResponse.provenance.queryId,
+              parsedResponse.provenance.sourceRef
+            )
+          ),
+          signal
+        );
+      } catch (error) {
+        if (signal.aborted) {
+          throw error;
+        }
+        throw new DeepSqlProviderError(
+          "DeepSQL freshness policy rejected the response."
+        );
+      }
+      if (fresh !== true) {
+        throw new DeepSqlProviderError(
+          "DeepSQL freshness policy rejected the response."
         );
       }
 
