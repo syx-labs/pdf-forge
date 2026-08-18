@@ -183,6 +183,11 @@ describe("buildPdfBuildReceipt", () => {
       "api-key credential-value",
       "token=credential-value",
       "password=credential-value",
+      "secret=credential-value",
+      "authorization: credential-value",
+      "passwd=credential-value",
+      "private_key: credential-value",
+      "Basic credential-value",
     ];
 
     for (const warning of invalidWarnings) {
@@ -190,6 +195,24 @@ describe("buildPdfBuildReceipt", () => {
         buildPdfBuildReceipt({ ...input, warnings: [warning] })
       ).rejects.toThrow();
     }
+  });
+
+  test("requires manifest snapshotRef to match the hashed snapshot", async () => {
+    const fixture = await createPdfFixture();
+    const input = receiptInput(fixture.path);
+
+    await expect(
+      buildPdfBuildReceipt({
+        ...input,
+        manifest: { ...input.manifest, snapshotRef: undefined },
+      })
+    ).rejects.toThrow("snapshotRef must match");
+    await expect(
+      buildPdfBuildReceipt({
+        ...input,
+        manifest: { ...input.manifest, snapshotRef: "different-snapshot" },
+      })
+    ).rejects.toThrow("snapshotRef must match");
   });
 
   test("requires listed components to include manifest selections and exist in the registry", async () => {

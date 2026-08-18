@@ -34,7 +34,7 @@ const SafeComponentIdSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/);
 const SECRET_WARNING_PATTERN =
-  /(?:\bBearer\b|api[_-]?key|token\s*=|password\s*=)/iu;
+  /(?:\bBearer\s+|\bBasic\s+|\bapi[_-]?key\b(?:\s+|\s*[:=])|\b(?:auth(?:orization)?|credentials?|password|passwd|private[_-]?key|secret|token)\b\s*[:=])/iu;
 const WarningSchema = z
   .string()
   .max(512)
@@ -64,10 +64,26 @@ function sortedUnique(values: readonly string[]): readonly string[] {
   return Object.freeze([...new Set(values)].sort());
 }
 
+export function isSafePdfOutputPath(outputPath: string): boolean {
+  return SAFE_OUTPUT_FILE_NAME_PATTERN.test(basename(outputPath));
+}
+
+export function assertSafePdfOutputPath(outputPath: string): void {
+  if (!isSafePdfOutputPath(outputPath)) {
+    throw new Error("PDF build output must have a safe basename.");
+  }
+}
+
 export async function buildPdfBuildReceipt(
   input: unknown
 ): Promise<PdfBuildReceipt> {
   const parsed = ReceiptInputSchema.parse(input);
+  if (
+    parsed.manifest.snapshotRef === undefined ||
+    parsed.manifest.snapshotRef !== parsed.snapshot.snapshotId
+  ) {
+    throw new Error("PDF build manifest snapshotRef must match the receipt snapshot.");
+  }
   const listedComponentIds = new Set(parsed.componentIds);
   const registeredComponentIds = new Set(
     parsed.registry.entries.map((entry) => entry.id)
@@ -95,9 +111,7 @@ export async function buildPdfBuildReceipt(
     throw new Error(`Invalid receipt components: ${issues.join("; ")}.`);
   }
   const fileName = basename(parsed.mergeResult.path);
-  if (!SAFE_OUTPUT_FILE_NAME_PATTERN.test(fileName)) {
-    throw new Error("PDF build output must have a safe basename.");
-  }
+  assertSafePdfOutputPath(parsed.mergeResult.path);
   const outputStat = await stat(parsed.mergeResult.path);
   if (!outputStat.isFile()) {
     throw new Error("PDF build output must be a regular file.");
