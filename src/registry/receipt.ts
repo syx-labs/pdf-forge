@@ -34,8 +34,8 @@ const SafeComponentIdSchema = z
   .string()
   .max(128)
   .regex(/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/);
-const SECRET_WARNING_PATTERN =
-  /(?:\bBearer\s+|\bBasic\s+|\bapi[_-]?key\b(?:\s+|\s*[:=])|\b(?:auth(?:orization)?|credentials?|password|passwd|private[_-]?key|secret|token)\b\s*[:=])/iu;
+const FORBIDDEN_WARNING_PATTERN =
+  /\b(?:bearer|basic)\s+\S|\bapi[_-]?key\b(?:\s+|\s*[:=])|\b(?:(?:access|auth|client|refresh|session)[_-]?(?:key|secret|token)|secret[_-]?key|password|passwd|pwd|secret|token|authorization|private[_-]?key|credentials?)\b\s*[:=]/iu;
 const WarningSchema = z
   .string()
   .max(512)
@@ -43,7 +43,7 @@ const WarningSchema = z
   .refine((warning) => warning.length > 0, {
     message: "Warnings must not be empty after trimming.",
   })
-  .refine((warning) => !SECRET_WARNING_PATTERN.test(warning), {
+  .refine((warning) => !FORBIDDEN_WARNING_PATTERN.test(warning), {
     message: "Warnings must not contain credential material.",
   });
 

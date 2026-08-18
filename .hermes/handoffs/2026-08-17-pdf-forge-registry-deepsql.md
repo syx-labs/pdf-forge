@@ -3,7 +3,7 @@
 **Data:** 2026-08-17
 **Branch:** `alpha/pdf-forge-task1`
 **Base:** `159f29e699bb12de014b1d5ca9d1a998e8eb6028`
-**Estado:** Tasks 1–30 concluídas; os 3 P1 da revisão adversarial foram remediados e todos os gates finais passaram. Este handoff integra o commit local de fechamento da Task 30.
+**Estado:** reaberto por revisão assíncrona tardia contra o snapshot `eceb60a6e75ede510323b81ee9b1c11b158e8243`; findings aplicáveis estão em remediação no head descendente. Nenhum PASS/merge-readiness anterior permanece válido até novos gates no SHA final.
 
 ## Objetivo
 
@@ -47,9 +47,9 @@ Evoluir o PDF Forge sem substituir o fluxo HTML/Playwright existente, adicionand
 9. O pacote inclui os assets e source internos necessários ao skill wrapper, sem novos exports públicos de provider.
 10. A galeria deriva somente de registry + examples + composer + Playwright e falha fechada se qualquer entry não puder ser renderizada.
 
-## Evidência final pós-remediação
+## Evidência anterior — supersedida pela revisão tardia
 
-Executado no estado final revisado da stack:
+Os resultados abaixo documentam o estado antes da remediação tardia e não provam o candidato final. Novas saídas serão registradas somente após a convergência dos findings.
 
 ```text
 bun run lint:anti-slop
@@ -95,7 +95,40 @@ compose_pdf MCP tool > keeps legacy generate_pdf callable with its exact raw-HTM
 
 `git diff --check` passou. Não há `.artifacts/registry-gallery`, PDFs, PNGs, tarballs, `dist/` ou outros outputs gerados no diff.
 
-## Revisão
+## Revisão tardia e reconciliação
+
+A delegação assíncrona `deleg_08c9a2ac` revisou o snapshot imutável `eceb60a6e75ede510323b81ee9b1c11b158e8243` e chegou depois do primeiro fechamento. O estado foi reaberto. Contra o head descendente `6162b2819b69d76dfc790236ffe448d4ecefb284`:
+
+- `already_remediated`: `componentVersions` ausente; escapes de CSS em tokens de tema.
+- `still_applicable` na chegada: containment/cancelamento de `compose_pdf`; aliases e transporte HTTP do DeepSQL; perda de `queryId`/`queryDigest`; aliases de secrets em warnings; siblings de `$ref`; aliases/atomicidade de PDF+receipt no CLI; egress via CSS escapado em templates; gates incompletos de publicação; artefatos da gallery não ignorados.
+- `non_applicable`: nenhum finding material foi descartado sem correção.
+
+Os findings aplicáveis foram remediados no processo pai, com regressões para aliases/rollback atômico, containment e cancelamento do MCP, rede bloqueada no renderer, provenance DeepSQL, aliases de secrets, siblings de `$ref`, política de release e ignore da gallery.
+
+## Evidência local final da remediação tardia
+
+Executado no estado final ainda não publicado:
+
+```text
+bun test tests/ --parallel=1 --timeout 60000
+→ 360 pass, 0 fail, 1892 expect(), 50 files
+
+bun run typecheck
+→ exit 0
+
+bun run lint:anti-slop
+→ 0 warnings, 0 errors; 98 files, 101 rules
+
+bun run build
+→ exit 0; ESM build success
+
+git diff --check
+→ exit 0
+```
+
+A execução equivalente ao workflow de publicação, arquivo por arquivo, também passou. `bun audit` não é um gate executável neste checkout porque não há lockfile (`Lockfile not found`). O SHA final e o CI remoto permanecem pendentes até commit/push desta remediação.
+
+## Revisão anterior
 
 - O agente pai releu os diffs completos por task antes de cada commit e rerodou os gates no estado final.
 - A revisão adversarial independente `deleg_491bd296` encontrou 3 P1: timeout/abort não cobria policy DeepSQL assíncrona; component IDs do receipt eram informados pelo chamador; a aceitação não provava ausência da canary no snapshot.

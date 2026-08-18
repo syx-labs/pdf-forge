@@ -267,6 +267,13 @@ describe("buildPdfBuildReceipt", () => {
       "authorization: credential-value",
       "passwd=credential-value",
       "private_key: credential-value",
+      "accessToken=credential-value",
+      "auth_token: credential-value",
+      "clientSecret=credential-value",
+      "refresh-token: credential-value",
+      "sessionToken=credential-value",
+      "secretKey: credential-value",
+      "pwd=credential-value",
       "Basic credential-value",
     ];
 

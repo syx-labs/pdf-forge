@@ -123,6 +123,13 @@ describe("DeepSQL request contract", () => {
       { ["p".repeat(129)]: "value" },
       { token: "not-a-request-parameter" },
       { rawSql: "not-a-request-parameter" },
+      { accessToken: "not-a-request-parameter" },
+      { auth_token: "not-a-request-parameter" },
+      { clientSecret: "not-a-request-parameter" },
+      { "refresh-token": "not-a-request-parameter" },
+      { sessionToken: "not-a-request-parameter" },
+      { secretKey: "not-a-request-parameter" },
+      { pwd: "not-a-request-parameter" },
       { tooLong: "x".repeat(4097) },
       excessiveParameters,
     ];
@@ -246,6 +253,13 @@ describe("DeepSQL response contract", () => {
       "sql",
       "rawSql",
       "query",
+      "accessToken",
+      "auth_token",
+      "clientSecret",
+      "refresh-token",
+      "sessionToken",
+      "secretKey",
+      "pwd",
     ]) {
       expect(() =>
         parseDeepSqlResponse({

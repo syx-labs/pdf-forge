@@ -41,6 +41,24 @@ describe("parseDataSnapshot", () => {
     expect(parsed.rows[0]).toEqual(["south", 1250.5, true, null]);
   });
 
+  test("preserves validated query identity and digest provenance", () => {
+    const queryDigest = "ab".repeat(32);
+    const parsed = parseDataSnapshot({
+      ...validSnapshot,
+      queryId: "monthly-revenue",
+      queryDigest,
+    });
+
+    expect(parsed.queryId).toBe("monthly-revenue");
+    expect(parsed.queryDigest).toBe(queryDigest);
+    expect(() =>
+      parseDataSnapshot({ ...validSnapshot, queryId: "unsafe query" })
+    ).toThrow();
+    expect(() =>
+      parseDataSnapshot({ ...validSnapshot, queryDigest: "A".repeat(64) })
+    ).toThrow();
+  });
+
   test("rejects duplicate column names", () => {
     expect(() =>
       parseDataSnapshot({

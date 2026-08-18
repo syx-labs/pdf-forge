@@ -1,4 +1,13 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  realpath,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { mergePages } from "../src/core/merger";
@@ -41,6 +50,180 @@ type ParseResult =
   | Readonly<{ kind: "options"; options: ComposeOptions }>
   | Readonly<{ kind: "help" }>
   | Readonly<{ kind: "error"; message: string }>;
+
+function comparisonPath(path: string): string {
+  return resolve(path).normalize("NFC").toLowerCase();
+}
+
+function isMissingPathError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error.code === "ENOENT" || error.code === "ENOTDIR")
+  );
+}
+
+async function canonicalComparisonPath(path: string): Promise<string> {
+  let candidate = resolve(path);
+  const missingSegments: string[] = [];
+  while (true) {
+    try {
+      return comparisonPath(join(await realpath(candidate), ...missingSegments));
+    } catch (error) {
+      if (!isMissingPathError(error)) {
+        throw error;
+      }
+      const parent = dirname(candidate);
+      if (parent === candidate) {
+        throw error;
+      }
+      missingSegments.unshift(basename(candidate));
+      candidate = parent;
+    }
+  }
+}
+
+type PathIdentity = Readonly<{
+  canonicalPath: string;
+  device?: number;
+  inode?: number;
+}>;
+
+async function pathIdentity(path: string): Promise<PathIdentity> {
+  const canonicalPath = await canonicalComparisonPath(path);
+  try {
+    const pathStat = await stat(path);
+    return {
+      canonicalPath,
+      device: pathStat.dev,
+      inode: pathStat.ino,
+    };
+  } catch (error) {
+    if (!isMissingPathError(error)) {
+      throw error;
+    }
+    return { canonicalPath };
+  }
+}
+
+function arePathAliases(left: PathIdentity, right: PathIdentity): boolean {
+  return (
+    left.canonicalPath === right.canonicalPath ||
+    (left.device !== undefined &&
+      left.inode !== undefined &&
+      left.device === right.device &&
+      left.inode === right.inode)
+  );
+}
+
+async function assertDistinctComposePaths(options: ComposeOptions): Promise<void> {
+  const paths = [options.dataPath, options.outputPath, options.receiptPath];
+  const identities = await Promise.all(paths.map(pathIdentity));
+  for (let leftIndex = 0; leftIndex < identities.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < identities.length;
+      rightIndex += 1
+    ) {
+      const left = identities[leftIndex];
+      const right = identities[rightIndex];
+      if (left !== undefined && right !== undefined && arePathAliases(left, right)) {
+        throw new Error("Data, output PDF, and receipt JSON paths must be distinct.");
+      }
+    }
+  }
+}
+
+type PublishedFile = Readonly<{
+  finalPath: string;
+  backupPath?: string;
+}>;
+
+class PublicationRollbackError extends AggregateError {
+  constructor(publicationError: unknown, rollbackError: unknown) {
+    super(
+      [publicationError, rollbackError],
+      "Artifact publication failed and rollback could not restore pre-existing files."
+    );
+  }
+}
+
+async function publishStagedFile(
+  stagedPath: string,
+  finalPath: string,
+  stageRoot: string
+): Promise<PublishedFile> {
+  let backupPath: string | undefined;
+  try {
+    const destinationStat = await lstat(finalPath);
+    if (destinationStat.isDirectory()) {
+      throw new Error(
+        `Cannot publish "${basename(finalPath)}" because the destination is a directory.`
+      );
+    }
+    backupPath = join(stageRoot, "pre-existing");
+    await rename(finalPath, backupPath);
+  } catch (error) {
+    if (!isMissingPathError(error)) {
+      throw error;
+    }
+  }
+
+  try {
+    await rename(stagedPath, finalPath);
+  } catch (publicationError) {
+    if (backupPath !== undefined) {
+      try {
+        await rename(backupPath, finalPath);
+      } catch (rollbackError) {
+        throw new PublicationRollbackError(publicationError, rollbackError);
+      }
+    }
+    throw publicationError;
+  }
+  return { finalPath, backupPath };
+}
+
+async function rollbackPublishedFile(published: PublishedFile): Promise<void> {
+  await rm(published.finalPath, { force: true });
+  if (published.backupPath !== undefined) {
+    await rename(published.backupPath, published.finalPath);
+  }
+}
+
+async function publishStagedPair(
+  input: Readonly<{
+    stagedOutputPath: string;
+    outputPath: string;
+    outputStageRoot: string;
+    stagedReceiptPath: string;
+    receiptPath: string;
+    receiptStageRoot: string;
+  }>
+): Promise<void> {
+  let publishedOutput: PublishedFile | undefined;
+  try {
+    publishedOutput = await publishStagedFile(
+      input.stagedOutputPath,
+      input.outputPath,
+      input.outputStageRoot
+    );
+    await publishStagedFile(
+      input.stagedReceiptPath,
+      input.receiptPath,
+      input.receiptStageRoot
+    );
+  } catch (publicationError) {
+    if (publishedOutput !== undefined) {
+      try {
+        await rollbackPublishedFile(publishedOutput);
+      } catch (rollbackError) {
+        throw new PublicationRollbackError(publicationError, rollbackError);
+      }
+    }
+    throw publicationError;
+  }
+}
 
 function isRequiredOption(argument: string): argument is RequiredOption {
   return (
@@ -161,6 +344,7 @@ function parseArguments(args: readonly string[], callerCwd: string): ParseResult
 }
 
 async function compose(options: ComposeOptions, packageRoot: string): Promise<void> {
+  await assertDistinctComposePaths(options);
   const providers = new DataProviderRegistry();
   providers.register(new StaticJsonProvider());
   const abortController = new AbortController();
@@ -213,32 +397,71 @@ async function compose(options: ComposeOptions, packageRoot: string): Promise<vo
       outputDir: renderedDir,
       format: "docs",
       scale: 1,
+      blockNetwork: true,
     });
-    await mkdir(dirname(options.outputPath), { recursive: true });
-    const mergeResult = await mergePages({
-      inputDir: renderedDir,
-      outputPath: options.outputPath,
-    });
-    const registry = await loadRegistry(packageRoot);
-    const receipt = await buildPdfBuildReceipt({
-      manifest,
-      registry,
-      componentIds: composition.componentIds,
-      snapshot: redacted,
-      mergeResult,
-      warnings: [],
-      createdAt: new Date().toISOString(),
-    });
-    await mkdir(dirname(options.receiptPath), { recursive: true });
-    await writeFile(
-      options.receiptPath,
-      `${JSON.stringify(receipt, null, 2)}\n`,
-      "utf8"
-    );
+    const outputParent = dirname(options.outputPath);
+    const receiptParent = dirname(options.receiptPath);
+    const stageRoots: string[] = [];
+    let retainStaging = false;
+    try {
+      await mkdir(outputParent, { recursive: true });
+      await mkdir(receiptParent, { recursive: true });
+      const outputStageRoot = await mkdtemp(
+        join(outputParent, ".pdf-forge-compose-output-")
+      );
+      stageRoots.push(outputStageRoot);
+      const receiptStageRoot = await mkdtemp(
+        join(receiptParent, ".pdf-forge-compose-receipt-")
+      );
+      stageRoots.push(receiptStageRoot);
+      const stagedOutputPath = join(
+        outputStageRoot,
+        basename(options.outputPath)
+      );
+      const stagedReceiptPath = join(receiptStageRoot, "receipt.json");
+      const mergeResult = await mergePages({
+        inputDir: renderedDir,
+        outputPath: stagedOutputPath,
+      });
+      const registry = await loadRegistry(packageRoot);
+      const receipt = await buildPdfBuildReceipt({
+        manifest,
+        registry,
+        componentIds: composition.componentIds,
+        snapshot: redacted,
+        mergeResult,
+        warnings: [],
+        createdAt: new Date().toISOString(),
+      });
+      await writeFile(
+        stagedReceiptPath,
+        `${JSON.stringify(receipt, null, 2)}\n`,
+        "utf8"
+      );
+      await publishStagedPair({
+        stagedOutputPath,
+        outputPath: options.outputPath,
+        outputStageRoot,
+        stagedReceiptPath,
+        receiptPath: options.receiptPath,
+        receiptStageRoot,
+      });
 
-    console.log(`Created executive-report PDF: ${basename(options.outputPath)}`);
-    console.log(`Receipt: ${basename(options.receiptPath)}`);
-    console.log(`Pages: ${receipt.output.pageCount}`);
+      console.log(`Created executive-report PDF: ${basename(options.outputPath)}`);
+      console.log(`Receipt: ${basename(options.receiptPath)}`);
+      console.log(`Pages: ${receipt.output.pageCount}`);
+    } catch (error) {
+      retainStaging = error instanceof PublicationRollbackError;
+      throw error;
+    } finally {
+      if (!retainStaging) {
+        await Promise.all(
+          stageRoots.map((stageRoot) =>
+            rm(stageRoot, { recursive: true, force: true })
+          )
+        );
+      }
+    }
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
   }

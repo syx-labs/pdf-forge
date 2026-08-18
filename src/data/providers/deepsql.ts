@@ -34,6 +34,14 @@ function containsHttpHeaderControl(value: string): boolean {
   return false;
 }
 
+function isLoopbackHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "[::1]" ||
+    /^127(?:\.\d{1,3}){3}$/u.test(hostname)
+  );
+}
+
 function isFixedHttpEndpoint(value: string): boolean {
   if (value.trim() !== value) {
     return false;
@@ -41,7 +49,8 @@ function isFixedHttpEndpoint(value: string): boolean {
   try {
     const parsed = new URL(value);
     return (
-      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      (parsed.protocol === "https:" ||
+        (parsed.protocol === "http:" && isLoopbackHostname(parsed.hostname))) &&
       parsed.hostname.length > 0 &&
       parsed.username === "" &&
       parsed.password === "" &&
@@ -348,6 +357,10 @@ export class DeepSqlProvider implements DataProvider {
         sourceRef: parsedResponse.provenance.sourceRef,
         mode: "read-only",
         capturedAt: parsedResponse.provenance.freshnessAt,
+        queryId: parsedResponse.provenance.queryId,
+        ...(parsedResponse.provenance.queryDigest === undefined
+          ? {}
+          : { queryDigest: parsedResponse.provenance.queryDigest }),
         columns: parsedResponse.columns,
         rows: parsedResponse.rows,
       });

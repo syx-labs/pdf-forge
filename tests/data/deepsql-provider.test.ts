@@ -23,6 +23,7 @@ const validResponse = {
     sourceRef: "deepsql/reports/monthly-revenue",
     freshnessAt: "2026-08-17T10:30:00+00:00",
     queryId: "monthly-revenue",
+    queryDigest: "a".repeat(64),
   },
 };
 
@@ -110,6 +111,8 @@ describe("DeepSqlProvider", () => {
       sourceRef: validResponse.provenance.sourceRef,
       mode: "read-only",
       capturedAt: validResponse.provenance.freshnessAt,
+      queryId: validResponse.provenance.queryId,
+      queryDigest: validResponse.provenance.queryDigest,
       columns: validResponse.columns,
       rows: validResponse.rows,
     });
@@ -605,6 +608,35 @@ describe("DeepSqlProvider", () => {
     expect(rejection.message).toBe("DeepSQL request timed out.");
     expect(rejection.message).not.toContain("freshness-timeout-token-must-not-leak");
   }, 1_000);
+
+  test("rejects bearer credentials over non-loopback HTTP while allowing loopback development endpoints", () => {
+    const sharedConfig = {
+      authToken: "host-owned-token",
+      timeoutMs: 1_000,
+      allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
+    };
+
+    for (const baseUrl of [
+      "http://example.test/deep/sql",
+      "http://10.0.0.10/deep/sql",
+      "http://192.168.1.10/deep/sql",
+    ]) {
+      expect(
+        () => new DeepSqlProvider({ ...sharedConfig, baseUrl })
+      ).toThrow("Invalid DeepSQL provider configuration.");
+    }
+
+    for (const baseUrl of [
+      "http://localhost/deep/sql",
+      "http://127.42.0.1/deep/sql",
+      "http://[::1]/deep/sql",
+    ]) {
+      expect(
+        () => new DeepSqlProvider({ ...sharedConfig, baseUrl })
+      ).not.toThrow();
+    }
+  });
 
   test("fails closed on invalid trusted configuration without echoing secrets", () => {
     const secret = "configuration-token-must-not-leak";

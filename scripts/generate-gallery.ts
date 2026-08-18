@@ -391,6 +391,7 @@ export async function generateGallery(
         outputDir: entryRenderedDir,
         format,
         scale: 1,
+        blockNetwork: true,
       });
       debug(`${entry.id}: rendered`);
       await mkdir(previewsDir, { recursive: true });
