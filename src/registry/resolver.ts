@@ -93,6 +93,11 @@ export async function resolveRegistryEntry(
   assertContainedPath(registryRoot, themePath, "theme", entry.id);
   const rawTheme = await readFile(themePath, "utf-8");
   const theme = ThemeSchema.parse(JSON.parse(rawTheme));
+  if (theme.id !== options.theme) {
+    throw new Error(
+      `Loaded theme id "${theme.id}" does not match requested theme "${options.theme}".`
+    );
+  }
 
   return Object.freeze({
     entry,

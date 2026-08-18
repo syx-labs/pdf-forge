@@ -89,11 +89,6 @@ async function assertSchemaFiles(
 function freezeEntry(entry: RegistryEntry): LoadedRegistryEntry {
   const formats = Object.freeze([...entry.formats]);
   const themes = Object.freeze([...entry.themes]);
-
-  if (entry.kind === "primitive") {
-    return Object.freeze({ ...entry, formats, themes });
-  }
-
   return Object.freeze({ ...entry, formats, themes });
 }
 

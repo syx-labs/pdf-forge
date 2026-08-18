@@ -127,6 +127,31 @@ describe("resolveRegistryEntry", () => {
     expect(Object.isFrozen(resolved.entry)).toBe(true);
   });
 
+  test("rejects a loaded theme whose ID differs from the requested theme", async () => {
+    const packageRoot = await createPackageRoot();
+    const themePath = join(
+      packageRoot,
+      "assets/registry/themes/ivory-editorial.json"
+    );
+    await writeFile(
+      themePath,
+      JSON.stringify({ ...VALID_THEME, id: "mismatched-theme" }),
+      "utf8"
+    );
+
+    await expect(
+      resolveRegistryEntry({
+        id: "metric-card",
+        kind: "primitive",
+        format: "docs",
+        theme: "ivory-editorial",
+        packageRoot,
+      })
+    ).rejects.toThrow(
+      'Loaded theme id "mismatched-theme" does not match requested theme "ivory-editorial".'
+    );
+  });
+
   test("rejects an ID and kind mismatch with the available kind", async () => {
     const packageRoot = await createPackageRoot();
 
