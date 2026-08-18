@@ -53,13 +53,15 @@ async function makeExternalCwd(): Promise<string> {
 async function runGenerator(
   cwd: string,
   args: readonly string[],
-  packageRoot?: string
+  packageRoot?: string,
+  debug = false
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
   const env = {
     HOME: process.env.HOME ?? tmpdir(),
     PATH: process.env.PATH ?? "",
     TMPDIR: process.env.TMPDIR ?? tmpdir(),
     ...(packageRoot === undefined ? {} : { PDF_FORGE_HOME: packageRoot }),
+    ...(debug ? { PDF_FORGE_GALLERY_DEBUG: "1" } : {}),
   };
 
   const proc = Bun.spawn([process.execPath, "run", SCRIPT, ...args], {
@@ -205,11 +207,12 @@ describe("canonical registry gallery generator", () => {
     const result = await runGenerator(
       externalCwd,
       ["--output", outputRelative],
-      packageRoot
+      packageRoot,
+      true
     );
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stderr).toContain("gallery: complete");
     const preview = await readFile(
       join(externalCwd, outputRelative, "previews/executive-report.pdf")
     );

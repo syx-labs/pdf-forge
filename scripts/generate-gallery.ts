@@ -50,6 +50,24 @@ type GalleryEntry = Readonly<{
   previewName: string;
 }>;
 
+function debug(message: string): void {
+  if (process.env.PDF_FORGE_GALLERY_DEBUG === "1") {
+    console.error(`gallery: ${message}`);
+  }
+}
+
+function galleryFormat(entry: LoadedRegistryEntry): "docs" | "slides" {
+  if (entry.formats.includes("docs")) {
+    return "docs";
+  }
+  if (entry.formats.includes("slides")) {
+    return "slides";
+  }
+  throw new Error(
+    `Registry entry "${entry.id}" has no gallery-compatible docs or slides format.`
+  );
+}
+
 function parseArguments(
   arguments_: readonly string[],
   callerCwd: string
@@ -331,22 +349,20 @@ export async function generateGallery(
 
     const galleryEntries: GalleryEntry[] = [];
     const renderedFiles: string[] = [];
-    for (const entry of registry.entries) {
+    const entriesByRenderFormat = [...registry.entries].sort((left, right) => {
+      const formatOrder =
+        Number(galleryFormat(left) === "slides") -
+        Number(galleryFormat(right) === "slides");
+      return formatOrder || left.id.localeCompare(right.id);
+    });
+    for (const entry of entriesByRenderFormat) {
+      debug(`${entry.id}: start`);
       const example = await readCanonicalExample(registryRoot, entry);
       const theme = entry.themes[0];
       if (theme === undefined) {
         throw new Error(`Registry entry "${entry.id}" has no declared theme.`);
       }
-      const format = entry.formats.includes("docs")
-        ? "docs"
-        : entry.formats.includes("slides")
-          ? "slides"
-          : undefined;
-      if (format === undefined) {
-        throw new Error(
-          `Registry entry "${entry.id}" has no gallery-compatible docs or slides format.`
-        );
-      }
+      const format = galleryFormat(entry);
       const manifest = parseDocumentManifest({
         schemaVersion: "1",
         documentId: `gallery-${entry.id}`,
@@ -365,6 +381,7 @@ export async function generateGallery(
         throw new Error(`Gallery manifest for "${entry.id}" has no page.`);
       }
       const html = await composeDocumentPage(manifest, page, packageRoot);
+      debug(`${entry.id}: composed as ${format}`);
       const entryPagesDir = join(workPagesDir, entry.id, "pages");
       const entryRenderedDir = join(workPagesDir, entry.id, "rendered");
       await mkdir(entryPagesDir, { recursive: true });
@@ -375,6 +392,7 @@ export async function generateGallery(
         format,
         scale: 1,
       });
+      debug(`${entry.id}: rendered`);
       await mkdir(previewsDir, { recursive: true });
       const previewName = `${entry.id}.pdf`;
       if (format === "docs") {
@@ -387,11 +405,13 @@ export async function generateGallery(
           : join(entryRenderedDir, source);
         await copyFile(sourcePath, join(previewsDir, previewName));
       } else {
+        debug(`${entry.id}: merging slide preview`);
         await mergePages({
           inputDir: entryRenderedDir,
           outputPath: join(previewsDir, previewName),
         });
       }
+      debug(`${entry.id}: preview ready`);
       renderedFiles.push(previewName);
 
       const schemaPath = await realpath(join(registryRoot, entry.schema));
@@ -411,6 +431,9 @@ export async function generateGallery(
       });
     }
 
+    galleryEntries.sort((left, right) =>
+      left.registryEntry.id.localeCompare(right.registryEntry.id)
+    );
     await assertRenderedPreviews(
       previewsDir,
       galleryEntries,
@@ -423,6 +446,7 @@ export async function generateGallery(
     );
     await rm(workPagesDir, { recursive: true, force: true });
     await rename(stageDir, outputDir);
+    debug("complete");
 
     return { outputDir, count: galleryEntries.length };
   } catch (error) {
@@ -458,5 +482,5 @@ async function main(): Promise<number> {
 }
 
 if (import.meta.main) {
-  process.exitCode = await main();
+  process.exit(await main());
 }
