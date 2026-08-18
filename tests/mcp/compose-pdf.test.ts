@@ -328,6 +328,25 @@ describe("compose_pdf MCP tool", () => {
     expect(await pathExists(outputPath)).toBe(false);
   });
 
+  test("rejects an unsafe output basename before rendering or writing", async () => {
+    const root = await makeTemporaryRoot();
+    const outputPath = join(root, "must-not-exist", "quarterly report.pdf");
+    const result = await withMcpClient((client) =>
+      client.callTool({
+        name: "compose_pdf",
+        arguments: {
+          manifest: validManifest,
+          data: { kind: "embedded", snapshot: embeddedSnapshotInput },
+          outputPath,
+        },
+      })
+    );
+
+    expect(result.isError).toBe(true);
+    expect(readToolText(result)).toContain("safe basename");
+    expect(await pathExists(outputPath)).toBe(false);
+  });
+
   test("rejects an oversized embedded snapshot before creating compose temp or output paths", async () => {
     const root = await makeTemporaryRoot();
     const outputPath = join(root, "must-not-exist", "oversized.pdf");

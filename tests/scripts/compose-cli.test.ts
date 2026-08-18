@@ -265,6 +265,27 @@ describe("pdf-forge compose CLI", () => {
     expect(result.stderr).toContain("Usage:");
   });
 
+  test("rejects an unsafe PDF basename before reading data or creating output", async () => {
+    const externalCwd = await makeExternalCwd();
+    const outputPath = join(externalCwd, "artifacts/quarterly report.pdf");
+    const result = await runCli(externalCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "missing.json",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/quarterly report.pdf",
+      "--receipt",
+      "artifacts/receipt.json",
+    ]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("safe basename");
+    expect(await pathExists(outputPath)).toBe(false);
+  });
+
   test("fails malformed static data with exit code 1 and never creates a receipt", async () => {
     const externalCwd = await makeExternalCwd();
     const malformedDataPath = join(externalCwd, "data/malformed.json");
