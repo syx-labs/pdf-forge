@@ -18,3 +18,5 @@ pages/
 
 .impeccable/hook.cache.json
 .cursor/
+*.code-workspace
+.artifacts/registry-gallery/

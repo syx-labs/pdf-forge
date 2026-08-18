@@ -6,6 +6,7 @@ import {
   getSocialViewport,
   isValidSocialFormat,
   SOCIAL_FORMAT_VALUES,
+  type Viewport,
 } from "./social-presets.js";
 
 async function resolveSocialFormat(
@@ -54,7 +55,16 @@ async function resolveSocialFormat(
 }
 
 export async function renderPages(options: RenderOptions): Promise<RenderResult> {
-  const { inputDir, outputDir, scale = 2, allowOverflow = false } = options;
+  const {
+    inputDir,
+    outputDir,
+    scale = 2,
+    allowOverflow = false,
+    blockNetwork = false,
+    signal,
+  } = options;
+
+  signal?.throwIfAborted();
 
   // Guard: socialFormat only applies to the social format. Silently ignoring
   // it for slides/docs would mask user misconfiguration.
@@ -82,7 +92,7 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
   await mkdir(outputDir, { recursive: true });
 
   let socialFormat: SocialFormat | undefined;
-  let viewport: { width: number; height: number };
+  let viewport: Viewport;
 
   if (format === "slides") {
     viewport = options.viewport ?? { width: 1920, height: 1080 };
@@ -95,15 +105,30 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
 
   const { chromium } = await import("playwright");
   const browser = await chromium.launch();
-  const context = await browser.newContext({
-    viewport,
-    deviceScaleFactor: scale,
-  });
+  let context: Awaited<ReturnType<typeof browser.newContext>> | undefined;
+  const abortRendering = (): void => {
+    void context?.close().catch(() => {});
+    void browser.close().catch(() => {});
+  };
+  signal?.addEventListener("abort", abortRendering, { once: true });
 
   const outputFiles: string[] = [];
 
   try {
+    signal?.throwIfAborted();
+    context = await browser.newContext({
+      viewport,
+      deviceScaleFactor: scale,
+    });
+    signal?.throwIfAborted();
+    if (blockNetwork) {
+      await context.route(/^https?:\/\//u, (route) =>
+        route.abort("blockedbyclient")
+      );
+    }
+
     for (const filePath of htmlFiles) {
+      signal?.throwIfAborted();
       const name = basename(filePath);
       const page = await context.newPage();
 
@@ -120,6 +145,7 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
       );
 
       await page.evaluate(() => document.fonts.ready);
+      signal?.throwIfAborted();
 
       // Overflow guard runs for single-viewport formats (slides + social).
       // Docs are exempt — page.pdf paginates natively, so scrollHeight > viewport is expected.
@@ -169,8 +195,9 @@ export async function renderPages(options: RenderOptions): Promise<RenderResult>
       await page.close();
     }
   } finally {
-    await context.close();
-    await browser.close();
+    signal?.removeEventListener("abort", abortRendering);
+    await context?.close().catch(() => {});
+    await browser.close().catch(() => {});
   }
 
   if (format === "social") {

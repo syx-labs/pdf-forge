@@ -17,7 +17,8 @@ const SafeIdentifierSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/);
 
-const ForbiddenDataNamePattern = /^(?:api[_-]?key|auth(?:orization)?|connection[_-]?string|credentials?|password|passwd|private[_-]?key|raw[_-]?sql|secret|sql|token|query)$/i;
+const ForbiddenDataNamePattern =
+  /^(?:auth(?:orization)?|credentials?|password|passwd|pwd|private[_-]?key|secret(?:[_-]?key)?|token|(?:access|api|auth|client|refresh|session)[_-]?(?:key|secret|token)|connection[_-]?string|raw[_-]?sql|sql|query)$/iu;
 
 const SafeParameterNameSchema = SafeIdentifierSchema.refine(
   (name) => !ForbiddenDataNamePattern.test(name),

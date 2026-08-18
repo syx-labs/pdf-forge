@@ -3,13 +3,20 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { composePrimitivePage } from "../../src/registry/compose";
+import {
+  composeDocumentPage,
+  composeDocumentPageWithMetadata,
+  composePrimitivePage,
+} from "../../src/registry/compose";
 import { parseDocumentManifest } from "../../src/registry/document-manifest";
 
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
 const temporaryRoots: string[] = [];
 
-async function packageRootWithMetricTemplate(template: string): Promise<string> {
+async function packageRootWithMetricTemplate(
+  template: string,
+  schema?: Readonly<Record<string, unknown>>
+): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "pdf-forge-compose-"));
   temporaryRoots.push(root);
   const registryRoot = join(root, "assets/registry");
@@ -40,13 +47,15 @@ entries:
       "utf-8"
     ),
     writeFile(templatePath, template, "utf-8"),
-    copyFile(
-      join(
-        packageRoot,
-        "assets/registry/primitives/metric-card/schema.json"
-      ),
-      schemaPath
-    ),
+    schema === undefined
+      ? copyFile(
+          join(
+            packageRoot,
+            "assets/registry/primitives/metric-card/schema.json"
+          ),
+          schemaPath
+        )
+      : writeFile(schemaPath, JSON.stringify(schema), "utf-8"),
     copyFile(
       join(packageRoot, "assets/registry/themes/ivory-editorial.json"),
       themePath
@@ -142,6 +151,24 @@ describe("composePrimitivePage", () => {
     expect(first).toEndWith("\n</body>\n</html>\n");
   });
 
+  test("returns exact immutable provenance metadata for a primitive composition without changing the legacy HTML API", async () => {
+    const manifest = metricCardManifest();
+    const page = manifest.pages[0];
+
+    const composition = await composeDocumentPageWithMetadata(
+      manifest,
+      page,
+      packageRoot
+    );
+
+    expect(composition.html).toBe(
+      await composeDocumentPage(manifest, page, packageRoot)
+    );
+    expect(composition.componentIds).toEqual(["metric-card"]);
+    expect(Object.isFrozen(composition)).toBe(true);
+    expect(Object.isFrozen(composition.componentIds)).toBe(true);
+  });
+
   test("omits the optional metric trend without leaving compiler syntax", async () => {
     const manifest = metricCardManifest({ label: "Revenue", value: "$1.2M" });
 
@@ -177,6 +204,43 @@ describe("composePrimitivePage", () => {
     );
     expect(caught.message).toContain('schemaPath "#/required"');
     expect(caught.message).toContain('dataPath "$.value"');
+  });
+
+  test("applies sibling constraints alongside local $ref definitions", async () => {
+    const root = await packageRootWithMetricTemplate(
+      "<article>{{escape:label}} {{escape:value}}</article>",
+      {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        $defs: {
+          NonEmptyString: { type: "string", minLength: 1 },
+        },
+        type: "object",
+        additionalProperties: false,
+        required: ["label", "value"],
+        properties: {
+          label: {
+            $ref: "#/$defs/NonEmptyString",
+            pattern: "^Allowed label$",
+          },
+          value: { $ref: "#/$defs/NonEmptyString" },
+        },
+      }
+    );
+    const rejected = metricCardManifest({
+      label: "Blocked label",
+      value: "$1.2M",
+    });
+    const accepted = metricCardManifest({
+      label: "Allowed label",
+      value: "$1.2M",
+    });
+
+    await expect(
+      composePrimitivePage(rejected, rejected.pages[0], root)
+    ).rejects.toThrow('schemaPath "#/properties/label/pattern"');
+    await expect(
+      composePrimitivePage(accepted, accepted.pages[0], root)
+    ).resolves.toContain("Allowed label");
   });
 
   test("rejects block pages before registry composition", async () => {
@@ -237,6 +301,8 @@ describe("composePrimitivePage", () => {
       "<svg><feImage /></svg>",
       '<style>.metric { background-image: image-set("https://example.com/a.png" 1x); }</style>',
       '<style>.metric { background-image: -webkit-image-set("https://example.com/a.png" 1x); }</style>',
+      String.raw`<style>.metric { background: u\72l("http://127.0.0.1/pixel.png"); }</style>`,
+      String.raw`<style>.metric { background: u\5c 72l("http://127.0.0.1/pixel.png"); }</style>`,
     ];
 
     for (const hostileFragment of hostileFragments) {

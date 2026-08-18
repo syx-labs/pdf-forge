@@ -18,6 +18,11 @@ export interface RenderOptions {
   // Opt-out of the overflow guard for single-viewport formats (slides, social).
   // Docs are always exempt — page.pdf paginates natively.
   allowOverflow?: boolean;
+  // Deny every HTTP(S) request from the browser context. Governed composition
+  // paths enable this so registry HTML cannot access the network while rendering.
+  blockNetwork?: boolean;
+  // Abort browser work and close Playwright resources when the caller cancels.
+  signal?: AbortSignal;
   // Override the screenshot viewport for the `slides` format. Defaults to
   // 1920×1080. Use for decks/posters whose pages are a different fixed size
   // (e.g. a PSD artboard that is not 16:9). Ignored for `docs`/`social`.

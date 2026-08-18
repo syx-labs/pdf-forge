@@ -17,6 +17,7 @@ export type PdfBuildReceipt = Readonly<{
   theme: string;
   registryVersion: Registry["version"];
   componentIds: readonly string[];
+  componentVersions: Readonly<Record<string, string>>;
   snapshotSha256: string;
   output: Readonly<{
     fileName: string;
@@ -33,8 +34,8 @@ const SafeComponentIdSchema = z
   .string()
   .max(128)
   .regex(/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/);
-const SECRET_WARNING_PATTERN =
-  /(?:\bBearer\s+|\bBasic\s+|\bapi[_-]?key\b(?:\s+|\s*[:=])|\b(?:auth(?:orization)?|credentials?|password|passwd|private[_-]?key|secret|token)\b\s*[:=])/iu;
+const FORBIDDEN_WARNING_PATTERN =
+  /\b(?:bearer|basic)\s+\S|\bapi[_-]?key\b(?:\s+|\s*[:=])|\b(?:(?:access|auth|client|refresh|session)[_-]?(?:key|secret|token)|secret[_-]?key|password|passwd|pwd|secret|token|authorization|private[_-]?key|credentials?)\b\s*[:=]/iu;
 const WarningSchema = z
   .string()
   .max(512)
@@ -42,7 +43,7 @@ const WarningSchema = z
   .refine((warning) => warning.length > 0, {
     message: "Warnings must not be empty after trimming.",
   })
-  .refine((warning) => !SECRET_WARNING_PATTERN.test(warning), {
+  .refine((warning) => !FORBIDDEN_WARNING_PATTERN.test(warning), {
     message: "Warnings must not contain credential material.",
   });
 
@@ -85,8 +86,11 @@ export async function buildPdfBuildReceipt(
     throw new Error("PDF build manifest snapshotRef must match the receipt snapshot.");
   }
   const listedComponentIds = new Set(parsed.componentIds);
+  const registryEntriesById = new Map(
+    parsed.registry.entries.map((entry) => [entry.id, entry] as const)
+  );
   const registeredComponentIds = new Set(
-    parsed.registry.entries.map((entry) => entry.id)
+    registryEntriesById.keys()
   );
   const missingSelections = [
     ...new Set(parsed.manifest.pages.map((page) => page.selection.id)),
@@ -127,6 +131,17 @@ export async function buildPdfBuildReceipt(
     throw new Error("PDF build output must contain at least one page.");
   }
   const componentIds = sortedUnique(parsed.componentIds);
+  const componentVersions = Object.freeze(
+    Object.fromEntries(
+      componentIds.map((id) => {
+        const entry = registryEntriesById.get(id);
+        if (entry === undefined) {
+          throw new Error(`Registry component "${id}" is unavailable.`);
+        }
+        return [id, entry.version] as const;
+      })
+    )
+  );
   const warnings = sortedUnique(parsed.warnings);
   const output = Object.freeze({
     fileName,
@@ -142,6 +157,7 @@ export async function buildPdfBuildReceipt(
     theme: parsed.manifest.theme,
     registryVersion: parsed.registry.version,
     componentIds,
+    componentVersions,
     snapshotSha256: hashDataSnapshot(parsed.snapshot),
     output,
     warnings,

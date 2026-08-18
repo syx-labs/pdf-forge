@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1",
+  "mode": "read-only",
+  "snapshotId": "executive-report-2026-q3",
+  "columns": [
+    { "name": "region", "type": "string" },
+    { "name": "revenue", "type": "number" },
+    { "name": "target", "type": "number" },
+    { "name": "recommendation", "type": "string" }
+  ],
+  "rows": [
+    ["North", 125000, 120000, "Protect enterprise retention."],
+    ["South", 98000, 105000, "Accelerate qualified pipeline."],
+    ["West", 114500, 110000, "Expand partner coverage."]
+  ],
+  "provenance": {
+    "sourceRef": "deepsql.reports.executive-report-v1.2026-q3",
+    "freshnessAt": "2026-08-17T10:30:00-03:00",
+    "queryId": "executive-report-v1",
+    "queryDigest": "cd38923f9a31b0497349f0525c5690232ebe441457439a1ea2bf7f4cf716a5e6"
+  }
+}

@@ -5,6 +5,7 @@ import {
   hashDataSnapshot,
 } from "../../src/data/canonicalize.js";
 import type { DataSnapshot } from "../../src/data/types.js";
+import { parseDataSnapshot } from "../../src/data/schemas.js";
 
 function snapshotInSchemaOrder(): DataSnapshot {
   return {
@@ -119,5 +120,31 @@ describe("hashDataSnapshot", () => {
         capturedAt: "2026-08-17T10:30:01+00:00",
       })
     ).not.toBe(digest);
+  });
+
+  test("materially binds query identity and digest provenance", () => {
+    const base = snapshotInSchemaOrder();
+    const first = parseDataSnapshot({
+      ...base,
+      queryId: "monthly-revenue",
+      queryDigest: "a".repeat(64),
+    });
+    const differentQuery = parseDataSnapshot({
+      ...base,
+      queryId: "quarterly-revenue",
+      queryDigest: "a".repeat(64),
+    });
+    const differentDigest = parseDataSnapshot({
+      ...base,
+      queryId: "monthly-revenue",
+      queryDigest: "b".repeat(64),
+    });
+
+    expect(canonicalizeDataSnapshot(first)).toContain(
+      '"queryDigest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","queryId":"monthly-revenue"'
+    );
+    expect(hashDataSnapshot(first)).not.toBe(hashDataSnapshot(base));
+    expect(hashDataSnapshot(first)).not.toBe(hashDataSnapshot(differentQuery));
+    expect(hashDataSnapshot(first)).not.toBe(hashDataSnapshot(differentDigest));
   });
 });

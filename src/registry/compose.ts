@@ -6,6 +6,21 @@ import { resolveRegistryEntry } from "./resolver.js";
 
 type DocumentPage = DocumentManifest["pages"][number];
 
+export type DocumentPageComposition = Readonly<{
+  html: string;
+  componentIds: readonly string[];
+}>;
+
+function compositionResult(
+  html: string,
+  componentIds: readonly string[]
+): DocumentPageComposition {
+  return Object.freeze({
+    html,
+    componentIds: Object.freeze([...new Set(componentIds)].sort()),
+  });
+}
+
 type ValidationIssue = Readonly<{
   schemaPath: string;
   dataPath: string;
@@ -15,6 +30,29 @@ type ValidationIssue = Readonly<{
 const PLACEHOLDER_PATTERN = /\{\{([^{}]+)\}\}/gu;
 const FORBIDDEN_TEMPLATE_PATTERN =
   /<\/?(?:script|iframe|frame|frameset|object|embed|applet|portal|link|base|form|input|button|audio|video|source|track|picture|img|image|use|feimage|mpath)\b|<meta\b(?=[^>]*\bhttp-equiv\s*=\s*(?:"\s*refresh\s*"|'\s*refresh\s*'|refresh\b))|\bon[a-z]+\s*=|\b(?:src|srcset|href|xlink:href|action|formaction|poster|background|ping|manifest|archive|codebase)\s*=|javascript\s*:|@import\b|url\s*\(|(?:-webkit-)?image-set\s*\(|\bimage\s*\(/iu;
+
+function decodeCssEscapes(value: string): string {
+  let decoded = value;
+  for (let pass = 0; pass < 4; pass += 1) {
+    const next = decoded.replace(
+      /\\(?:([0-9a-f]{1,6})[\t\n\f\r ]?|([^\n\r\f]))/giu,
+      (_match, hex: string | undefined, escaped: string | undefined) =>
+        hex === undefined ? (escaped ?? "") : String.fromCodePoint(Number.parseInt(hex, 16))
+    );
+    if (next === decoded) {
+      return next;
+    }
+    decoded = next;
+  }
+  return decoded;
+}
+
+function containsForbiddenTemplateContent(template: string): boolean {
+  return (
+    FORBIDDEN_TEMPLATE_PATTERN.test(template) ||
+    FORBIDDEN_TEMPLATE_PATTERN.test(decodeCssEscapes(template))
+  );
+}
 const METRIC_CARD_PLACEHOLDERS = new Set([
   "label",
   "value",
@@ -222,13 +260,16 @@ function validateSchema(
         message: `unresolved reference "${schema.$ref}"`,
       };
     }
-    return validateSchema(
+    const referenceIssue = validateSchema(
       rootSchema.$defs[definitionName],
       value,
       rootSchema,
       `#/$defs/${schemaPointerSegment(definitionName)}`,
       dataPath
     );
+    if (referenceIssue !== undefined) {
+      return referenceIssue;
+    }
   }
 
   if (schema.allOf !== undefined) {
@@ -357,7 +398,11 @@ function validateSchema(
     };
   }
 
-  if (schema.type === "string") {
+  const hasStringConstraints =
+    schema.type === "string" ||
+    schema.minLength !== undefined ||
+    schema.pattern !== undefined;
+  if (hasStringConstraints) {
     if (typeof value !== "string") {
       return {
         schemaPath: `${schemaPath}/type`,
@@ -833,10 +878,9 @@ function renderDataTable(template: string, props: unknown): string {
 }
 
 function assertTemplateSafe(template: string, entryId: string): void {
-  const forbidden = template.match(FORBIDDEN_TEMPLATE_PATTERN)?.[0];
-  if (forbidden !== undefined) {
+  if (containsForbiddenTemplateContent(template)) {
     throw new Error(
-      `Unsafe template content "${forbidden}" is not allowed for registry entry "${entryId}".`
+      `Unsafe template content is not allowed for registry entry "${entryId}".`
     );
   }
 }
@@ -1314,13 +1358,16 @@ export async function composePrimitivePage(
   return pageShell(manifest, page, resolved.cssVariables, componentHtml);
 }
 
-export async function composeDocumentPage(
+export async function composeDocumentPageWithMetadata(
   manifest: DocumentManifest,
   page: DocumentPage,
   packageRoot?: string
-): Promise<string> {
+): Promise<DocumentPageComposition> {
   if (page.selection.kind === "primitive") {
-    return composePrimitivePage(manifest, page, packageRoot);
+    return compositionResult(
+      await composePrimitivePage(manifest, page, packageRoot),
+      [page.selection.id]
+    );
   }
 
   const resolved = await resolveRegistryEntry({
@@ -1399,10 +1446,25 @@ export async function composeDocumentPage(
     table
   );
 
-  return pageShell(
+  const html = pageShell(
     manifest,
     page,
     resolved.cssVariables,
     finishBlockFragment(blockFragment)
   );
+  return compositionResult(html, [
+    page.selection.id,
+    definition.primitives.metrics.id,
+    definition.primitives.table.id,
+  ]);
+}
+
+export async function composeDocumentPage(
+  manifest: DocumentManifest,
+  page: DocumentPage,
+  packageRoot?: string
+): Promise<string> {
+  return (
+    await composeDocumentPageWithMetadata(manifest, page, packageRoot)
+  ).html;
 }

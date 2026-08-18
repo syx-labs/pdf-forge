@@ -22,6 +22,36 @@ let font = "Montserrat";
 let scale = "2";
 let assets = false;
 
+interface ArtboardSize {
+  width: number;
+  height: number;
+}
+
+interface PsdDeckManifest {
+  artboards: ArtboardSize[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isArtboardSize(value: unknown): value is ArtboardSize {
+  return (
+    isRecord(value) &&
+    typeof value.width === "number" &&
+    typeof value.height === "number"
+  );
+}
+
+function isPsdDeckManifest(value: unknown): value is PsdDeckManifest {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.artboards) &&
+    value.artboards.length > 0 &&
+    value.artboards.every(isArtboardSize)
+  );
+}
+
 function needValue(flag: string, v: string | undefined): string {
   if (v === undefined || v === "" || /^-{1,2}[A-Za-z]/.test(v)) {
     console.error(`${flag} requires a value.`);
@@ -81,9 +111,13 @@ try {
   await run("psd-extract.ts", exArgs);
 
   // viewport automático: se todos os artboards têm o mesmo tamanho ≠ 1920×1080
-  const manifest = JSON.parse(
+  const parsedManifest: unknown = JSON.parse(
     await readFile(resolve(extractDir, "manifest.json"), "utf-8")
-  ) as { artboards: Array<{ width: number; height: number }> };
+  );
+  if (!isPsdDeckManifest(parsedManifest)) {
+    throw new Error("manifest.json inválido: artboards deve conter width/height numéricos.");
+  }
+  const manifest = parsedManifest;
   const sizes = new Set(manifest.artboards.map((a) => `${a.width}x${a.height}`));
   let viewport: string | undefined;
   if (sizes.size === 1) {

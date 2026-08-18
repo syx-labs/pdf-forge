@@ -17,20 +17,48 @@ import { readdir, stat, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { readPngSize, pickPptxAspect } from "../src/core/image-size";
 
-const ASPECT_PRESETS: Record<string, { width: number; height: number }> = {
+type AspectPreset = "16:9" | "4:3" | "16:10" | "a4-landscape" | "a4-portrait";
+
+interface AspectDimensions {
+  width: number;
+  height: number;
+}
+
+interface PptxBuildResult {
+  path: string;
+  slides: number;
+}
+
+const ASPECT_PRESETS = {
   "16:9": { width: 13.333, height: 7.5 },
   "4:3": { width: 10, height: 7.5 },
   "16:10": { width: 13.333, height: 8.333 },
   "a4-landscape": { width: 11.69, height: 8.27 },
   "a4-portrait": { width: 8.27, height: 11.69 },
-};
+} satisfies Record<AspectPreset, AspectDimensions>;
 
 const ASPECT_KEYS = Object.keys(ASPECT_PRESETS);
+
+function isAspectPreset(value: string): value is AspectPreset {
+  return ASPECT_KEYS.some((candidate) => candidate === value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isPptxBuildResult(value: unknown): value is PptxBuildResult {
+  return (
+    isRecord(value) &&
+    typeof value.path === "string" &&
+    typeof value.slides === "number"
+  );
+}
 
 const args = process.argv.slice(2);
 let renderedDir = "";
 let outputPath = "./output.pptx";
-let aspect = "16:9";
+let aspect: AspectPreset = "16:9";
 let aspectExplicit = false;
 let widthOverride: number | undefined;
 let heightOverride: number | undefined;
@@ -50,13 +78,14 @@ for (let i = 0; i < args.length; i++) {
   if (arg === "--output" || arg === "-o") {
     outputPath = requireNext(arg, args[++i]);
   } else if (arg === "--aspect") {
-    aspect = requireNext(arg, args[++i]);
-    if (!ASPECT_PRESETS[aspect]) {
+    const requestedAspect = requireNext(arg, args[++i]);
+    if (!isAspectPreset(requestedAspect)) {
       console.error(
-        `Invalid --aspect "${aspect}". Valid: ${ASPECT_KEYS.join(", ")}.`
+        `Invalid --aspect "${requestedAspect}". Valid: ${ASPECT_KEYS.join(", ")}.`
       );
       process.exit(1);
     }
+    aspect = requestedAspect;
     aspectExplicit = true;
   } else if (arg === "--width") {
     widthOverride = parseFloat(requireNext(arg, args[++i]));
@@ -223,7 +252,10 @@ if (exitInfo.code !== 0) {
 }
 
 try {
-  const parsed = JSON.parse(stdout.trim().split("\n").pop() ?? "{}");
+  const parsed: unknown = JSON.parse(stdout.trim().split("\n").pop() ?? "{}");
+  if (!isPptxBuildResult(parsed)) {
+    throw new Error("python-pptx returned an invalid completion payload");
+  }
   console.log(`\nSaved: ${parsed.path}`);
   console.log(`Slides embedded: ${parsed.slides}`);
 } catch {

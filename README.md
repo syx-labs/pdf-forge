@@ -97,6 +97,51 @@ The skill automatically:
 3. Generates self-contained HTML pages with Tailwind CSS
 4. Renders to PDF via Playwright
 
+### Typed registry and governed data
+
+The free-form HTML workflow remains supported, including the legacy MCP
+`generate_pdf` tool. The typed registry is an additive path for reusable,
+schema-validated components:
+
+```bash
+bun run bin/pdf-forge.ts registry list --json
+bun run bin/pdf-forge.ts registry inspect executive-report --json
+bun run bin/pdf-forge.ts compose executive-report \
+  --data ./snapshot.json \
+  --theme ivory-editorial \
+  --output ./report.pdf \
+  --receipt ./report.receipt.json
+```
+
+`compose` keeps data acquisition separate from visual composition and validates a
+versioned read-only snapshot before binding and rendering it. The MCP server adds
+read-only registry discovery plus `compose_pdf`; `generate_pdf` retains its raw
+HTML contract for existing clients.
+
+The DeepSQL HTTP adapter is optional and disabled by default. A trusted host must
+own its fixed endpoint and authentication, register it explicitly, allowlist query
+IDs, and approve non-empty parameters. Documents cannot supply raw SQL, provider
+configuration, endpoints, or credentials. See
+[`docs/integrations/deepsql.md`](docs/integrations/deepsql.md) for the contract and
+threat model.
+
+Inspect effective capabilities without exposing configured values:
+
+```bash
+bun run bin/pdf-forge.ts doctor --json
+```
+
+Generate the canonical component gallery from registry examples and real
+Playwright output:
+
+```bash
+bun run scripts/generate-gallery.ts --output .artifacts/registry-gallery
+```
+
+The generated gallery is evidence, not committed source. See
+[`docs/registry/README.md`](docs/registry/README.md) for its layout and fail-closed
+rules.
+
 ## Brand Customization
 
 Create `.claude/pdf-forge.local.md` in your project:

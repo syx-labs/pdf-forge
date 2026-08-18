@@ -22,11 +22,20 @@ jobs:
 
       - run: bun install
 
+      - name: Install Playwright
+        run: bunx playwright install chromium --with-deps
+
+      - name: Anti-slop lint
+        run: bun run lint:anti-slop
+
       - name: Type check
         run: bun run typecheck
 
-      - name: Unit tests
-        run: bun test tests/core/utils.test.ts
+      - name: Full test suite
+        run: |
+          git ls-files 'tests/**/*.test.ts' | while IFS= read -r test_file; do
+            bun test "$test_file" --parallel=1 --timeout 60000
+          done
 
       - name: Build
         run: bun run build

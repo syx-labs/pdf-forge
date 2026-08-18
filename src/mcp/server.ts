@@ -2,12 +2,19 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { isSafePdfOutputPath } from "../registry/receipt.js";
-import { dirname, resolve, join } from "node:path";
+import { basename, resolve, join } from "node:path";
 import { mkdir, readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { discoverPackageRoot } from "../core/package-root.js";
 import { renderPages } from "../core/renderer.js";
 import { mergePages } from "../core/merger.js";
+import {
+  ComposeOutputPathError,
+  createComposeStagingDirectory,
+  publishStagedPdf,
+  resolveComposeOutputRoot,
+  validateComposeOutputTarget,
+} from "./compose-output.js";
 import type { DocumentManifest } from "../registry/document-manifest.js";
 import type { LoadedRegistry } from "../registry/loader.js";
 
@@ -66,6 +73,8 @@ type ComposeErrorCode =
   | "INVALID_SNAPSHOT"
   | "SNAPSHOT_LIMIT_EXCEEDED"
   | "BINDING_FAILED"
+  | "OUTPUT_PATH_REJECTED"
+  | "COMPOSITION_CANCELLED"
   | "COMPOSITION_FAILED";
 
 class ComposePdfError extends Error {
@@ -271,8 +280,12 @@ function isSnapshotLimitError(error: unknown): boolean {
   );
 }
 
-async function loadComposeSnapshot(data: ComposePdfInput["data"]) {
+async function loadComposeSnapshot(
+  data: ComposePdfInput["data"],
+  signal: AbortSignal
+) {
   try {
+    signal.throwIfAborted();
     if (data.kind === "embedded") {
       const { parseDataSnapshot } = await import("../data/schemas.js");
       return parseDataSnapshot(data.snapshot);
@@ -284,13 +297,15 @@ async function loadComposeSnapshot(data: ComposePdfInput["data"]) {
     ]);
     const providers = new DataProviderRegistry();
     providers.register(new StaticJsonProvider());
-    const abortController = new AbortController();
     return await providers.load(
       "static-json",
       { filePath: resolve(data.filePath) },
-      { signal: abortController.signal }
+      { signal }
     );
   } catch (error) {
+    if (signal.aborted) {
+      throw error;
+    }
     if (isSnapshotLimitError(error)) {
       throw new ComposePdfError(
         "SNAPSHOT_LIMIT_EXCEEDED",
@@ -337,9 +352,65 @@ const RESOURCE_MAP = {
   "pdf-forge://anti-patterns": "skills/pdf-forge/references/anti-patterns.md",
 } satisfies Record<string, string>;
 
-export async function createServer(): Promise<McpServer> {
+export type CreateServerOptions = Readonly<{
+  composeOutputRoot?: string;
+  composeTimeoutMs?: number;
+}>;
+
+const DEFAULT_COMPOSE_TIMEOUT_MS = 60_000;
+const MAX_COMPOSE_TIMEOUT_MS = 600_000;
+
+function readComposeTimeoutMs(options: CreateServerOptions): number {
+  const timeoutMs = options.composeTimeoutMs ?? DEFAULT_COMPOSE_TIMEOUT_MS;
+  if (
+    !Number.isSafeInteger(timeoutMs) ||
+    timeoutMs <= 0 ||
+    timeoutMs > MAX_COMPOSE_TIMEOUT_MS
+  ) {
+    throw new Error("compose_pdf timeout must be an integer from 1 to 600000 ms.");
+  }
+  return timeoutMs;
+}
+
+type ComposeSignal = Readonly<{
+  signal: AbortSignal;
+  cleanup: () => void;
+}>;
+
+function createComposeSignal(
+  requestSignal: AbortSignal,
+  timeoutMs: number
+): ComposeSignal {
+  const controller = new AbortController();
+  const forwardCancellation = (): void => {
+    controller.abort(requestSignal.reason);
+  };
+  if (requestSignal.aborted) {
+    forwardCancellation();
+  } else {
+    requestSignal.addEventListener("abort", forwardCancellation, { once: true });
+  }
+  const timeout = setTimeout(() => {
+    controller.abort(new Error("compose_pdf timed out."));
+  }, timeoutMs);
+  timeout.unref?.();
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timeout);
+      requestSignal.removeEventListener("abort", forwardCancellation);
+    },
+  };
+}
+
+export async function createServer(
+  options: CreateServerOptions = {}
+): Promise<McpServer> {
   const packageRoot = await packageRootPromise;
   const version = await readPackageVersion(packageRoot);
+  const composeOutputRoot =
+    options.composeOutputRoot ?? join(process.cwd(), "pdf-forge-output");
+  const composeTimeoutMs = readComposeTimeoutMs(options);
   let registryPromise: ReturnType<typeof loadRegistryForMcp> | undefined;
   const loadCanonicalRegistry = (): ReturnType<typeof loadRegistryForMcp> => {
     registryPromise ??= loadRegistryForMcp(packageRoot);
@@ -439,8 +510,21 @@ export async function createServer(): Promise<McpServer> {
         "Compose one governed executive-report manifest from a bounded data snapshot and return an auditable PDF receipt.",
       inputSchema: ComposePdfInputSchema,
     },
-    async ({ manifest: manifestInput, data, outputPath }: ComposePdfInput) => {
+    async (
+      { manifest: manifestInput, data, outputPath }: ComposePdfInput,
+      extra
+    ) => {
+      const composeSignal = createComposeSignal(extra.signal, composeTimeoutMs);
+      const { signal } = composeSignal;
+      let stagingDirectory: string | undefined;
       try {
+        signal.throwIfAborted();
+        const canonicalOutputRoot = await resolveComposeOutputRoot(
+          composeOutputRoot
+        );
+        await validateComposeOutputTarget(canonicalOutputRoot, outputPath);
+        signal.throwIfAborted();
+
         let manifest: DocumentManifest;
         try {
           manifest = await parseDocumentManifestForMcp(manifestInput);
@@ -473,7 +557,8 @@ export async function createServer(): Promise<McpServer> {
           );
         }
 
-        const snapshot = await loadComposeSnapshot(data);
+        const snapshot = await loadComposeSnapshot(data, signal);
+        signal.throwIfAborted();
         if (manifest.snapshotRef !== snapshot.snapshotId) {
           throw new ComposePdfError(
             "INVALID_MANIFEST",
@@ -499,12 +584,16 @@ export async function createServer(): Promise<McpServer> {
               import("../data/redact.js"),
               import("../data/bindings/executive-report.js"),
             ]);
+          signal.throwIfAborted();
           redacted = redactDataSnapshot(snapshot, {
             mode: "allow",
             columns: ["region", "revenue", "target", "recommendation"],
           });
           props = bindExecutiveReport(redacted);
-        } catch {
+        } catch (error) {
+          if (signal.aborted) {
+            throw error;
+          }
           throw new ComposePdfError(
             "BINDING_FAILED",
             "Snapshot could not be bound to the executive-report contract."
@@ -529,15 +618,24 @@ export async function createServer(): Promise<McpServer> {
             "Effective manifest could not be composed."
           );
         }
-        let html: string;
+        let composition: Readonly<{
+          html: string;
+          componentIds: readonly string[];
+        }>;
         try {
-          const { composeDocumentPage } = await import("../registry/compose.js");
-          html = await composeDocumentPage(
+          const { composeDocumentPageWithMetadata } = await import(
+            "../registry/compose.js"
+          );
+          signal.throwIfAborted();
+          composition = await composeDocumentPageWithMetadata(
             effectiveManifest,
             effectivePage,
             packageRoot
           );
-        } catch {
+        } catch (error) {
+          if (signal.aborted) {
+            throw error;
+          }
           throw new ComposePdfError(
             "COMPOSITION_FAILED",
             "Effective manifest could not be composed."
@@ -553,7 +651,7 @@ export async function createServer(): Promise<McpServer> {
           await mkdir(pagesDir, { recursive: true });
           await writeFile(
             join(pagesDir, "01-executive-report.html"),
-            html,
+            composition.html,
             "utf-8"
           );
           await renderPages({
@@ -561,14 +659,24 @@ export async function createServer(): Promise<McpServer> {
             outputDir: renderDir,
             format: effectiveManifest.format,
             scale: 1,
+            blockNetwork: true,
+            signal,
           });
+          signal.throwIfAborted();
 
-          const finalPath = resolve(outputPath);
-          await mkdir(dirname(finalPath), { recursive: true });
+          stagingDirectory = await createComposeStagingDirectory(
+            canonicalOutputRoot,
+            signal
+          );
+          const stagedPdfPath = join(
+            stagingDirectory,
+            basename(outputPath)
+          );
           const mergeResult = await mergePages({
             inputDir: renderDir,
-            outputPath: finalPath,
+            outputPath: stagedPdfPath,
           });
+          signal.throwIfAborted();
           const receiptRegistry = await loadCanonicalRegistry();
           const { buildPdfBuildReceipt } = await import(
             "../registry/receipt.js"
@@ -576,19 +684,22 @@ export async function createServer(): Promise<McpServer> {
           const receipt = await buildPdfBuildReceipt({
             manifest: effectiveManifest,
             registry: receiptRegistry,
-            componentIds: [
-              "executive-report",
-              "metric-card",
-              "data-table",
-            ],
+            componentIds: composition.componentIds,
             snapshot: redacted,
             mergeResult,
             warnings: [],
             createdAt: new Date().toISOString(),
           });
+          signal.throwIfAborted();
+          const publishedPath = await publishStagedPdf(
+            canonicalOutputRoot,
+            outputPath,
+            stagedPdfPath,
+            signal
+          );
           return jsonTextResult({
             ok: true,
-            path: mergeResult.path,
+            path: publishedPath,
             receipt,
           });
         } finally {
@@ -598,12 +709,35 @@ export async function createServer(): Promise<McpServer> {
         if (error instanceof ComposePdfError) {
           return composeErrorResult(error);
         }
+        if (error instanceof ComposeOutputPathError) {
+          return composeErrorResult(
+            new ComposePdfError(
+              "OUTPUT_PATH_REJECTED",
+              "Output PDF path was rejected by compose_pdf policy."
+            )
+          );
+        }
+        if (signal.aborted) {
+          return composeErrorResult(
+            new ComposePdfError(
+              "COMPOSITION_CANCELLED",
+              "Structured PDF composition was cancelled or timed out."
+            )
+          );
+        }
         return composeErrorResult(
           new ComposePdfError(
             "COMPOSITION_FAILED",
             "Structured PDF composition failed."
           )
         );
+      } finally {
+        composeSignal.cleanup();
+        if (stagingDirectory !== undefined) {
+          await rm(stagingDirectory, { recursive: true, force: true }).catch(
+            () => {}
+          );
+        }
       }
     }
   );

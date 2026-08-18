@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { mergePages } from "../../src/core/merger";
 import { renderPages } from "../../src/core/renderer";
-import { composeDocumentPage } from "../../src/registry/compose";
+import {
+  composeDocumentPage,
+  composeDocumentPageWithMetadata,
+} from "../../src/registry/compose";
 import { parseDocumentManifest } from "../../src/registry/document-manifest";
 
 const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -58,12 +61,23 @@ describe("registry executive-report runtime", () => {
       ],
     });
 
-    const html = await composeDocumentPage(
+    const composition = await composeDocumentPageWithMetadata(
       manifest,
       manifest.pages[0],
       packageRoot
     );
+    const html = composition.html;
 
+    expect(composition.componentIds).toEqual([
+      "data-table",
+      "executive-report",
+      "metric-card",
+    ]);
+    expect(Object.isFrozen(composition)).toBe(true);
+    expect(Object.isFrozen(composition.componentIds)).toBe(true);
+    expect(html).toBe(
+      await composeDocumentPage(manifest, manifest.pages[0], packageRoot)
+    );
     expect(html.match(/<html\b/gu)).toHaveLength(1);
     expect(html.match(/<body\b/gu)).toHaveLength(1);
     expect(html.match(/<\/body>/gu)).toHaveLength(1);
@@ -233,7 +247,11 @@ describe("registry executive-report runtime", () => {
         composeDocumentPage(manifest, manifest.pages[0], definitionRoot)
       ).rejects.toThrow("Invalid executive-report block definition");
       await expect(
-        composeDocumentPage(manifest, manifest.pages[0], referenceRoot)
+        composeDocumentPageWithMetadata(
+          manifest,
+          manifest.pages[0],
+          referenceRoot
+        )
       ).rejects.toThrow('Unknown registry entry id "unknown-card"');
       await expect(
         composeDocumentPage(manifest, manifest.pages[0], slotRoot)

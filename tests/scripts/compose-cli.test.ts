@@ -2,11 +2,14 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
   copyFile,
+  link,
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   stat,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -133,6 +136,11 @@ describe("pdf-forge compose CLI", () => {
       theme: "ivory-editorial",
       registryVersion: "1",
       componentIds: ["data-table", "executive-report", "metric-card"],
+      componentVersions: {
+        "data-table": "1.0.0",
+        "executive-report": "1.0.0",
+        "metric-card": "1.0.0",
+      },
       snapshotSha256: hashDataSnapshot(redacted),
       output: {
         fileName: basename(outputPath),
@@ -285,6 +293,327 @@ describe("pdf-forge compose CLI", () => {
     expect(result.stderr).toContain("safe basename");
     expect(await pathExists(outputPath)).toBe(false);
   });
+
+  test("rejects case-insensitive aliases among data, output, and receipt before mutation", async () => {
+    const dataOutputCwd = await makeExternalCwd();
+    const dataOutputPath = join(dataOutputCwd, "Case/Data.PDF");
+    const dataOutputReceipt = join(dataOutputCwd, "artifacts/data-output.json");
+    await mkdir(join(dataOutputCwd, "Case"), { recursive: true });
+    await copyFile(SOURCE_FIXTURE, dataOutputPath);
+    const dataOutputBefore = await readFile(dataOutputPath);
+
+    const dataOutput = await runCli(dataOutputCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "Case/Data.PDF",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "case/data.pdf",
+      "--receipt",
+      "artifacts/data-output.json",
+    ]);
+
+    expect(dataOutput.exitCode).toBe(1);
+    expect(dataOutput.stdout).toBe("");
+    expect(dataOutput.stderr).toContain("must be distinct");
+    expect(await readFile(dataOutputPath)).toEqual(dataOutputBefore);
+    expect(await pathExists(dataOutputReceipt)).toBe(false);
+
+    const outputReceiptCwd = await makeExternalCwd();
+    const relativeDataPath = await copyFixtureToExternalCwd(outputReceiptCwd);
+    const outputPath = join(outputReceiptCwd, "Artifacts/Report.PDF");
+    await mkdir(join(outputReceiptCwd, "Artifacts"), { recursive: true });
+    await writeFile(outputPath, "pre-existing output\n", "utf8");
+    const outputBefore = await readFile(outputPath);
+
+    const outputReceipt = await runCli(outputReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      relativeDataPath,
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "Artifacts/Report.PDF",
+      "--receipt",
+      "artifacts/report.pdf",
+    ]);
+
+    expect(outputReceipt.exitCode).toBe(1);
+    expect(outputReceipt.stdout).toBe("");
+    expect(outputReceipt.stderr).toContain("must be distinct");
+    expect(await readFile(outputPath)).toEqual(outputBefore);
+
+    const dataReceiptCwd = await makeExternalCwd();
+    const dataReceiptPath = join(dataReceiptCwd, "Data/Receipt.JSON");
+    const dataReceiptOutput = join(dataReceiptCwd, "artifacts/data-receipt.pdf");
+    await mkdir(join(dataReceiptCwd, "Data"), { recursive: true });
+    await copyFile(SOURCE_FIXTURE, dataReceiptPath);
+    const dataReceiptBefore = await readFile(dataReceiptPath);
+
+    const dataReceipt = await runCli(dataReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "Data/Receipt.JSON",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/data-receipt.pdf",
+      "--receipt",
+      "data/receipt.json",
+    ]);
+
+    expect(dataReceipt.exitCode).toBe(1);
+    expect(dataReceipt.stdout).toBe("");
+    expect(dataReceipt.stderr).toContain("must be distinct");
+    expect(await readFile(dataReceiptPath)).toEqual(dataReceiptBefore);
+    expect(await pathExists(dataReceiptOutput)).toBe(false);
+  }, 60_000);
+
+  test("rejects symlink aliases among data, output, and receipt before mutation", async () => {
+    const dataOutputCwd = await makeExternalCwd();
+    const dataOutputPath = join(dataOutputCwd, "inputs/source.pdf");
+    const linkedOutputPath = join(dataOutputCwd, "artifacts/output.pdf");
+    const dataOutputReceipt = join(dataOutputCwd, "artifacts/receipt.json");
+    await Promise.all([
+      mkdir(join(dataOutputCwd, "inputs"), { recursive: true }),
+      mkdir(join(dataOutputCwd, "artifacts"), { recursive: true }),
+    ]);
+    await copyFile(SOURCE_FIXTURE, dataOutputPath);
+    await symlink(dataOutputPath, linkedOutputPath);
+    const dataOutputBefore = await readFile(dataOutputPath);
+
+    const dataOutput = await runCli(dataOutputCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "inputs/source.pdf",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/output.pdf",
+      "--receipt",
+      "artifacts/receipt.json",
+    ]);
+
+    expect(dataOutput.exitCode).toBe(1);
+    expect(dataOutput.stdout).toBe("");
+    expect(dataOutput.stderr).toContain("must be distinct");
+    expect(await readFile(dataOutputPath)).toEqual(dataOutputBefore);
+    expect(await pathExists(dataOutputReceipt)).toBe(false);
+
+    const dataReceiptCwd = await makeExternalCwd();
+    const dataReceiptPath = join(dataReceiptCwd, "inputs/source.json");
+    const linkedReceiptPath = join(dataReceiptCwd, "artifacts/receipt.json");
+    const dataReceiptOutput = join(dataReceiptCwd, "artifacts/output.pdf");
+    await Promise.all([
+      mkdir(join(dataReceiptCwd, "inputs"), { recursive: true }),
+      mkdir(join(dataReceiptCwd, "artifacts"), { recursive: true }),
+    ]);
+    await copyFile(SOURCE_FIXTURE, dataReceiptPath);
+    await symlink(dataReceiptPath, linkedReceiptPath);
+    const dataReceiptBefore = await readFile(dataReceiptPath);
+
+    const dataReceipt = await runCli(dataReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "inputs/source.json",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/output.pdf",
+      "--receipt",
+      "artifacts/receipt.json",
+    ]);
+
+    expect(dataReceipt.exitCode).toBe(1);
+    expect(dataReceipt.stdout).toBe("");
+    expect(dataReceipt.stderr).toContain("must be distinct");
+    expect(await readFile(dataReceiptPath)).toEqual(dataReceiptBefore);
+    expect(await pathExists(dataReceiptOutput)).toBe(false);
+
+    const outputReceiptCwd = await makeExternalCwd();
+    const relativeDataPath = await copyFixtureToExternalCwd(outputReceiptCwd);
+    const artifactsDir = join(outputReceiptCwd, "artifacts");
+    const linkedArtifactsDir = join(outputReceiptCwd, "linked-artifacts");
+    const outputPath = join(artifactsDir, "report.pdf");
+    const receiptPath = join(linkedArtifactsDir, "report.pdf");
+    await mkdir(artifactsDir);
+    await symlink(artifactsDir, linkedArtifactsDir, "dir");
+
+    const outputReceipt = await runCli(outputReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      relativeDataPath,
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/report.pdf",
+      "--receipt",
+      "linked-artifacts/report.pdf",
+    ]);
+
+    expect(outputReceipt.exitCode).toBe(1);
+    expect(outputReceipt.stdout).toBe("");
+    expect(outputReceipt.stderr).toContain("must be distinct");
+    expect(await pathExists(outputPath)).toBe(false);
+    expect(await pathExists(receiptPath)).toBe(false);
+  }, 60_000);
+
+  test("rejects hardlink aliases among data, output, and receipt before mutation", async () => {
+    const dataOutputCwd = await makeExternalCwd();
+    const dataOutputPath = join(dataOutputCwd, "inputs/source.json");
+    const linkedOutputPath = join(dataOutputCwd, "artifacts/output.pdf");
+    const dataOutputReceipt = join(dataOutputCwd, "artifacts/receipt.json");
+    await Promise.all([
+      mkdir(join(dataOutputCwd, "inputs"), { recursive: true }),
+      mkdir(join(dataOutputCwd, "artifacts"), { recursive: true }),
+    ]);
+    await copyFile(SOURCE_FIXTURE, dataOutputPath);
+    await link(dataOutputPath, linkedOutputPath);
+    const dataOutputBefore = await readFile(dataOutputPath);
+
+    const dataOutput = await runCli(dataOutputCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "inputs/source.json",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/output.pdf",
+      "--receipt",
+      "artifacts/receipt.json",
+    ]);
+
+    expect(dataOutput.exitCode).toBe(1);
+    expect(dataOutput.stdout).toBe("");
+    expect(dataOutput.stderr).toContain("must be distinct");
+    expect(await readFile(dataOutputPath)).toEqual(dataOutputBefore);
+    expect(await pathExists(dataOutputReceipt)).toBe(false);
+
+    const dataReceiptCwd = await makeExternalCwd();
+    const dataReceiptPath = join(dataReceiptCwd, "inputs/source.json");
+    const linkedReceiptPath = join(dataReceiptCwd, "artifacts/receipt.json");
+    const dataReceiptOutput = join(dataReceiptCwd, "artifacts/output.pdf");
+    await Promise.all([
+      mkdir(join(dataReceiptCwd, "inputs"), { recursive: true }),
+      mkdir(join(dataReceiptCwd, "artifacts"), { recursive: true }),
+    ]);
+    await copyFile(SOURCE_FIXTURE, dataReceiptPath);
+    await link(dataReceiptPath, linkedReceiptPath);
+    const dataReceiptBefore = await readFile(dataReceiptPath);
+
+    const dataReceipt = await runCli(dataReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      "inputs/source.json",
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/output.pdf",
+      "--receipt",
+      "artifacts/receipt.json",
+    ]);
+
+    expect(dataReceipt.exitCode).toBe(1);
+    expect(dataReceipt.stdout).toBe("");
+    expect(dataReceipt.stderr).toContain("must be distinct");
+    expect(await readFile(dataReceiptPath)).toEqual(dataReceiptBefore);
+    expect(await pathExists(dataReceiptOutput)).toBe(false);
+
+    const outputReceiptCwd = await makeExternalCwd();
+    const relativeDataPath = await copyFixtureToExternalCwd(outputReceiptCwd);
+    const outputPath = join(outputReceiptCwd, "artifacts/output.pdf");
+    const linkedReceiptPathForOutput = join(
+      outputReceiptCwd,
+      "receipts/output.json"
+    );
+    await Promise.all([
+      mkdir(join(outputReceiptCwd, "artifacts"), { recursive: true }),
+      mkdir(join(outputReceiptCwd, "receipts"), { recursive: true }),
+    ]);
+    await writeFile(outputPath, "pre-existing output\n", "utf8");
+    await link(outputPath, linkedReceiptPathForOutput);
+    const outputBefore = await readFile(outputPath);
+
+    const outputReceipt = await runCli(outputReceiptCwd, [
+      "compose",
+      "executive-report",
+      "--data",
+      relativeDataPath,
+      "--theme",
+      "ivory-editorial",
+      "--output",
+      "artifacts/output.pdf",
+      "--receipt",
+      "receipts/output.json",
+    ]);
+
+    expect(outputReceipt.exitCode).toBe(1);
+    expect(outputReceipt.stdout).toBe("");
+    expect(outputReceipt.stderr).toContain("must be distinct");
+    expect(await readFile(outputPath)).toEqual(outputBefore);
+    expect(await readFile(linkedReceiptPathForOutput)).toEqual(outputBefore);
+  }, 60_000);
+
+  test("rolls back the staged PDF when receipt publication fails and preserves pre-existing paths", async () => {
+    for (const withPreExistingOutput of [false, true]) {
+      const externalCwd = await makeExternalCwd();
+      const relativeDataPath = await copyFixtureToExternalCwd(externalCwd);
+      const dataPath = join(externalCwd, relativeDataPath);
+      const artifactsDir = join(externalCwd, "artifacts");
+      const outputPath = join(artifactsDir, "report.pdf");
+      const receiptPath = join(artifactsDir, "report.receipt.json");
+      const receiptSentinelPath = join(receiptPath, "sentinel.txt");
+      await mkdir(receiptPath, { recursive: true });
+      await writeFile(receiptSentinelPath, "pre-existing receipt directory\n", "utf8");
+      if (withPreExistingOutput) {
+        await writeFile(outputPath, "pre-existing output\n", "utf8");
+      }
+      const dataBefore = await readFile(dataPath);
+      const receiptSentinelBefore = await readFile(receiptSentinelPath);
+      const outputBefore = withPreExistingOutput
+        ? await readFile(outputPath)
+        : undefined;
+
+      const result = await runCli(externalCwd, [
+        "compose",
+        "executive-report",
+        "--data",
+        relativeDataPath,
+        "--theme",
+        "ivory-editorial",
+        "--output",
+        "artifacts/report.pdf",
+        "--receipt",
+        "artifacts/report.receipt.json",
+      ]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain("pdf-forge compose failed:");
+      expect(await readFile(dataPath)).toEqual(dataBefore);
+      expect((await stat(receiptPath)).isDirectory()).toBe(true);
+      expect(await readFile(receiptSentinelPath)).toEqual(receiptSentinelBefore);
+      if (outputBefore === undefined) {
+        expect(await pathExists(outputPath)).toBe(false);
+      } else {
+        expect(await readFile(outputPath)).toEqual(outputBefore);
+      }
+      expect((await readdir(artifactsDir)).sort()).toEqual(
+        withPreExistingOutput
+          ? ["report.pdf", "report.receipt.json"]
+          : ["report.receipt.json"]
+      );
+    }
+  }, 60_000);
 
   test("fails malformed static data with exit code 1 and never creates a receipt", async () => {
     const externalCwd = await makeExternalCwd();

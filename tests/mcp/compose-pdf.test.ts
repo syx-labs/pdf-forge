@@ -6,8 +6,10 @@ import {
   mkdtemp,
   readFile,
   readdir,
+  realpath,
   rm,
   stat,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -66,9 +68,13 @@ const validManifest = {
 } as const;
 
 async function withMcpClient<Result>(
-  run: (client: Client) => Promise<Result>
+  run: (client: Client) => Promise<Result>,
+  options: Readonly<{
+    composeOutputRoot?: string;
+    composeTimeoutMs?: number;
+  }> = {}
 ): Promise<Result> {
-  const server = await createServer();
+  const server = await createServer(options);
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
   const client = new Client({ name: "compose-pdf-test", version: "1.0.0" });
@@ -111,7 +117,7 @@ function readToolJson(result: unknown): unknown {
 }
 
 async function makeTemporaryRoot(prefix = "pdf-forge-compose-mcp-test-") {
-  const root = await mkdtemp(join(tmpdir(), prefix));
+  const root = await realpath(await mkdtemp(join(tmpdir(), prefix)));
   temporaryRoots.push(root);
   return root;
 }
@@ -150,17 +156,20 @@ describe("compose_pdf MCP tool", () => {
 
   test("composes an embedded governed snapshot into a verified PDF and receipt", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "nested", "executive-report.pdf");
+    const relativeOutputPath = join("nested", "executive-report.pdf");
+    const outputPath = join(root, relativeOutputPath);
 
-    const result = await withMcpClient((client) =>
-      client.callTool({
-        name: "compose_pdf",
-        arguments: {
-          manifest: validManifest,
-          data: { kind: "embedded", snapshot: embeddedSnapshotInput },
-          outputPath,
-        },
-      })
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: validManifest,
+            data: { kind: "embedded", snapshot: embeddedSnapshotInput },
+            outputPath: relativeOutputPath,
+          },
+        }),
+      { composeOutputRoot: root }
     );
 
     expect(result.isError).not.toBe(true);
@@ -238,10 +247,79 @@ describe("compose_pdf MCP tool", () => {
     ]);
   }, 60_000);
 
+  test("rejects absolute, traversal, and symlink output paths without publishing", async () => {
+    const root = await makeTemporaryRoot();
+    const outside = await makeTemporaryRoot("pdf-forge-compose-outside-");
+    const outsidePdf = join(outside, "outside.pdf");
+    const linkedPdf = join(root, "linked.pdf");
+    await writeFile(outsidePdf, "outside-canary", "utf8");
+    await symlink(outsidePdf, linkedPdf);
+    const before = await composeTemporaryEntries();
+
+    await withMcpClient(
+      async (client) => {
+        for (const outputPath of [
+          join(outside, "absolute.pdf"),
+          "../traversal.pdf",
+          "linked.pdf",
+        ]) {
+          const result = await client.callTool({
+            name: "compose_pdf",
+            arguments: {
+              manifest: validManifest,
+              data: { kind: "embedded", snapshot: embeddedSnapshotInput },
+              outputPath,
+            },
+          });
+
+          expect(result.isError, outputPath).toBe(true);
+        }
+      },
+      { composeOutputRoot: root }
+    );
+
+    expect(await readFile(outsidePdf, "utf8")).toBe("outside-canary");
+    expect(await pathExists(join(outside, "absolute.pdf"))).toBe(false);
+    expect(await pathExists(join(outside, "traversal.pdf"))).toBe(false);
+    expect(await composeTemporaryEntries()).toEqual(before);
+  });
+
+  test("cancels timed-out composition and never publishes after the timeout", async () => {
+    const root = await makeTemporaryRoot();
+    const outputPath = "timed-out.pdf";
+    const before = await composeTemporaryEntries();
+
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: validManifest,
+            data: { kind: "embedded", snapshot: embeddedSnapshotInput },
+            outputPath,
+          },
+        }),
+      { composeOutputRoot: root, composeTimeoutMs: 1 }
+    );
+
+    expect(result.isError).toBe(true);
+    expect(readToolJson(result)).toEqual({
+      ok: false,
+      error: {
+        code: "COMPOSITION_CANCELLED",
+        message: "Structured PDF composition was cancelled or timed out.",
+      },
+    });
+    await Bun.sleep(50);
+    expect(await pathExists(join(root, outputPath))).toBe(false);
+    expect(await composeTemporaryEntries()).toEqual(before);
+  });
+
   test("loads an explicit local snapshot through the scoped static-json provider", async () => {
     const root = await makeTemporaryRoot();
     const snapshotPath = join(root, "governed-snapshot.json");
-    const outputPath = join(root, "static-json-report.pdf");
+    const relativeOutputPath = "static-json-report.pdf";
+    const outputPath = join(root, relativeOutputPath);
     const staticSnapshot = {
       ...embeddedSnapshotInput,
       snapshotId: "snapshot-static-json-2026-q3",
@@ -249,18 +327,20 @@ describe("compose_pdf MCP tool", () => {
     };
     await writeFile(snapshotPath, JSON.stringify(staticSnapshot), "utf8");
 
-    const result = await withMcpClient((client) =>
-      client.callTool({
-        name: "compose_pdf",
-        arguments: {
-          manifest: {
-            ...validManifest,
-            snapshotRef: staticSnapshot.snapshotId,
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: {
+              ...validManifest,
+              snapshotRef: staticSnapshot.snapshotId,
+            },
+            data: { kind: "static-json", filePath: snapshotPath },
+            outputPath: relativeOutputPath,
           },
-          data: { kind: "static-json", filePath: snapshotPath },
-          outputPath,
-        },
-      })
+        }),
+      { composeOutputRoot: root }
     );
 
     expect(result.isError).not.toBe(true);
@@ -282,27 +362,30 @@ describe("compose_pdf MCP tool", () => {
 
   test("rejects an invalid manifest before creating compose temp or output paths", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "must-not-exist", "invalid.pdf");
+    const relativeOutputPath = "must-not-exist/invalid.pdf";
+    const outputPath = join(root, relativeOutputPath);
     const before = await composeTemporaryEntries();
 
-    const result = await withMcpClient((client) =>
-      client.callTool({
-        name: "compose_pdf",
-        arguments: {
-          manifest: {
-            ...validManifest,
-            theme: "private-theme-value",
-          },
-          data: {
-            kind: "embedded",
-            snapshot: {
-              ...embeddedSnapshotInput,
-              rows: [["must-not-be-echoed"]],
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: {
+              ...validManifest,
+              theme: "private-theme-value",
             },
+            data: {
+              kind: "embedded",
+              snapshot: {
+                ...embeddedSnapshotInput,
+                rows: [["must-not-be-echoed"]],
+              },
+            },
+            outputPath: relativeOutputPath,
           },
-          outputPath,
-        },
-      })
+        }),
+      { composeOutputRoot: root }
     );
     const text = readToolText(result);
 
@@ -330,16 +413,19 @@ describe("compose_pdf MCP tool", () => {
 
   test("rejects an unsafe output basename before rendering or writing", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "must-not-exist", "quarterly report.pdf");
-    const result = await withMcpClient((client) =>
-      client.callTool({
-        name: "compose_pdf",
-        arguments: {
-          manifest: validManifest,
-          data: { kind: "embedded", snapshot: embeddedSnapshotInput },
-          outputPath,
-        },
-      })
+    const relativeOutputPath = "must-not-exist/quarterly report.pdf";
+    const outputPath = join(root, relativeOutputPath);
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: validManifest,
+            data: { kind: "embedded", snapshot: embeddedSnapshotInput },
+            outputPath: relativeOutputPath,
+          },
+        }),
+      { composeOutputRoot: root }
     );
 
     expect(result.isError).toBe(true);
@@ -349,33 +435,36 @@ describe("compose_pdf MCP tool", () => {
 
   test("rejects an oversized embedded snapshot before creating compose temp or output paths", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "must-not-exist", "oversized.pdf");
+    const relativeOutputPath = "must-not-exist/oversized.pdf";
+    const outputPath = join(root, relativeOutputPath);
     const oversizedValue = `private-${"x".repeat(5_242_880)}`;
     const before = await composeTemporaryEntries();
 
-    const result = await withMcpClient((client) =>
-      client.callTool({
-        name: "compose_pdf",
-        arguments: {
-          manifest: validManifest,
-          data: {
-            kind: "embedded",
-            snapshot: {
-              ...embeddedSnapshotInput,
-              rows: [
-                [
-                  "North",
-                  125000,
-                  120000,
-                  "Protect enterprise retention.",
-                  oversizedValue,
+    const result = await withMcpClient(
+      (client) =>
+        client.callTool({
+          name: "compose_pdf",
+          arguments: {
+            manifest: validManifest,
+            data: {
+              kind: "embedded",
+              snapshot: {
+                ...embeddedSnapshotInput,
+                rows: [
+                  [
+                    "North",
+                    125000,
+                    120000,
+                    "Protect enterprise retention.",
+                    oversizedValue,
+                  ],
                 ],
-              ],
+              },
             },
+            outputPath: relativeOutputPath,
           },
-          outputPath,
-        },
-      })
+        }),
+      { composeOutputRoot: root }
     );
     const text = readToolText(result);
 
@@ -395,7 +484,8 @@ describe("compose_pdf MCP tool", () => {
 
   test("publishes a closed schema and rejects secret, SQL, provider config, and unknown fields", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "must-not-exist", "strict-schema.pdf");
+    const relativeOutputPath = "must-not-exist/strict-schema.pdf";
+    const outputPath = join(root, relativeOutputPath);
     const before = await composeTemporaryEntries();
     const forbiddenFields = [
       "connectionString",
@@ -433,7 +523,7 @@ describe("compose_pdf MCP tool", () => {
           arguments: {
             manifest: validManifest,
             data: { kind: "embedded", snapshot: embeddedSnapshotInput },
-            outputPath,
+            outputPath: relativeOutputPath,
             [field]: secretValue,
           },
         });
@@ -456,7 +546,7 @@ describe("compose_pdf MCP tool", () => {
               snapshot: embeddedSnapshotInput,
               [field]: secretValue,
             },
-            outputPath,
+            outputPath: relativeOutputPath,
           },
         });
         const text = readToolText(result);
@@ -464,7 +554,7 @@ describe("compose_pdf MCP tool", () => {
         expect(text, field).toContain("Input validation error");
         expect(text, field).not.toContain(secretValue);
       }
-    });
+    }, { composeOutputRoot: root });
 
     expect(await composeTemporaryEntries()).toEqual(before);
     expect(await pathExists(outputPath)).toBe(false);
@@ -472,7 +562,8 @@ describe("compose_pdf MCP tool", () => {
 
   test("rejects snapshot reference mismatches and caller-supplied block props", async () => {
     const root = await makeTemporaryRoot();
-    const outputPath = join(root, "must-not-exist", "governance.pdf");
+    const relativeOutputPath = "must-not-exist/governance.pdf";
+    const outputPath = join(root, relativeOutputPath);
     const before = await composeTemporaryEntries();
 
     await withMcpClient(async (client) => {
@@ -484,7 +575,7 @@ describe("compose_pdf MCP tool", () => {
             snapshotRef: "different-private-snapshot",
           },
           data: { kind: "embedded", snapshot: embeddedSnapshotInput },
-          outputPath,
+          outputPath: relativeOutputPath,
         },
       });
       const mismatchText = readToolText(mismatch);
@@ -519,7 +610,7 @@ describe("compose_pdf MCP tool", () => {
             ],
           },
           data: { kind: "embedded", snapshot: embeddedSnapshotInput },
-          outputPath,
+          outputPath: relativeOutputPath,
         },
       });
       const propsText = readToolText(nonemptyProps);
@@ -540,7 +631,7 @@ describe("compose_pdf MCP tool", () => {
       });
       expect(propsText).not.toContain("must-not-enter-composition");
       expect(propsText).not.toContain("privateValue");
-    });
+    }, { composeOutputRoot: root });
 
     expect(await composeTemporaryEntries()).toEqual(before);
     expect(await pathExists(outputPath)).toBe(false);

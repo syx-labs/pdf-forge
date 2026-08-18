@@ -12,7 +12,7 @@
  *   bun run scripts/psd-to-slides.ts <extract-dir> [--output <dir>] [--font "Montserrat"]
  *   bun run scripts/render-pdf.ts <output>/pages --format slides --output <render>
  */
-import { resolve, dirname } from "node:path";
+import { resolve } from "node:path";
 import { mkdir, readFile, copyFile, readdir } from "node:fs/promises";
 import { chromium, type Browser, type Page } from "playwright";
 
@@ -38,6 +38,83 @@ interface Manifest {
   width: number; height: number; color_mode: string;
   artboards: Artboard[]; fonts: Record<string, number>;
   fonts_recoverable: boolean; texts: Record<string, TextEntry[]>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isNumberTuple4(value: unknown): value is [number, number, number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 4 &&
+    value.every((entry) => typeof entry === "number")
+  );
+}
+
+function isOptionalNullableNumber(value: unknown): boolean {
+  return value === undefined || value === null || typeof value === "number";
+}
+
+function isTextEntry(value: unknown): value is TextEntry {
+  return (
+    isRecord(value) &&
+    (value.idx === null || typeof value.idx === "number") &&
+    (value.text === null || typeof value.text === "string") &&
+    isNumberTuple4(value.bbox_rel) &&
+    typeof value.w === "number" &&
+    typeof value.h === "number" &&
+    (value.color === null || typeof value.color === "string") &&
+    (value.font === null || typeof value.font === "string") &&
+    isOptionalNullableNumber(value.cap_height) &&
+    (value.align === undefined ||
+      value.align === null ||
+      value.align === "left" ||
+      value.align === "center" ||
+      value.align === "right") &&
+    isOptionalNullableNumber(value.weight_hint)
+  );
+}
+
+function isArtboard(value: unknown): value is Artboard {
+  return (
+    isRecord(value) &&
+    typeof value.index === "number" &&
+    typeof value.name === "string" &&
+    typeof value.slug === "string" &&
+    isNumberTuple4(value.bbox) &&
+    typeof value.width === "number" &&
+    typeof value.height === "number" &&
+    typeof value.reference === "string" &&
+    typeof value.plate === "string"
+  );
+}
+
+function isNumberDictionary(value: unknown): value is Record<string, number> {
+  return isRecord(value) && Object.values(value).every((entry) => typeof entry === "number");
+}
+
+function isTextDictionary(value: unknown): value is Record<string, TextEntry[]> {
+  return (
+    isRecord(value) &&
+    Object.values(value).every(
+      (entries) => Array.isArray(entries) && entries.every(isTextEntry),
+    )
+  );
+}
+
+function isManifest(value: unknown): value is Manifest {
+  return (
+    isRecord(value) &&
+    typeof value.width === "number" &&
+    typeof value.height === "number" &&
+    typeof value.color_mode === "string" &&
+    Array.isArray(value.artboards) &&
+    value.artboards.every(isArtboard) &&
+    isNumberDictionary(value.fonts) &&
+    typeof value.fonts_recoverable === "boolean" &&
+    isTextDictionary(value.texts)
+  );
 }
 
 const args = process.argv.slice(2);
@@ -71,9 +148,13 @@ const outAbs = resolve(outputDir || resolve(extractAbs, "deck"));
 const pagesDir = resolve(outAbs, "pages");
 const imgDir = resolve(pagesDir, "img");
 
-const manifest = JSON.parse(
+const parsedManifest: unknown = JSON.parse(
   await readFile(resolve(extractAbs, "manifest.json"), "utf-8")
-) as Manifest;
+);
+if (!isManifest(parsedManifest)) {
+  throw new Error("Invalid PSD manifest.json structure.");
+}
+const manifest = parsedManifest;
 
 const fontParam = font.replace(/\s+/g, "+");
 const fontCss = `'${font}'`;
@@ -95,11 +176,12 @@ await page.setContent(
   `<style>*{margin:0;padding:0}#m{position:absolute;left:0;top:0;line-height:1;white-space:nowrap;font-family:${fontCss}}</style>` +
   `</head><body><span id="m"></span></body></html>`
 );
-await page.evaluate(() => (document as unknown as { fonts: { ready: Promise<unknown> } }).fonts.ready);
+await page.evaluate(() => document.fonts.ready);
 
 async function naturalWidth(text: string, fontPx: number, weight: number, ls: string): Promise<number> {
   return page.evaluate((a: { text: string; fontPx: number; weight: number; ls: string }) => {
-    const el = document.getElementById("m") as HTMLElement;
+    const el = document.getElementById("m");
+    if (el === null) throw new Error("Text measurement element #m is missing.");
     el.textContent = a.text;
     el.style.fontSize = a.fontPx + "px";
     el.style.fontWeight = String(a.weight);
@@ -133,6 +215,8 @@ for (const art of manifest.artboards) {
   const parts: string[] = [];
 
   for (const t of entries) {
+    const text = t.text;
+    if (text === null) continue;
     const [x, y] = t.bbox_rel;
     const bw = t.w, bh = t.h;
     const color = t.color || "#0a2a5e";
@@ -140,7 +224,7 @@ for (const art of manifest.artboards) {
     const align = t.align ?? "left";
     const ls = weight >= 800 ? "-0.015em" : "0";
     const fontPx0 = Math.max(11, Math.round(bh));
-    const natural = await naturalWidth(t.text as string, fontPx0, weight, ls);
+    const natural = await naturalWidth(text, fontPx0, weight, ls);
     const wrap = natural > bw * 1.35;
 
     if (wrap) {
@@ -150,7 +234,7 @@ for (const art of manifest.artboards) {
       parts.push(
         `<div style="position:absolute;left:${x}px;top:${y}px;width:${bw}px;` +
         `font-size:${fontPx}px;font-weight:${weight};line-height:${lh};color:${color};` +
-        `text-align:${align};font-family:${fontCss};">${esc(t.text as string)}</div>`
+        `text-align:${align};font-family:${fontCss};">${esc(text)}</div>`
       );
     } else if (align === "center" || align === "right") {
       // texto em caixa: alinha dentro da largura do bbox, sem scaleX (não distorce)
@@ -158,7 +242,7 @@ for (const art of manifest.artboards) {
       parts.push(
         `<div style="position:absolute;left:${x}px;top:${y + dy}px;width:${bw}px;` +
         `font-size:${fontPx0}px;font-weight:${weight};line-height:1;color:${color};` +
-        `text-align:${align};white-space:nowrap;font-family:${fontCss};letter-spacing:${ls};">${esc(t.text as string)}</div>`
+        `text-align:${align};white-space:nowrap;font-family:${fontCss};letter-spacing:${ls};">${esc(text)}</div>`
       );
     } else {
       const scaleX = Math.min(1.25, Math.max(0.8, bw / natural));
@@ -167,7 +251,7 @@ for (const art of manifest.artboards) {
         `<div style="position:absolute;left:${x}px;top:${y + dy}px;` +
         `font-size:${fontPx0}px;font-weight:${weight};line-height:1;color:${color};` +
         `white-space:nowrap;font-family:${fontCss};letter-spacing:${ls};` +
-        `transform:scaleX(${scaleX.toFixed(3)});transform-origin:0 0;">${esc(t.text as string)}</div>`
+        `transform:scaleX(${scaleX.toFixed(3)});transform-origin:0 0;">${esc(text)}</div>`
       );
     }
   }

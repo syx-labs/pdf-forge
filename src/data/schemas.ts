@@ -70,6 +70,8 @@ export function createDataSnapshotSchema(
       sourceRef: SourceRefSchema,
       mode: z.literal("read-only"),
       capturedAt: z.iso.datetime({ offset: true }),
+      queryId: SafeIdentifierSchema.optional(),
+      queryDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
       columns: z.array(DataColumnSchema).max(limits.maxColumns).readonly(),
       rows: z.array(DataRowSchema).max(limits.maxRows).readonly(),
     })

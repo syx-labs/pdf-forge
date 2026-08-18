@@ -34,6 +34,14 @@ function containsHttpHeaderControl(value: string): boolean {
   return false;
 }
 
+function isLoopbackHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "[::1]" ||
+    /^127(?:\.\d{1,3}){3}$/u.test(hostname)
+  );
+}
+
 function isFixedHttpEndpoint(value: string): boolean {
   if (value.trim() !== value) {
     return false;
@@ -41,7 +49,8 @@ function isFixedHttpEndpoint(value: string): boolean {
   try {
     const parsed = new URL(value);
     return (
-      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      (parsed.protocol === "https:" ||
+        (parsed.protocol === "http:" && isLoopbackHostname(parsed.hostname))) &&
       parsed.hostname.length > 0 &&
       parsed.username === "" &&
       parsed.password === "" &&
@@ -103,7 +112,7 @@ class DeepSqlProviderError extends Error {
   }
 }
 
-async function raceFreshnessWithAbort<T>(
+async function raceWithAbort<T>(
   operation: Promise<T>,
   signal: AbortSignal
 ): Promise<T> {
@@ -231,24 +240,6 @@ export class DeepSqlProvider implements DataProvider {
       throw new Error("DeepSQL query is not allowed.");
     }
 
-    const parameters = parsedRequest.parameters;
-    if (parameters !== undefined && Object.keys(parameters).length > 0) {
-      const validateParameters = this.#validateParameters;
-      if (validateParameters === undefined) {
-        throw new Error("DeepSQL parameters require host policy approval.");
-      }
-      let approved: boolean;
-      try {
-        approved = await validateParameters(parsedRequest.queryId, parameters);
-      } catch {
-        throw new Error("DeepSQL parameter policy rejected the request.");
-      }
-      if (approved !== true) {
-        throw new Error("DeepSQL parameter policy rejected the request.");
-      }
-    }
-
-    context.signal.throwIfAborted();
     const timeoutController = new AbortController();
     const timeout = setTimeout(() => timeoutController.abort(), this.#timeoutMs);
     const signal = AbortSignal.any([
@@ -256,6 +247,38 @@ export class DeepSqlProvider implements DataProvider {
       timeoutController.signal,
     ]);
     try {
+      const parameters = parsedRequest.parameters;
+      if (parameters !== undefined && Object.keys(parameters).length > 0) {
+        const validateParameters = this.#validateParameters;
+        if (validateParameters === undefined) {
+          throw new DeepSqlProviderError(
+            "DeepSQL parameters require host policy approval."
+          );
+        }
+        let approved: boolean;
+        try {
+          approved = await raceWithAbort(
+            Promise.resolve(
+              validateParameters(parsedRequest.queryId, parameters)
+            ),
+            signal
+          );
+        } catch (error) {
+          if (signal.aborted) {
+            throw error;
+          }
+          throw new DeepSqlProviderError(
+            "DeepSQL parameter policy rejected the request."
+          );
+        }
+        if (approved !== true) {
+          throw new DeepSqlProviderError(
+            "DeepSQL parameter policy rejected the request."
+          );
+        }
+      }
+
+      signal.throwIfAborted();
       const response = await fetch(this.#baseUrl, {
         method: "POST",
         headers: {
@@ -303,7 +326,7 @@ export class DeepSqlProvider implements DataProvider {
       }
       let fresh: boolean;
       try {
-        fresh = await raceFreshnessWithAbort(
+        fresh = await raceWithAbort(
           Promise.resolve(
             this.#validateFreshness(
               parsedResponse.provenance.freshnessAt,
@@ -334,6 +357,10 @@ export class DeepSqlProvider implements DataProvider {
         sourceRef: parsedResponse.provenance.sourceRef,
         mode: "read-only",
         capturedAt: parsedResponse.provenance.freshnessAt,
+        queryId: parsedResponse.provenance.queryId,
+        ...(parsedResponse.provenance.queryDigest === undefined
+          ? {}
+          : { queryDigest: parsedResponse.provenance.queryDigest }),
         columns: parsedResponse.columns,
         rows: parsedResponse.rows,
       });

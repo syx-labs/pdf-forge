@@ -95,6 +95,33 @@ afterEach(async () => {
 });
 
 describe("resolveRegistryEntry", () => {
+  test("rejects malformed runtime options before resolving package paths", async () => {
+    const malformedOptions = [
+      null,
+      {},
+      {
+        id: "metric-card",
+        kind: "primitive",
+        format: "docs",
+        theme: "../../outside",
+      },
+      {
+        id: "metric-card",
+        kind: "primitive",
+        format: "docs",
+        theme: "ivory-editorial",
+        packageRoot: "",
+      },
+    ];
+
+    for (const malformed of malformedOptions) {
+      // SAFETY: This test intentionally crosses the public JavaScript runtime boundary.
+      await expect(resolveRegistryEntry(malformed as never)).rejects.toThrow(
+        "Invalid registry entry resolution options."
+      );
+    }
+  });
+
   test("resolves canonical registry assets and deterministic theme CSS", async () => {
     const packageRoot = await createPackageRoot();
     const registryRoot = join(packageRoot, "assets/registry");

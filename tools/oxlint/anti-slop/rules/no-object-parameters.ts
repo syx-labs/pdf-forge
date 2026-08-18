@@ -98,8 +98,10 @@ export const noObjectParametersRule = defineRule({
 		};
 
 		return {
-			Program(node) {
+			before() {
 				aliases.clear();
+			},
+			Program(node) {
 				for (const statement of node.body) {
 					const declaration =
 						statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;

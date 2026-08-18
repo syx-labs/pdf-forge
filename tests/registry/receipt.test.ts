@@ -3,9 +3,15 @@ import { createHash } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { canonicalizeDataSnapshot } from "../../src/data/canonicalize";
+import { composeDocumentPageWithMetadata } from "../../src/registry/compose";
+import { parseDocumentManifest } from "../../src/registry/document-manifest";
+import { loadRegistry } from "../../src/registry/loader";
 import { buildPdfBuildReceipt } from "../../src/registry/receipt";
+
+const packageRoot = fileURLToPath(new URL("../..", import.meta.url));
 
 const temporaryRoots: string[] = [];
 
@@ -120,6 +126,10 @@ describe("buildPdfBuildReceipt", () => {
       theme: "ivory-editorial",
       registryVersion: "1",
       componentIds: ["executive-report", "metric-card"],
+      componentVersions: {
+        "executive-report": "1.0.0",
+        "metric-card": "1.0.0",
+      },
       snapshotSha256: expectedSnapshotSha256,
       output: {
         fileName: basename(fixture.path),
@@ -135,6 +145,7 @@ describe("buildPdfBuildReceipt", () => {
     expect(receipt.output.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(Object.isFrozen(receipt)).toBe(true);
     expect(Object.isFrozen(receipt.componentIds)).toBe(true);
+    expect(Object.isFrozen(receipt.componentVersions)).toBe(true);
     expect(Object.isFrozen(receipt.output)).toBe(true);
     expect(Object.isFrozen(receipt.warnings)).toBe(true);
 
@@ -146,6 +157,75 @@ describe("buildPdfBuildReceipt", () => {
     expect(serialized).not.toContain(snapshot.sourceRef);
     expect(serialized).not.toContain("providerId");
     expect(serialized).not.toContain("sourceRef");
+  });
+
+  test("receives the exact immutable component IDs produced by the production composer", async () => {
+    const productionManifest = parseDocumentManifest({
+      schemaVersion: "1",
+      documentId: "metric-receipt",
+      format: "docs",
+      theme: "ivory-editorial",
+      pages: [
+        {
+          id: "revenue-card",
+          selection: { kind: "primitive", id: "metric-card" },
+          props: { label: "Revenue", value: "$1.2M" },
+        },
+      ],
+      snapshotRef: snapshot.snapshotId,
+    });
+    const page = productionManifest.pages[0];
+    if (page === undefined) {
+      throw new Error("Expected production manifest page.");
+    }
+    const composition = await composeDocumentPageWithMetadata(
+      productionManifest,
+      page,
+      packageRoot
+    );
+    const fixture = await createPdfFixture(1);
+
+    const receipt = await buildPdfBuildReceipt({
+      manifest: productionManifest,
+      registry: await loadRegistry(packageRoot),
+      componentIds: composition.componentIds,
+      snapshot,
+      mergeResult: {
+        path: fixture.path,
+        pageCount: 0,
+        fileSize: "0 B",
+      },
+      warnings: [],
+      createdAt: "2026-08-17T11:45:00+00:00",
+    });
+
+    expect(composition.componentIds).toEqual(["metric-card"]);
+    expect(Object.isFrozen(composition.componentIds)).toBe(true);
+    expect(receipt.componentIds).toEqual(composition.componentIds);
+    expect(receipt.componentVersions).toEqual({ "metric-card": "1.0.0" });
+    expect(Object.isFrozen(receipt.componentIds)).toBe(true);
+    expect(Object.isFrozen(receipt.componentVersions)).toBe(true);
+  });
+
+  test("derives component version provenance from the loaded registry", async () => {
+    const fixture = await createPdfFixture();
+    const input = receiptInput(fixture.path);
+    const versionedRegistry = {
+      ...input.registry,
+      entries: input.registry.entries.map((entry) =>
+        entry.id === "metric-card" ? { ...entry, version: "2.4.1" } : entry
+      ),
+    };
+
+    const receipt = await buildPdfBuildReceipt({
+      ...input,
+      registry: versionedRegistry,
+    });
+
+    expect(receipt.componentVersions).toEqual({
+      "executive-report": "1.0.0",
+      "metric-card": "2.4.1",
+    });
   });
 
   test("rejects unknown provider, token, config and secret fields at the trusted-host boundary", async () => {
@@ -187,6 +267,13 @@ describe("buildPdfBuildReceipt", () => {
       "authorization: credential-value",
       "passwd=credential-value",
       "private_key: credential-value",
+      "accessToken=credential-value",
+      "auth_token: credential-value",
+      "clientSecret=credential-value",
+      "refresh-token: credential-value",
+      "sessionToken=credential-value",
+      "secretKey: credential-value",
+      "pwd=credential-value",
       "Basic credential-value",
     ];
 
