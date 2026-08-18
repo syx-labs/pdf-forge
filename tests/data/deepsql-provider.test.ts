@@ -319,6 +319,7 @@ describe("DeepSqlProvider", () => {
       authToken,
       timeoutMs: 20,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       validateParameters: () => new Promise<boolean>(() => {}),
     });
 
@@ -346,6 +347,7 @@ describe("DeepSqlProvider", () => {
       authToken: "host-owned-token",
       timeoutMs: 1_000,
       allowedQueryIds: ["monthly-revenue"],
+      validateFreshness: () => true,
       validateParameters: () => new Promise<boolean>(() => {}),
     });
     const controller = new AbortController();
@@ -584,6 +586,7 @@ describe("DeepSqlProvider", () => {
     expect(rejection.message).toBe(
       "DeepSQL freshness policy rejected the response."
     );
+    expect(rejection.message).not.toContain(validResponse.provenance.freshnessAt);
     expect(rejection.message).not.toContain("freshness-token-must-not-leak");
   });
 
