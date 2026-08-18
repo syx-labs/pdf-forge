@@ -65,7 +65,7 @@ Deferred. UniFace is deferred as an optional future `ImageAnalyzerProvider`; it 
 
 ## Security Boundaries
 
-- The provider owns transport, authentication, connection profiles, and acquisition. composition never receives database credentials.
+- The provider owns transport, authentication, connection profiles, and acquisition. Composition never receives database credentials.
 - Provider requests must be constrained to approved, read-only operations, and snapshots must record `read-only` provenance.
 - Manifests, registry metadata, block props, provider responses, and snapshots are untrusted at their respective boundaries and must be parsed with closed schemas before domain use.
 - Database credentials, connection secrets, and arbitrary SQL text must not appear in document manifests, registry templates, generated HTML, build receipts, or block props.
