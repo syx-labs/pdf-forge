@@ -20,6 +20,7 @@ import {
   sep,
 } from "node:path";
 import { discoverPackageRoot } from "../src/core/package-root";
+import { mergePages } from "../src/core/merger";
 import { renderPages } from "../src/core/renderer";
 import { composeDocumentPage } from "../src/registry/compose";
 import { parseDocumentManifest } from "../src/registry/document-manifest";
@@ -329,16 +330,27 @@ export async function generateGallery(
     ]);
 
     const galleryEntries: GalleryEntry[] = [];
+    const renderedFiles: string[] = [];
     for (const entry of registry.entries) {
       const example = await readCanonicalExample(registryRoot, entry);
       const theme = entry.themes[0];
       if (theme === undefined) {
         throw new Error(`Registry entry "${entry.id}" has no declared theme.`);
       }
+      const format = entry.formats.includes("docs")
+        ? "docs"
+        : entry.formats.includes("slides")
+          ? "slides"
+          : undefined;
+      if (format === undefined) {
+        throw new Error(
+          `Registry entry "${entry.id}" has no gallery-compatible docs or slides format.`
+        );
+      }
       const manifest = parseDocumentManifest({
         schemaVersion: "1",
         documentId: `gallery-${entry.id}`,
-        format: "docs",
+        format,
         theme,
         pages: [
           {
@@ -353,7 +365,34 @@ export async function generateGallery(
         throw new Error(`Gallery manifest for "${entry.id}" has no page.`);
       }
       const html = await composeDocumentPage(manifest, page, packageRoot);
-      await writeFile(join(workPagesDir, `${entry.id}.html`), html, "utf8");
+      const entryPagesDir = join(workPagesDir, entry.id, "pages");
+      const entryRenderedDir = join(workPagesDir, entry.id, "rendered");
+      await mkdir(entryPagesDir, { recursive: true });
+      await writeFile(join(entryPagesDir, `${entry.id}.html`), html, "utf8");
+      const rendered = await renderPages({
+        inputDir: entryPagesDir,
+        outputDir: entryRenderedDir,
+        format,
+        scale: 1,
+      });
+      await mkdir(previewsDir, { recursive: true });
+      const previewName = `${entry.id}.pdf`;
+      if (format === "docs") {
+        const source = rendered.files[0];
+        if (source === undefined) {
+          throw new Error(`Gallery renderer produced no preview for "${entry.id}".`);
+        }
+        const sourcePath = isAbsolute(source)
+          ? source
+          : join(entryRenderedDir, source);
+        await copyFile(sourcePath, join(previewsDir, previewName));
+      } else {
+        await mergePages({
+          inputDir: entryRenderedDir,
+          outputPath: join(previewsDir, previewName),
+        });
+      }
+      renderedFiles.push(previewName);
 
       const schemaPath = await realpath(join(registryRoot, entry.schema));
       assertContainedPath(registryRoot, schemaPath, "schema", entry.id);
@@ -368,20 +407,14 @@ export async function generateGallery(
       galleryEntries.push({
         registryEntry: entry,
         schemaName,
-        previewName: `${entry.id}.pdf`,
+        previewName,
       });
     }
 
-    const rendered = await renderPages({
-      inputDir: workPagesDir,
-      outputDir: previewsDir,
-      format: "docs",
-      scale: 1,
-    });
     await assertRenderedPreviews(
       previewsDir,
       galleryEntries,
-      rendered.files
+      renderedFiles
     );
     await writeFile(
       join(stageDir, "index.html"),
