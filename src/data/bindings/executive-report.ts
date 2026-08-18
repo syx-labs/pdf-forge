@@ -85,6 +85,9 @@ export function bindExecutiveReport(snapshot: DataSnapshot) {
   if (snapshot.rows.length === 0) {
     throw new Error("Executive-report binding requires at least one row.");
   }
+  if (snapshot.rows.length > 12) {
+    throw new Error("Executive-report binding accepts at most 12 rows.");
+  }
   const regionIndex = readRequiredIndex(indexes, "region");
   const revenueIndex = readRequiredIndex(indexes, "revenue");
   const targetIndex = readRequiredIndex(indexes, "target");
@@ -111,6 +114,11 @@ export function bindExecutiveReport(snapshot: DataSnapshot) {
         recommendation.length > 0 &&
         !seenRecommendations.has(recommendation)
       ) {
+        if (recommendations.length === 6) {
+          throw new Error(
+            "Executive-report binding accepts at most 6 unique recommendations."
+          );
+        }
         seenRecommendations.add(recommendation);
         recommendations.push(recommendation);
       }
