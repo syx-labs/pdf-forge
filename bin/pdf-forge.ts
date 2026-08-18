@@ -154,6 +154,7 @@ function printHelp() {
   console.log("  pdf-forge preview <rendered> [...]            Generate a social preview");
   console.log("  pdf-forge registry list [--json]              List registry entries");
   console.log("  pdf-forge registry inspect <id> [--json]      Inspect a registry entry");
+  console.log("  pdf-forge doctor --json                      Inspect effective capabilities safely");
   console.log("  pdf-forge compose executive-report --data <path> --theme <id> --output <pdf> --receipt <json>");
   console.log("  pdf-forge psd-deck|psd-extract|psd-slides [...]  PSD import tools (require uv)");
   console.log("\nRun a pipeline command with --help for its arguments when supported.");
@@ -202,6 +203,53 @@ async function runRegistryCommand(args: string[]): Promise<number> {
   return 2;
 }
 
+const DOCTOR_HELP = [
+  "pdf-forge doctor - Inspect effective capabilities without secrets",
+  "",
+  "Usage:",
+  "  pdf-forge doctor --json",
+].join("\n");
+
+function printDoctorHelp(): void {
+  console.log(DOCTOR_HELP);
+}
+
+function printDoctorError(message: string): void {
+  console.error(message);
+  console.error("");
+  console.error(DOCTOR_HELP);
+}
+
+async function runDoctorCommand(args: string[]): Promise<number> {
+  const option = args[0];
+  if (option === undefined || ["help", "--help", "-h"].includes(option)) {
+    if (args.length > 1) {
+      printDoctorError(`Unexpected doctor argument "${args[1]}".`);
+      return 2;
+    }
+    printDoctorHelp();
+    return 0;
+  }
+  if (option !== "--json") {
+    printDoctorError(`Unknown doctor option "${option}".`);
+    return 2;
+  }
+  if (args.length > 1) {
+    printDoctorError(`Unexpected doctor argument "${args[1]}".`);
+    return 2;
+  }
+
+  const { inspectEffectiveConfig } = await import(
+    "../src/core/effective-config.js"
+  );
+  const effectiveConfig = await inspectEffectiveConfig({
+    packageRoot: PLUGIN_ROOT,
+    environment: process.env,
+  });
+  console.log(JSON.stringify(effectiveConfig, null, 2));
+  return 0;
+}
+
 async function main() {
   const command = process.argv[2];
   const args = process.argv.slice(3);
@@ -224,6 +272,11 @@ async function main() {
   }
   if (command === "registry") {
     const code = await runRegistryCommand(args);
+    process.exitCode = code;
+    return;
+  }
+  if (command === "doctor") {
+    const code = await runDoctorCommand(args);
     process.exitCode = code;
     return;
   }
