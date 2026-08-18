@@ -156,6 +156,7 @@ describe("governed DeepSQL to registry PDF acceptance", () => {
       authToken: inertCanary,
       timeoutMs: 1_000,
       allowedQueryIds: ["executive-report-v1"],
+      validateFreshness: () => true,
       validateParameters(queryId, parameters) {
         return (
           queryId === "executive-report-v1" &&
