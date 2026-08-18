@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pdf-forge.local/registry/primitives/metric-card/schema.json",
+  "title": "Metric card props",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["label", "value"],
+  "properties": {
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "value": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trend": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direction", "value", "label"],
+          "properties": {
+            "direction": {
+              "type": "string",
+              "const": "up"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direction", "value", "label"],
+          "properties": {
+            "direction": {
+              "type": "string",
+              "const": "down"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direction", "value", "label"],
+          "properties": {
+            "direction": {
+              "type": "string",
+              "const": "neutral"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

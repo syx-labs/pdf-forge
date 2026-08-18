@@ -39,6 +39,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
+    "lint:anti-slop": "oxlint -c oxlint.config.ts src bin scripts tests",
     "test": "bun test --parallel=1 --timeout=60000",
     "cli": "bun run bin/pdf-forge.ts",
     "render": "bun run scripts/render-pdf.ts",
@@ -59,7 +60,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@oxlint/plugins": "1.78.0",
     "@types/node": "^25.5.2",
+    "oxlint": "1.78.0",
     "tsup": "^8.5.1",
     "typescript": "^7.0.0"
   }

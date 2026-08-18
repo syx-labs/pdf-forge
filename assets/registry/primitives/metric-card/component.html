@@ -1,0 +1,58 @@
+<style>
+  .metric-card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  .metric-card__label {
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-label);
+    line-height: var(--line-height-label);
+    text-transform: uppercase;
+  }
+
+  .metric-card__value {
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    font-size: var(--font-size-metric);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--tracking-heading);
+    line-height: var(--line-height-tight);
+  }
+
+  .metric-card__trend {
+    color: var(--color-neutral);
+    font-family: var(--font-body);
+    font-size: var(--font-size-caption);
+    letter-spacing: var(--tracking-body);
+    line-height: var(--line-height-body);
+  }
+
+  .metric-card__trend[data-trend-direction="up"] {
+    color: var(--color-positive);
+  }
+
+  .metric-card__trend[data-trend-direction="down"] {
+    color: var(--color-negative);
+  }
+</style>
+
+<article class="metric-card">
+  <p class="metric-card__label">{{escape:label}}</p>
+  <p class="metric-card__value">{{escape:value}}</p>
+  <div
+    class="metric-card__trend"
+    data-pdf-forge-optional="trend"
+    data-trend-direction="{{escape:trend.direction}}"
+  >
+    <span class="metric-card__trend-value">{{escape:trend.value}}</span>
+    <span class="metric-card__trend-label">{{escape:trend.label}}</span>
+  </div>
+</article>

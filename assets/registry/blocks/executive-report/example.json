@@ -1,0 +1,55 @@
+{
+  "title": "Q2 2026 Executive Report",
+  "summary": "Revenue growth accelerated while retention remained above target.",
+  "metrics": [
+    {
+      "label": "Monthly recurring revenue",
+      "value": "$1.2M",
+      "trend": {
+        "direction": "up",
+        "value": "12%",
+        "label": "vs. previous quarter"
+      }
+    },
+    {
+      "label": "Net revenue retention",
+      "value": "118%",
+      "trend": {
+        "direction": "up",
+        "value": "3 pts",
+        "label": "vs. previous quarter"
+      }
+    }
+  ],
+  "table": {
+    "columns": [
+      {
+        "key": "quarter",
+        "label": "Quarter",
+        "align": "left"
+      },
+      {
+        "key": "revenue",
+        "label": "Revenue",
+        "align": "right"
+      },
+      {
+        "key": "growth",
+        "label": "Growth",
+        "align": "right"
+      }
+    ],
+    "rows": [
+      {
+        "cells": ["Q1 2026", "$1.05M", "8%"]
+      },
+      {
+        "cells": ["Q2 2026", "$1.20M", "12%"]
+      }
+    ]
+  },
+  "recommendations": [
+    "Prioritize enterprise expansion in the next quarter.",
+    "Protect onboarding capacity as volume grows."
+  ]
+}

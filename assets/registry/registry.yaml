@@ -1,0 +1,23 @@
+version: "1"
+entries:
+  - id: metric-card
+    kind: primitive
+    version: 1.0.0
+    template: primitives/metric-card/component.html
+    schema: primitives/metric-card/schema.json
+    formats: [docs, slides]
+    themes: [ivory-editorial]
+  - id: data-table
+    kind: primitive
+    version: 1.0.0
+    template: primitives/data-table/component.html
+    schema: primitives/data-table/schema.json
+    formats: [docs, slides]
+    themes: [ivory-editorial]
+  - id: executive-report
+    kind: block
+    version: 1.0.0
+    template: blocks/executive-report/template.html
+    schema: blocks/executive-report/block.yaml
+    formats: [docs, slides]
+    themes: [ivory-editorial]
