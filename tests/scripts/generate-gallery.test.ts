@@ -186,6 +186,36 @@ describe("canonical registry gallery generator", () => {
     expect(await readFile(sentinelPath)).toEqual(beforeSentinel);
   }, 60_000);
 
+  test("renders a slides-only registry entry and still publishes a PDF preview", async () => {
+    const externalCwd = await makeExternalCwd();
+    const packageRoot = join(externalCwd, "package-root");
+    const copiedRegistryRoot = join(packageRoot, "assets/registry");
+    await cp(REGISTRY_ROOT, copiedRegistryRoot, { recursive: true });
+    const registryPath = join(copiedRegistryRoot, "registry.yaml");
+    const registryText = await readFile(registryPath, "utf8");
+    await writeFile(
+      registryPath,
+      registryText.replace(
+        "id: executive-report\n    kind: block\n    version: 1.0.0\n    template: blocks/executive-report/template.html\n    schema: blocks/executive-report/block.yaml\n    formats: [docs, slides]",
+        "id: executive-report\n    kind: block\n    version: 1.0.0\n    template: blocks/executive-report/template.html\n    schema: blocks/executive-report/block.yaml\n    formats: [slides]"
+      ),
+      "utf8"
+    );
+    const outputRelative = "generated/slides-only";
+    const result = await runGenerator(
+      externalCwd,
+      ["--output", outputRelative],
+      packageRoot
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    const preview = await readFile(
+      join(externalCwd, outputRelative, "previews/executive-report.pdf")
+    );
+    expect(new TextDecoder().decode(preview.subarray(0, 5))).toBe("%PDF-");
+  }, 60_000);
+
   test("fails closed when a copied registry package is missing an example", async () => {
     const externalCwd = await makeExternalCwd();
     const packageRoot = join(externalCwd, "package-root");
