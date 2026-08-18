@@ -32,7 +32,9 @@
     "scripts/",
     "skills/",
     "src/core/",
+    "src/data/",
     "src/mcp/",
+    "src/registry/",
     "install.sh",
     ".claude-plugin/"
   ],
