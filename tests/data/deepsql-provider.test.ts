@@ -306,6 +306,61 @@ describe("DeepSqlProvider", () => {
     expect(requestCount).toBe(0);
   });
 
+  test("times out a pending async parameter policy before network access with a sanitized error", async () => {
+    let requestCount = 0;
+    const server = startServer(() => {
+      requestCount += 1;
+      return Response.json(validResponse);
+    });
+    const authToken = "policy-timeout-token-must-not-leak";
+    const parameterValue = "policy-timeout-parameter-must-not-leak";
+    const provider = new DeepSqlProvider({
+      baseUrl: endpoint(server),
+      authToken,
+      timeoutMs: 20,
+      allowedQueryIds: ["monthly-revenue"],
+      validateParameters: () => new Promise<boolean>(() => {}),
+    });
+
+    const rejection = await rejectionOf(() =>
+      provider.load(
+        { ...validRequest, parameters: { region: parameterValue } },
+        { signal: new AbortController().signal }
+      )
+    );
+
+    expect(rejection.message).toBe("DeepSQL request timed out.");
+    expect(rejection.message).not.toContain(authToken);
+    expect(rejection.message).not.toContain(parameterValue);
+    expect(requestCount).toBe(0);
+  }, 1_000);
+
+  test("preserves an external abort reason while an async parameter policy is pending without network access", async () => {
+    let requestCount = 0;
+    const server = startServer(() => {
+      requestCount += 1;
+      return Response.json(validResponse);
+    });
+    const provider = new DeepSqlProvider({
+      baseUrl: endpoint(server),
+      authToken: "host-owned-token",
+      timeoutMs: 1_000,
+      allowedQueryIds: ["monthly-revenue"],
+      validateParameters: () => new Promise<boolean>(() => {}),
+    });
+    const controller = new AbortController();
+    const reason = new DOMException("cancelled by host", "AbortError");
+    setTimeout(() => controller.abort(reason), 20);
+
+    await expect(
+      provider.load(
+        { ...validRequest, parameters: { region: "south" } },
+        { signal: controller.signal }
+      )
+    ).rejects.toBe(reason);
+    expect(requestCount).toBe(0);
+  }, 1_000);
+
   test("times out delayed HTTP acquisition with a sanitized error", async () => {
     const server = startServer(async () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
