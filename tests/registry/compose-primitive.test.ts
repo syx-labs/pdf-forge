@@ -224,19 +224,29 @@ describe("composePrimitivePage", () => {
 
   test("rejects executable or network-capable template content", async () => {
     const manifest = metricCardManifest({ label: "Revenue", value: "$1.2M" });
-    const scriptRoot = await packageRootWithMetricTemplate(
-      "<article>{{escape:label}} {{escape:value}}</article><script>alert(1)</script>"
-    );
-    const networkRoot = await packageRootWithMetricTemplate(
-      "<style>.metric { background: url(https://example.com/a.png); }</style><article>{{escape:label}} {{escape:value}}</article>"
-    );
+    const hostileFragments = [
+      "<script>alert(1)</script>",
+      "<style>.metric { background: url(https://example.com/a.png); }</style>",
+      '<meta http-equiv="refresh" content="0; https://example.com/next">',
+      '<video poster="https://example.com/poster.png"></video>',
+      '<table background="https://example.com/background.png"></table>',
+      "<audio></audio>",
+      "<picture></picture>",
+      "<svg><image /></svg>",
+      "<svg><use /></svg>",
+      "<svg><feImage /></svg>",
+      '<style>.metric { background-image: image-set("https://example.com/a.png" 1x); }</style>',
+      '<style>.metric { background-image: -webkit-image-set("https://example.com/a.png" 1x); }</style>',
+    ];
 
-    await expect(
-      composePrimitivePage(manifest, manifest.pages[0], scriptRoot)
-    ).rejects.toThrow("Unsafe template content");
-    await expect(
-      composePrimitivePage(manifest, manifest.pages[0], networkRoot)
-    ).rejects.toThrow("Unsafe template content");
+    for (const hostileFragment of hostileFragments) {
+      const hostileRoot = await packageRootWithMetricTemplate(
+        `<article>{{escape:label}} {{escape:value}}</article>${hostileFragment}`
+      );
+      await expect(
+        composePrimitivePage(manifest, manifest.pages[0], hostileRoot)
+      ).rejects.toThrow("Unsafe template content");
+    }
   });
 
   test("renders data-table columns, rows, cells, alignment, and nulls in input order", async () => {
@@ -277,6 +287,43 @@ describe("composePrimitivePage", () => {
     expect(html).not.toContain("No data available.");
     expect(html).not.toContain("data-pdf-forge-");
     expect(html).not.toContain("{{");
+  });
+
+  test("keeps JavaScript replacement tokens literal in validated table data", async () => {
+    const replacementTokens = "$& $1 $$ $` $'";
+    const manifest = parseDocumentManifest({
+      schemaVersion: "1",
+      documentId: "replacement-token-table",
+      format: "docs",
+      theme: "ivory-editorial",
+      pages: [
+        {
+          id: "replacement-token-table",
+          selection: { kind: "primitive", id: "data-table" },
+          props: {
+            columns: [
+              {
+                key: "replacement-token",
+                label: replacementTokens,
+                align: "left",
+              },
+            ],
+            rows: [{ cells: [replacementTokens] }],
+          },
+        },
+      ],
+    });
+
+    const html = await composePrimitivePage(
+      manifest,
+      manifest.pages[0],
+      packageRoot
+    );
+    const escapedTokens = "$&amp; $1 $$ $` $&#39;";
+
+    expect(html).toContain('data-column-key="replacement-token"');
+    expect(html).toContain(`>${escapedTokens}</th>`);
+    expect(html).toContain(`>${escapedTokens}</td>`);
   });
 
   test("renders the data-table empty state with deterministic column span", async () => {

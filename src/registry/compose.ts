@@ -14,7 +14,7 @@ type ValidationIssue = Readonly<{
 
 const PLACEHOLDER_PATTERN = /\{\{([^{}]+)\}\}/gu;
 const FORBIDDEN_TEMPLATE_PATTERN =
-  /<\/?(?:script|iframe|object|embed|link|base|form|input|button)\b|\bon[a-z]+\s*=|\b(?:src|srcset|href|action)\s*=|javascript\s*:|@import\b|url\s*\(/iu;
+  /<\/?(?:script|iframe|frame|frameset|object|embed|applet|portal|link|base|form|input|button|audio|video|source|track|picture|img|image|use|feimage|mpath)\b|<meta\b(?=[^>]*\bhttp-equiv\s*=\s*(?:"\s*refresh\s*"|'\s*refresh\s*'|refresh\b))|\bon[a-z]+\s*=|\b(?:src|srcset|href|xlink:href|action|formaction|poster|background|ping|manifest|archive|codebase)\s*=|javascript\s*:|@import\b|url\s*\(|(?:-webkit-)?image-set\s*\(|\bimage\s*\(/iu;
 const METRIC_CARD_PLACEHOLDERS = new Set([
   "label",
   "value",
@@ -153,6 +153,14 @@ function escapeHtml(value: string): string {
     }
   }
   return escaped;
+}
+
+function replaceLiteral(
+  source: string,
+  searchValue: string | RegExp,
+  replacement: string
+): string {
+  return source.replace(searchValue, () => replacement);
 }
 
 function schemaPointerSegment(segment: string): string {
@@ -758,16 +766,24 @@ function renderDataTable(template: string, props: unknown): string {
   }
 
   if (props.rows.length === 0) {
-    const preparedEmpty = emptyFragment
-      .replace(/\s+data-pdf-forge-empty="rows"/u, "")
-      .replace(
-        /\s+data-pdf-forge-colspan="columns"/u,
-        ` colspan="${props.columns.length}"`
-      );
-    return template
-      .replace(columnFragment, renderedColumns.join("\n"))
-      .replace(rowFragment, "")
-      .replace(emptyFragment, preparedEmpty);
+    const emptyWithoutDirective = emptyFragment.replace(
+      /\s+data-pdf-forge-empty="rows"/u,
+      ""
+    );
+    const preparedEmpty = replaceLiteral(
+      emptyWithoutDirective,
+      /\s+data-pdf-forge-colspan="columns"/u,
+      ` colspan="${props.columns.length}"`
+    );
+    return replaceLiteral(
+      replaceLiteral(
+        replaceLiteral(template, columnFragment, renderedColumns.join("\n")),
+        rowFragment,
+        ""
+      ),
+      emptyFragment,
+      preparedEmpty
+    );
   }
 
   const renderedRows: string[] = [];
@@ -797,16 +813,23 @@ function renderDataTable(template: string, props: unknown): string {
       );
     }
 
-    const preparedRow = rowFragment
-      .replace(/\s+data-pdf-forge-each="rows"/u, "")
-      .replace(cellFragment, renderedCells.join("\n"));
+    const preparedRow = replaceLiteral(
+      rowFragment.replace(/\s+data-pdf-forge-each="rows"/u, ""),
+      cellFragment,
+      renderedCells.join("\n")
+    );
     renderedRows.push(preparedRow);
   }
 
-  return template
-    .replace(columnFragment, renderedColumns.join("\n"))
-    .replace(rowFragment, renderedRows.join("\n"))
-    .replace(emptyFragment, "");
+  return replaceLiteral(
+    replaceLiteral(
+      replaceLiteral(template, columnFragment, renderedColumns.join("\n")),
+      rowFragment,
+      renderedRows.join("\n")
+    ),
+    emptyFragment,
+    ""
+  );
 }
 
 function assertTemplateSafe(template: string, entryId: string): void {
@@ -1060,9 +1083,10 @@ function renderSingleTextSection(
       `Executive-report ${sectionName} placeholder is not inside slot "${section.slot}".`
     );
   }
-  return template.replace(
+  return replaceLiteral(
+    template,
     slot.full,
-    `${slot.opening}${slot.content.replace(marker, escapeHtml(value))}${slot.closing}`
+    `${slot.opening}${replaceLiteral(slot.content, marker, escapeHtml(value))}${slot.closing}`
   );
 }
 
@@ -1103,11 +1127,12 @@ function renderRecommendations(
   );
   const preparedItem = item.replace(directivePattern, "");
   const renderedItems = values
-    .map((value) => preparedItem.replace(marker, escapeHtml(value)))
+    .map((value) => replaceLiteral(preparedItem, marker, escapeHtml(value)))
     .join("\n");
-  return template.replace(
+  return replaceLiteral(
+    template,
     slot.full,
-    `${slot.opening}${slot.content.replace(item, renderedItems)}${slot.closing}`
+    `${slot.opening}${replaceLiteral(slot.content, item, renderedItems)}${slot.closing}`
   );
 }
 
@@ -1164,7 +1189,8 @@ function injectPrimitiveFragments(
       `Executive-report primitive slot "${slotName}" must be empty before composition.`
     );
   }
-  return template.replace(
+  return replaceLiteral(
+    template,
     slot.full,
     `${slot.opening}\n${fragments.join("\n")}\n${slot.closing}`
   );

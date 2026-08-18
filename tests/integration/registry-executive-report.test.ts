@@ -112,6 +112,50 @@ describe("registry executive-report runtime", () => {
     }
   }, 60_000);
 
+  test("keeps JavaScript replacement tokens literal across nested block composition", async () => {
+    const canonicalExample: unknown = JSON.parse(
+      await readFile(examplePath, "utf-8")
+    );
+    if (!isRecord(canonicalExample) || !isRecord(canonicalExample.table)) {
+      throw new Error("Expected the canonical executive-report example to be valid.");
+    }
+    const replacementTokens = "$& $1 $$ $` $'";
+    const manifest = parseDocumentManifest({
+      schemaVersion: "1",
+      documentId: "executive-report-replacement-tokens",
+      format: "docs",
+      theme: "ivory-editorial",
+      pages: [
+        {
+          id: "executive-report",
+          selection: { kind: "block", id: "executive-report" },
+          props: {
+            ...canonicalExample,
+            title: replacementTokens,
+            summary: replacementTokens,
+            recommendations: [replacementTokens],
+            table: {
+              ...canonicalExample.table,
+              rows: [{ cells: [replacementTokens, 1, replacementTokens] }],
+            },
+          },
+        },
+      ],
+    });
+
+    const html = await composeDocumentPage(
+      manifest,
+      manifest.pages[0],
+      packageRoot
+    );
+    const escapedTokens = "$&amp; $1 $$ $` $&#39;";
+
+    expect(html).toContain(`>${escapedTokens}</h1>`);
+    expect(html).toContain(`>${escapedTokens}</p>`);
+    expect(html).toContain(`>${escapedTokens}</li>`);
+    expect(html).toContain(`>${escapedTokens}</td>`);
+  });
+
   test("fails closed on unknown block definitions, primitive refs, slots, and placeholders", async () => {
     const canonicalExample: unknown = JSON.parse(
       await readFile(examplePath, "utf-8")
