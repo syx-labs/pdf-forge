@@ -42,4 +42,7 @@ jobs:
         run: bunx playwright install chromium --with-deps
 
       - name: Integration tests
-        run: bun test tests/ --timeout 60000
+        run: |
+          git ls-files 'tests/**/*.test.ts' | while IFS= read -r test_file; do
+            bun test "$test_file" --parallel=1 --timeout 60000
+          done
