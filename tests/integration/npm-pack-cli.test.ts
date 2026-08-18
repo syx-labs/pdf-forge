@@ -358,6 +358,7 @@ describe("packed npm CLI", () => {
     const receiptOutput = requiredRecord(receipt.output, "receipt output");
     expect(Object.keys(receipt).sort()).toEqual([
       "componentIds",
+      "componentVersions",
       "createdAt",
       "documentId",
       "format",
@@ -374,6 +375,11 @@ describe("packed npm CLI", () => {
       "executive-report",
       "metric-card",
     ]);
+    expect(receipt.componentVersions).toEqual({
+      "data-table": "1.0.0",
+      "executive-report": "1.0.0",
+      "metric-card": "1.0.0",
+    });
     expect(receiptOutput.fileName).toBe(basename(output));
     expect(receiptOutput.pageCount).toBe(pdf.getPageCount());
     for (const forbidden of [

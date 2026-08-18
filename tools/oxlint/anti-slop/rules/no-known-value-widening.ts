@@ -170,6 +170,9 @@ export const noKnownValueWideningRule = defineRule({
 			environment === null ? null : annotationTarget(annotation, environment);
 
 		return {
+			before() {
+				environment = null;
+			},
 			Program(node) {
 				environment = createTypeEnvironment(node);
 			},

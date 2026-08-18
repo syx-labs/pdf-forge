@@ -126,6 +126,10 @@ describe("buildPdfBuildReceipt", () => {
       theme: "ivory-editorial",
       registryVersion: "1",
       componentIds: ["executive-report", "metric-card"],
+      componentVersions: {
+        "executive-report": "1.0.0",
+        "metric-card": "1.0.0",
+      },
       snapshotSha256: expectedSnapshotSha256,
       output: {
         fileName: basename(fixture.path),
@@ -141,6 +145,7 @@ describe("buildPdfBuildReceipt", () => {
     expect(receipt.output.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(Object.isFrozen(receipt)).toBe(true);
     expect(Object.isFrozen(receipt.componentIds)).toBe(true);
+    expect(Object.isFrozen(receipt.componentVersions)).toBe(true);
     expect(Object.isFrozen(receipt.output)).toBe(true);
     expect(Object.isFrozen(receipt.warnings)).toBe(true);
 
@@ -197,7 +202,30 @@ describe("buildPdfBuildReceipt", () => {
     expect(composition.componentIds).toEqual(["metric-card"]);
     expect(Object.isFrozen(composition.componentIds)).toBe(true);
     expect(receipt.componentIds).toEqual(composition.componentIds);
+    expect(receipt.componentVersions).toEqual({ "metric-card": "1.0.0" });
     expect(Object.isFrozen(receipt.componentIds)).toBe(true);
+    expect(Object.isFrozen(receipt.componentVersions)).toBe(true);
+  });
+
+  test("derives component version provenance from the loaded registry", async () => {
+    const fixture = await createPdfFixture();
+    const input = receiptInput(fixture.path);
+    const versionedRegistry = {
+      ...input.registry,
+      entries: input.registry.entries.map((entry) =>
+        entry.id === "metric-card" ? { ...entry, version: "2.4.1" } : entry
+      ),
+    };
+
+    const receipt = await buildPdfBuildReceipt({
+      ...input,
+      registry: versionedRegistry,
+    });
+
+    expect(receipt.componentVersions).toEqual({
+      "executive-report": "1.0.0",
+      "metric-card": "2.4.1",
+    });
   });
 
   test("rejects unknown provider, token, config and secret fields at the trusted-host boundary", async () => {
