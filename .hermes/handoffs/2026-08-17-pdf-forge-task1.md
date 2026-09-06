@@ -1,0 +1,52 @@
+# PDF Forge — Task 1: ADR das fronteiras
+
+## Objective Anchor
+
+- **Missão:** concluir as 30 tarefas do plano de registry tipado + dados governados, com TDD, commits focados e verificação final end-to-end, sem push/PR/ativação não autorizados.
+- **Done when:** Tasks 1–30 estiverem implementadas e commitadas sequencialmente; cada RED→GREEN estiver preservado; lint anti-slop, typecheck, build, browserless gate, suíte completa, acceptance PDF/receipt e diff final passarem no estado final; nenhum segredo/arbitrary SQL/renderer alternativo entrar; handoff final registrar receipts reais.
+- **Estado:** running — Task 1 concluída; Task 2 é a próxima.
+- **Invariantes:** preservar Playwright como renderer padrão; composição nunca recebe credenciais de banco; HTML direto continua suportado; dados são somente leitura; Takumi/Forme, SQL direto e UniFace ficam adiados; não editar runtime; não pushar.
+- **Decisão:** Gabriel autorizou continuar sem novos gates intermediários e reportar somente quando todo o plano estiver finalizado; usar os defaults recomendados do plano quando não houver risco material novo.
+- **Blockers:** nenhum.
+- **Workspace principal:** `/Users/ogabrielfalcao/Projects/Pessoal/PDF-Forge/pdf-forge` em `main`/`159f29e699bb12de014b1d5ca9d1a998e8eb6028`, preservado sem mutação de código; apenas `.hermes/` permanece untracked como antes.
+- **Workspace isolado:** `/Users/ogabrielfalcao/Projects/Pessoal/PDF-Forge/pdf-forge-task1-worktree`, branch `alpha/pdf-forge-task1`, base `159f29e699bb12de014b1d5ca9d1a998e8eb6028`.
+- **Plano:** `.hermes/plans/2026-08-17_114828-pdf-forge-registry-deepsql-integrations.md` no workspace principal.
+- **Worker handle:** `deleg_b32d5c90` (concluído; autorrelato reconciliado com o estado final).
+- **Commit local:** `940bb5ffd2682217873a0ebf1a4cea259da36a84` — `docs: define registry and governed data boundaries`.
+- **Diff final:** exatamente 2 arquivos adicionados, 109 linhas; nenhum arquivo de runtime/config alterado.
+- **TDD:** RED observado antes do ADR (`ENOENT`, 0 pass/1 fail); GREEN pós-commit = 1 pass/0 fail/4 expects.
+- **Gates finais:** `bun run typecheck` PASS; `bun run build` PASS; `bun test` PASS (93 testes, 21 arquivos, 254 expects, 0 falhas).
+- **Hashes:** ADR `17d0ceec31ac022dc95e49ce1b450fff256750c990229c7d1fcdb2a1d39d75a8`; teste `f5e3fde1d6865478b386a366be5e45988257b5f21c88e8400a34c459d2e34f56`.
+- **Push:** não realizado.
+- **Task 2:** commit `a109423e9e36a0e4410869f325fdb01154b301bf`; config test 2/2; lint baseline 40 warnings/0 errors em 45 arquivos; typecheck/build PASS; suíte serial 95/95; 13 paths focados; sem push.
+- **Task 3:** commit `087b12a1634032fce8bf7bb98d132ff21c72c3a0`; targeted 10/10; task lint 0/0; typecheck PASS; suíte serial 105/105; 3 paths focados.
+- **Task 4:** commit `c6f8741827448f1c877e9892dea4578c542b0b5f`; targeted 7/7; task lint 0/0; typecheck PASS; suíte serial 112/112; 3 paths focados.
+- **Task 5:** commit `106786b9152e955c2ba40a12da5d956840ce8810`; parent corrigiu expectativa canônica do loader; targeted 13/13; task lint 0/0; typecheck PASS; suíte 118/118; 6 paths.
+- **Task 6:** commit `42feffde5a66c36d9ca8358187cc56559622ca4f`; targeted 15/15; task lint 0/0; typecheck PASS; suíte 126/126; 6 paths.
+- **Task 7:** commit `8ce256ddae37d47be72e0e4048eee3abb12ad537`; targeted 5/5; task lint 0/0; typecheck PASS; suíte 131/131; 3 paths.
+- **Task 8:** commit `50a21df3c0ad23c890c1687f1c5b0c1ee92417d0`; parent fechou theme containment + imutabilidade; targeted 8/8; task lint 0/0; typecheck PASS; suíte 139/139; 2 paths.
+- **Task 9:** commit `a4a6674d837e73954efac95f827ebc11126b4c0f`; parent fechou theme/snapshot/document IDs, props e deep freeze; targeted 12/12; task lint 0/0; typecheck PASS; suíte 151/151; 2 paths.
+- **Task 10:** commit `c3eded69f3292ef930f9249bd473c43e98bf80dc`; targeted 8/8; task lint 0/0; typecheck PASS; suíte 159/159; 2 paths.
+- **Task 11:** commit `bd7b25f050af883b1a779690f21fc3b9d9234936`; targeted 13/13; task lint 0/0; typecheck PASS; suíte 165/165 após retry de flake Playwright; 6 paths.
+- **Task 12:** commit `59dc83154b907f3998fbac83156a03d2cc6a5d44`; targeted 2/2 com Playwright→PDF; task lint 0/0; typecheck PASS; suíte 167/167; 2 paths.
+- **Task 13:** commit `30c665f98a17517729a533775cd52c6116571199`; parent adicionou enforcement valor↔tipo de coluna; targeted 24/24; task lint 0/0; typecheck PASS; suíte 191/191; 4 paths.
+- **Task 14:** commit `b09fe565e1d53a4aa483b6b7ccf454c74df8874f`; targeted 3/3; task lint 0/0; typecheck PASS; suíte 194/194; 2 paths.
+- **Task 15:** commit `af2514284bd72de89bf8746d799d70ab99e9171c`; parent adicionou captura do provider durante mutation in-flight; targeted 10/10; task lint 0/0; typecheck PASS; suíte 204/204; 3 paths.
+- **Task 16:** commit `3cff239081a3db49e6e112782ac9e822824dfa3b`; parent fechou abort checks + exact explicit path; targeted 10/10; task lint 0/0; typecheck PASS; suíte 214/214; 2 paths.
+- **Task 17:** commit `ccddae8926e09c49e3d50518925df2ec33288a12`; parent endureceu marker whitespace-only; targeted 9/9; task lint 0/0; typecheck PASS; suíte 223/223; 2 paths.
+- **Task 18:** commit `cfc973222aa3113676613d71a03aa8418d2fd080`; parent adicionou integração real com composeDocumentPage e removeu `emptyMessage` incompatível com data-table; targeted 8/8; task lint 0/0; typecheck PASS; suíte 231/231; 2 paths.
+- **Task 19:** commit `325a09250e5defa8c9a01144e5363bc4e823e809`; parent adicionou vínculo entre manifest selections, component IDs e registry; targeted 8/8; task lint 0/0; typecheck PASS; suíte 239/239; 2 paths.
+- **Task 20:** commit `c2efd4d55de178ae5b9fa3fa226b13fd09329530`; parent removeu assertion preexistente no setup para task lint 0/0; targeted+existing CLI 9/9; typecheck PASS; suíte 244/244; 4 paths.
+- **Task 21:** commit `924f6e0dca6988cfc29adf2e83019d2f7335c55d`; E2E real StaticJsonProvider→redaction→binding→compose→Playwright→merge→receipt; targeted 6/6; existing CLI 9/9; lint 0/0; typecheck PASS; suíte 250/250; 4 paths.
+- **Task 22:** commit `eaa4b3e120e70d58ee080aa1988a2bdbc54bc905`; parent adicionou registry-level validation ao validate_pdf_manifest; targeted 11/11; lint 0/0; typecheck PASS; suíte final 258/258 após 1 flake de subprocesso compose reproduzido isolado e full rerun verde; 2 paths.
+- **Task 23:** commit `43d98f4bef063b2c4a3b0cc63c8b65bd8ad7f32a`; parent corrigiu fixture legacy Tailwind readiness e deduplicou registry validation; targeted MCP 19/19; lint 0/0; typecheck PASS; suíte 266/266; 3 paths.
+- **Task 24:** commit `d0b497df68e86ecbc7d726d243f9278ed58ebcd4`; parent removeu inferência regex sobre strings de dados e explicitou host policy/redaction, preservando conteúdo como dado inerte; targeted 22/22; lint 0/0; typecheck PASS; suíte 288/288; 3 paths.
+- **Task 25:** commit `f0bca030410353d8f3319631ce0afc28fcc3f811`; parent concluiu config defensiva, streaming bounded, cancel/timeout/abort, sanitização e hardening de header token; targeted 16/16; lint 0/0; typecheck PASS; suíte 304/304; 2 paths.
+- **Task 26:** commit `401048befe6ca39a04ad9c5b14ea375178dac9b0`; parent completou doctor help/error e sanitizou falhas de registry; targeted 7/7; CLI JSON real; lint 0/0; typecheck PASS; suíte 311/311 após reproduzir flake Playwright 2/4 isolado e rerun verde; 3 paths.
+- **Task 27:** commit `dcb15247071064f35641d4a645be56ac26ff62d0`; parent sanitizou erro de JSON; targeted 5/5; smoke real 7 arquivos/3 PDFs `%PDF-`; lint 0/0; typecheck PASS; suíte 316/316 após reproduzir flake de stderr do subprocesso e rerun verde; 3 paths.
+- **Task 28:** commit `dfefb0e82d782d433f667ead6fb435e7c9b81a2b`; parent releu 3 paths; pack+external CWD 12/12; lint 0/0; typecheck/build PASS; suíte 323/323; package passou a incluir `src/data/` e `src/registry/` sem novos exports.
+- **Task 29:** commit `7d684211b0fca57761362e2d77ae63b64987feca`; parent releu diff completo de 19 paths; 5 regras agora error; CI antes de typecheck; lint 0/0; typecheck/build PASS; suíte 324/324 após reproduzir flake de stderr do compose isolado e rerun verde.
+- **Task 30:** commit `15f0b50be142625c7e40c5db1475f417fc6d291d`; acceptance DeepSQL→snapshot→hash→registry→Playwright→PDF→receipt; revisão adversarial encontrou 3 P1 e todos foram corrigidos via TDD. Pai releu diff, 53 testes focados verdes, anti-slop 0/0, typecheck/build PASS e suíte final 329/329. Branch contém 30 commits; worktree limpa; `main` preservada em `159f29e6`.
+- **Publicação:** cinco branches empilhadas publicadas e PRs abertos: #18 contracts/tracer, #19 snapshots, #20 CLI/MCP, #21 DeepSQL, #22 gallery/package/gates. Bases/heads e contagens foram relidas da API; todos estão OPEN, MERGEABLE e com Stack section. CI GitHub check+integration verde no #18; Socket verde em #18–#22. Workflow atual só dispara para base `main`, portanto os PRs empilhados #19–#22 terão CI próprio quando forem retargetados após o merge do predecessor.
+- **Review gate:** classificação read-only `deleg_a01ba5a4` concluída contra `15f0b50`: 18 comentários, 0 P0, 6 P1 + 6 P2 persistentes, 2 P3, 2 já remediados e 2 não aplicáveis. Remediação TDD `deleg_671ecd13` está em andamento no worktree; nenhum merge autorizado/executado. Após retorno: pai valida findings, diff completo e gates; distribui as correções na camada correspondente; atualiza/revalida heads, diffs, checks e comentários da stack.
+- **Estado:** PRs executados, revisão pós-publicação em andamento; não declarar pronto para merge enquanto os comentários P1/P2 aplicáveis não forem resolvidos e os checks finais não forem relidos.

@@ -112,6 +112,8 @@ The render script auto-detects the format (slides vs docs) from the HTML content
 
 The renderer enforces an **overflow guard** on slides and social formats: if rendered content is taller than the viewport (1080px for slides), the render aborts with the offending filename. Pass `allowOverflow: true` (programmatic) or accept the failure as a layout signal — usually the slide needs splitting, tighter spacing, or shorter copy. Docs are exempt (page.pdf paginates natively).
 
+**On OVERFLOW: split, don't shrink.** Iteratively trimming copy or font size and re-rendering the same page burns render cycles and degrades the design (it happened twice on one page in a real session). First overflow on a page → move a section or half the table rows to a new page and re-render once. Budget content BEFORE rendering: a dense A4 page holds roughly one heading + ~12 table rows or 3 content sections at the standard type scale — beyond that, plan two pages from the start (step 3).
+
 ### 7. (Optional) Export to PPTX
 
 When the deliverable is a `.pptx` (boardroom decks, client proposals, anything that goes through PowerPoint/Keynote), convert the rendered PNGs into a full-bleed PPTX:
