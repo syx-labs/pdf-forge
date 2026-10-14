@@ -65,7 +65,7 @@
     "@oxlint/plugins": "1.78.0",
     "@types/node": "^25.5.2",
     "oxlint": "1.78.0",
-    "tsup": "^8.5.1",
+    "tsup": "^9.0.0",
     "typescript": "^7.0.0"
   }
 }
