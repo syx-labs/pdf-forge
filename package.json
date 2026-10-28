@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@oxlint/plugins": "1.78.0",
-    "@types/node": "^25.5.2",
+    "@types/node": "^26.0.0",
     "oxlint": "1.78.0",
     "tsup": "^8.5.1",
     "typescript": "^7.0.0"
