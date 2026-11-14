@@ -63,7 +63,7 @@ Read `references/color-palettes.md` for the full color system and brand substitu
 
 **Brand presets** ship under `assets/themes/` (e.g. `yorus-dark.yaml`). Each preset defines a palette, fonts, and accent gradient that you should honor when composing HTML. Presets with a `brand:` block apply to slides and documents (not only social). When a project's `.claude/pdf-forge.local.md` references a preset, treat that palette as authoritative.
 
-**Yorus interop**: when working on a Yorus project (path matches `yorus`, `alfama`, etc., or `preset: yorus-dark` is set), the `yorus-visual-direction` skill is the source of truth for visual judgment — palette is `#010101 / #ef700b / #8933e2`, voice is active and concrete, anti-AI-slop is non-negotiable. The `yorus-dark.yaml` preset encodes the implementation baseline; the sibling skill handles direction.
+**Yorus interop**: when working on a Yorus project (path matches `yorus`, `alfama`, etc., or `preset: yorus-dark` is set), palette is `#010101 / #ef700b / #8933e2`, voice is active and concrete, and anti-AI-slop is non-negotiable; the `yorus-dark.yaml` preset encodes the implementation baseline.
 
 ### 3. Plan the Page Sequence
 
@@ -112,7 +112,7 @@ The render script auto-detects the format (slides vs docs) from the HTML content
 
 The renderer enforces an **overflow guard** on slides and social formats: if rendered content is taller than the viewport (1080px for slides), the render aborts with the offending filename. Pass `allowOverflow: true` (programmatic) or accept the failure as a layout signal — usually the slide needs splitting, tighter spacing, or shorter copy. Docs are exempt (page.pdf paginates natively).
 
-**On OVERFLOW: split, don't shrink.** Iteratively trimming copy or font size and re-rendering the same page burns render cycles and degrades the design (it happened twice on one page in a real session). First overflow on a page → move a section or half the table rows to a new page and re-render once. Budget content BEFORE rendering: a dense A4 page holds roughly one heading + ~12 table rows or 3 content sections at the standard type scale — beyond that, plan two pages from the start (step 3).
+**On OVERFLOW: split, don't shrink.** Iteratively trimming copy or font size and re-rendering the same page burns render cycles and degrades the design. First overflow on a page → move a section or half the table rows to a new page and re-render once. Budget content BEFORE rendering: a dense A4 page holds roughly one heading + ~12 table rows or 3 content sections at the standard type scale — beyond that, plan two pages from the start (step 3).
 
 ### 7. (Optional) Export to PPTX
 
